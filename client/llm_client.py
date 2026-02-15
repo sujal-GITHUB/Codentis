@@ -3,6 +3,7 @@ from dotenv import load_dotenv
 from typing import AsyncGenerator, Any
 from client.response import StreamEvent, TextDelta, TokenUsage, StreamEventType
 from openai import RateLimitError, APIConnectionError, APIError
+import asyncio
 import os
 
 load_dotenv()
@@ -36,6 +37,7 @@ class LLMClient:
                 "model": "arcee-ai/trinity-large-preview:free",
                 "messages": messages,
                 "stream": stream,
+                
             }
         
         for attempt in range(self.max_attempts+1):
