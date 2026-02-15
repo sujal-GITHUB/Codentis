@@ -1,4 +1,4 @@
-# Codentis 🚀
+# Codentis
 
 ![Python](https://img.shields.io/badge/python-3.10+-blue.svg)
 ![Rich](https://img.shields.io/badge/UI-Rich-purple.svg)
@@ -6,7 +6,7 @@
 
 **Codentis** is an intelligent, high-performance CLI AI agent designed to bring the power of LLMs directly to your terminal. Inspired by tools like Claude Code, it features a beautiful TUI, robust error handling, and a modular architecture for building complex agentic loop workflows.
 
-## ✨ Features
+## Features
 
 - **Beautiful TUI**: Built with `rich`, offering syntax highlighting, streaming responses, and clean visual separation.
 - **Resilient Client**: Automatic retries with exponential backoff for rate limits and connection errors.
@@ -17,7 +17,7 @@
 - **Async Core**: Fully asynchronous implementation for high performance.
 
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
@@ -67,10 +67,10 @@ Or just run the script (shell mode coming soon):
 python main.py
 ```
 
-## 🤝 Contributing
+## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License.
