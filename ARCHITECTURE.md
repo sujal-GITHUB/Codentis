@@ -4,10 +4,10 @@ Codentis is built on a clean, event-driven, multi-layered architecture designed 
 
 ```mermaid
 graph TD
-    CLI[CLI (main.py)] -->|Initializes| Agent[Agent (agent/agent.py)]
-    CLI -->|Initializes| TUI[TUI (ui/renderer.py)]
-    Agent -->|Uses| LLMClient[LLMClient (client/llm_client.py)]
-    LLMClient -->|API Calls| OpenAI[OpenAI / OpenRouter API]
+    CLI["CLI (main.py)"] -->|Initializes| Agent["Agent (agent/agent.py)"]
+    CLI -->|Initializes| TUI["TUI (ui/renderer.py)"]
+    Agent -->|Uses| LLMClient["LLMClient (client/llm_client.py)"]
+    LLMClient -->|API Calls| OpenAI["OpenAI / OpenRouter API"]
 
     subgraph Data Flow
         OpenAI -->|Raw Chunks| LLMClient
