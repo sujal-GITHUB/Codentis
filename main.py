@@ -43,6 +43,21 @@ class CLI:
             elif event.type == AgentEventType.AGENT_ERROR:
                 error = event.data.get("error") or "Unknown error occurred"
                 console.print(f"\n[bold red]Error: {error}[/bold red]")
+
+            elif event.type == AgentEventType.TOOL_CALL_START:
+                tool_name = event.data.get("name", "unknown")
+                tool = self.agent.tool_registry.get(tool_name)
+                tool_kind = None
+                if not tool:
+                    tool_kind = None
+                
+                tool_kind = tool.kind.value if tool else None
+                self.tui.tool_call_start(
+                    event.data.get("call_id", ""), 
+                    tool_name, 
+                    tool_kind, 
+                    event.data.get("arguments", {})
+                )
             
         return final_response
 

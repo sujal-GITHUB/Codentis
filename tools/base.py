@@ -5,7 +5,7 @@ from typing import Any
 from pydantic import BaseModel
 from dataclasses import dataclass
 from pathlib import Path
-from pydantic import ValidationError, model_json_schema
+from pydantic import ValidationError
 from dataclasses import field
 
 class ToolKind(Enum):
@@ -27,6 +27,21 @@ class ToolResult:
     output: str
     error: str | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
+    truncated: bool = False
+
+    @classmethod
+    def error_result(cls, error: str, output: str = "", **kwargs) -> ToolResult:
+        return cls(success=False, output=output, error=error, **kwargs)
+
+    @classmethod
+    def success_result(cls, output: str, **kwargs: Any) -> ToolResult:
+        return cls(success=True, output=output, error=None, **kwargs)
+
+    def to_model_output(self)->str:
+        if self.success:
+            return self.output
+
+        return f"Error: {self.error}\n\nOutput:\n{self.output}\n"
 
 @dataclass
 class ToolConfirmation:
@@ -39,8 +54,11 @@ class Tool(abc.ABC):
     description: str = "Base tool"
     kind: ToolKind = ToolKind.READ
 
-    def __init__(self, name: str, description: str):
-        pass
+    def __init__(self, name: str | None = None, description: str | None = None):
+        if name is not None:
+            self.name = name
+        if description is not None:
+            self.description = description
 
     @property
     def schema(self)->dict[str, Any] | type["BaseModel"]:
@@ -78,11 +96,11 @@ class Tool(abc.ABC):
             description=self.description
         )
 
-    async def to_openai_schema(self)->dict[str, Any]:
+    def to_openai_schema(self)->dict[str, Any]:
         schema = self.schema
 
         if isinstance(schema, type) and issubclass(schema, BaseModel):
-            json_schema = model_json_schema(schema, mode="serialization")
+            json_schema = schema.model_json_schema(mode="serialization")
 
             return {
                 "name": self.name,
