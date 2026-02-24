@@ -23,10 +23,10 @@ def display_path_relative_to_cwd(path: Path) -> str:
     except Exception:
         return str(path)
     
-    if cwd:
-        try:
-            return path.relative_to(cwd)
-        except Exception:
-            pass
+    cwd = Path.cwd()
+    try:
+        return str(path.relative_to(cwd))
+    except Exception:
+        pass
     
     return str(path)
