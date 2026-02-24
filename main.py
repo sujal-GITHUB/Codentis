@@ -13,6 +13,15 @@ class CLI:
         self.agent : Agent | None = None
         self.tui = TUI(console)
 
+    def get_tool_kind(self, tool_name: str)->str | None:
+        tool_kind = None
+        tool = self.agent.tool_registry.get(tool_name)
+        if not tool:
+            tool_kind = None
+        
+        tool_kind = tool.kind.value if tool else None
+        return tool_kind
+
     async def run_single(self, message: str):
         async with Agent() as agent:
             self.agent = agent
@@ -46,19 +55,28 @@ class CLI:
 
             elif event.type == AgentEventType.TOOL_CALL_START:
                 tool_name = event.data.get("name", "unknown")
-                tool = self.agent.tool_registry.get(tool_name)
-                tool_kind = None
-                if not tool:
-                    tool_kind = None
-                
-                tool_kind = tool.kind.value if tool else None
+                tool_kind = self.get_tool_kind(tool_name)
                 self.tui.tool_call_start(
                     event.data.get("call_id", ""), 
                     tool_name, 
                     tool_kind, 
                     event.data.get("arguments", {})
                 )
-            
+
+            elif event.type == AgentEventType.TOOL_CALL_COMPLETE:
+                tool_name = event.data.get("name", "unknown")
+                tool_kind = self.get_tool_kind(tool_name)
+                self.tui.tool_call_complete(
+                    event.data.get("call_id", ""), 
+                    tool_name, 
+                    tool_kind,
+                    event.data.get("success", False),
+                    event.data.get("output", ""),
+                    event.data.get("error", None),
+                    event.data.get("metadata", {}),
+                    event.data.get("truncated", False)
+                )
+
         return final_response
 
 @click.command()
