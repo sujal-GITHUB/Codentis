@@ -87,6 +87,19 @@ class TUI:
     def stream_assistant_delta(self, delta: str)->None:
         self.console.print(delta, end="", markup=False)
 
+    def print_welcome(self, title: str, lines: list[str])->None:
+        body = "\n".join(lines)
+        self.console.print(
+            Panel(
+                Text(body, style="code"),
+                title=Text(title, style="highlight"),
+                title_align="left",
+                border_style="border",
+                box=box.ROUNDED,
+                padding=(1, 2)
+            )
+        )
+
     def ordered_args(self, tool_name: str, args: dict[str, Any])->list[tuple[str, Any]]:
         PREFERRED_ORDER = {
             'read_file': ['path', 'offset', 'limit'],
@@ -304,7 +317,7 @@ class TUI:
             subtitle_align="right",
             border_style=border_style,
             box=box.ROUNDED,
-            padding=(1, 2)
+            padding=(0, 2)
         )
 
         self.console.print()

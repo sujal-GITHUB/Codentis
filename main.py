@@ -5,6 +5,7 @@ from typing import Any
 from agent.agent import Agent
 from agent.events import AgentEventType
 from ui.renderer import TUI, get_console
+from config.config import Config
 
 console = get_console()
 
@@ -26,7 +27,43 @@ class CLI:
         async with Agent() as agent:
             self.agent = agent
             await self.__process_message(message)
-            
+
+    async def run_interactive(self):
+        async with Agent() as agent:
+            self.agent = agent
+
+            self.tui.print_welcome(
+                title="Welcome to Codentis",
+                lines=[
+                    f'model: {self.agent.config.model_name}',
+                    f'cwd: {self.agent.config.cwd}',
+                    f'commands: /help, /exit, /config, /approval, /model',
+                ]
+            )
+
+            while True:
+                try:
+                    user_input = await asyncio.to_thread(
+                        lambda: console.input("\n[user]>[/user]")
+                    )
+                    user_input = user_input.strip()
+                    if not user_input:
+                        continue
+
+                    if user_input.lower() in ("/exit", "/quit", "exit", "quit"):
+                        break
+
+                    await self.__process_message(user_input)
+                except asyncio.CancelledError:
+                    console.print("\n[dim]Interrupted. Use /exit to quit.[/dim]")
+                    continue
+                except KeyboardInterrupt:
+                    console.print("\n[dim]Interrupted. Use /exit to quit.[/dim]")
+                    continue
+                except EOFError:
+                    break
+        console.print("\n[dim]Goodbye![/dim]\n")
+    
     async def __process_message(self, message: str):
         if not self.agent:
             return None
@@ -88,5 +125,10 @@ def main(prompt: str | None):
         result = asyncio.run(cli.run_single(prompt))
         if result is None:
             sys.exit(1)
+    else:
+        try:
+            asyncio.run(cli.run_interactive())
+        except KeyboardInterrupt:
+            pass  # suppress click's "Aborted!" message
 
 main()

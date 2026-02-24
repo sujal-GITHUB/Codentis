@@ -5,10 +5,12 @@ from client.llm_client import LLMClient
 from client.response import StreamEvent, StreamEventType, ToolResultMessage
 from context.contextManager import ContextManager
 from tools.registry import create_default_registry
+from config.config import Config
 from pathlib import Path
 
 class Agent:
     def __init__(self):
+        self.config = Config()
         self.client = LLMClient()
         self.context_manager = ContextManager()
         self.tool_registry = create_default_registry()
@@ -50,7 +52,20 @@ class Agent:
             elif event.type == StreamEventType.ERROR:
                 yield AgentEvent.agent_error(event.error or "Unknown error occured.")
         
-        self.context_manager.add_assistant_message(response_text or None)
+        self.context_manager.add_assistant_message(response_text or None,
+            [
+                {
+                    'id': tool_call.call_id,
+                    'type': tool_call.type,
+                    'function': {
+                        'name': tool_call.name,
+                        'arguments': tool_call.arguments
+                    }
+                }
+                for tool_call in tool_calls
+            ]
+            if tool_calls else None
+        )
 
         if response_text:
             yield AgentEvent.text_complete(response_text)

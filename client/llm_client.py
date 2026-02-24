@@ -10,6 +10,7 @@ load_dotenv()
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 OPENAI_BASE_URL = os.getenv("OPENAI_BASE_URL")
+MODEL_NAME = os.getenv("MODEL_NAME")
 
 class LLMClient:
     def __init__(self)->None:
@@ -47,7 +48,7 @@ class LLMClient:
     async def chat_completion(self, messages: list[dict[str, Any]], tools: list[dict[str, Any]] | None = None, stream: bool = True)->AsyncGenerator[StreamEvent, None]:
         client = self.get_client()
         kwargs = {
-                "model": "arcee-ai/trinity-large-preview:free",
+                "model": MODEL_NAME,
                 "messages": messages,
                 "stream": stream,
             }
