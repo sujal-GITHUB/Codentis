@@ -5,7 +5,7 @@ from typing import Any
 from agent.agent import Agent
 from agent.events import AgentEventType
 from ui.renderer import TUI, get_console
-from config.config import Config
+from config import Config, load_config
 
 console = get_console()
 
@@ -118,7 +118,30 @@ class CLI:
 
 @click.command()
 @click.argument("prompt", required=False)
-def main(prompt: str | None):
+@click.option(
+    '--cwd',
+    '-c',
+    type=click.Path(exists=True, file_okay=False, path_type=Path),
+    help='Current working directory'
+)
+
+def main(
+    prompt: str | None,
+    cwd: Path | None,
+):
+    try:
+        config = load_config(cwd)
+    except Exception as e:
+        console.print(f"[error]Configuration Error: {e}[/error]")
+        sys.exit(1)
+
+    errors = config.validate()
+    if errors: 
+        for error in errors:
+            console.print(f"[error]Configuration Error: {error}[/error]")
+
+        sys.exit(1)
+    
     cli = CLI()
 
     if prompt:
