@@ -2,6 +2,7 @@ import sys
 import asyncio
 import click
 from typing import Any
+from pathlib import Path
 from agent.agent import Agent
 from agent.events import AgentEventType
 from ui.renderer import TUI, get_console
@@ -10,9 +11,10 @@ from config import Config, load_config
 console = get_console()
 
 class CLI:
-    def __init__(self):
+    def __init__(self, config: Config):
         self.agent : Agent | None = None
         self.tui = TUI(console)
+        self.config = config
 
     def get_tool_kind(self, tool_name: str)->str | None:
         tool_kind = None
@@ -24,12 +26,12 @@ class CLI:
         return tool_kind
 
     async def run_single(self, message: str):
-        async with Agent() as agent:
+        async with Agent(self.config) as agent:
             self.agent = agent
             await self.__process_message(message)
 
     async def run_interactive(self):
-        async with Agent() as agent:
+        async with Agent(self.config) as agent:
             self.agent = agent
 
             self.tui.print_welcome(
@@ -142,7 +144,7 @@ def main(
 
         sys.exit(1)
     
-    cli = CLI()
+    cli = CLI(config)
 
     if prompt:
         result = asyncio.run(cli.run_single(prompt))

@@ -49,8 +49,8 @@
 4.  **Configure Environment:**
     Create a `.env` file in the root directory:
     ```env
-    OPENAI_API_KEY=your_api_key_here
-    OPENAI_BASE_URL=https://openrouter.ai/api/v1  # Optional: For OpenRouter or local LLMs
+    API_KEY=your_api_key_here
+    BASE_URL=https://openrouter.ai/api/v1  # Optional: For OpenRouter or local LLMs
     ```
 
 ### Usage

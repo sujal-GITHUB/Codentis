@@ -16,7 +16,7 @@ const steps = [
     {
         num: "3",
         title: "Configure",
-        code: "echo OPENAI_API_KEY=your_key > .env",
+        code: "echo API_KEY=your_key > .env",
     },
     {
         num: "4",

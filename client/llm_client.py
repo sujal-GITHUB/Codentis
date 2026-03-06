@@ -3,26 +3,24 @@ from dotenv import load_dotenv
 from typing import AsyncGenerator, Any
 from client.response import StreamEvent, TextDelta, TokenUsage, StreamEventType, ToolCall, ToolCallDelta, parse_tool_call_arguements
 from openai import RateLimitError, APIConnectionError, APIError
+from config.config import Config
 import asyncio
 import os
 
 load_dotenv()
-
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-OPENAI_BASE_URL = os.getenv("OPENAI_BASE_URL")
-MODEL_NAME = os.getenv("MODEL_NAME")
+MODEL_NAME = os.getenv("MODEL_NAME", "gpt-4o")
 
 class LLMClient:
-    def __init__(self)->None:
+    def __init__(self, config: Config)->None:
         self.client : AsyncOpenAI | None = None
-        self.max_attempts = 3
-        pass
+        self.max_attempts: int = 3
+        self.config = config
 
     def get_client(self)->AsyncOpenAI:
         if self.client is None:
             self.client = AsyncOpenAI(
-                api_key=OPENAI_API_KEY,
-                base_url=OPENAI_BASE_URL
+                api_key=self.config.api_key,
+                base_url=self.config.base_url
             )
         return self.client
 
@@ -65,7 +63,7 @@ class LLMClient:
                 else:
                     event = await self.non_stream_response(client, kwargs)
                     yield event
-                pass
+                return
             except RateLimitError as e:
                 if attempt < self.max_attempts:
                     wait_time = 2 ** attempt
@@ -97,10 +95,7 @@ class LLMClient:
                     type=StreamEventType.ERROR,
                     error=str(e),
                 )
-            finally:
-                await self.close()
-            pass
-        pass
+                return
 
     async def stream_response(self, client: AsyncOpenAI, kwargs: dict[str, Any])->AsyncGenerator[StreamEvent, None]:
         response = await client.chat.completions.create(**kwargs)

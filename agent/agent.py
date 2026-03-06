@@ -9,9 +9,11 @@ from config.config import Config
 from pathlib import Path
 
 class Agent:
-    def __init__(self):
-        self.config = Config()
-        self.client = LLMClient()
+    def __init__(self, config: Config):
+        self.config = config
+        self.client = LLMClient(
+            config = self.config
+        )
         self.context_manager = ContextManager()
         self.tool_registry = create_default_registry()
 
