@@ -31,7 +31,7 @@ class ContextManager:
         self.config = Config()
         self.system_prompt = get_system_prompt(self.config)
         self.messages: list[MessageItem] = []
-        self.model_name = "arcee-ai/trinity-large-preview:free"
+        self.model_name = self.config.model_name
     
     def add_user_message(self, content: str)->None:
         item = MessageItem(
@@ -43,10 +43,12 @@ class ContextManager:
         self.messages.append(item)
         return item
     
-    def add_assistant_message(self, content: str)->None:
+    def add_assistant_message(self, content: str, tool_calls: list[dict[str, Any]] | None = None)->None:
         item = MessageItem(
             role="assistant",
             content=content or "",
+            token_count=count_tokens(content or "", self.model_name),
+            tool_calls=tool_calls or [],
         )
         self.messages.append(item)
         return item

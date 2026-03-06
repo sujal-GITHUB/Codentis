@@ -4,6 +4,9 @@ from pydantic import Field
 from tools.base import ToolInvocation, ToolResult, ToolKind
 from utils.paths import resolve_path, is_binary_file
 from utils.text import count_tokens, truncate_text
+import os
+
+MODEL_NAME = os.getenv("MODEL_NAME")
 
 class ReadFileParams(BaseModel):
     path: str = Field(...,
@@ -77,7 +80,7 @@ class ReadFileTool(Tool):
                 formatted_lines.append(f"{i:6} | {line}")
 
             output = "\n".join(formatted_lines)
-            token_count = count_tokens(output, "arcee-ai/trinity-large-preview:free")
+            token_count = count_tokens(output, MODEL_NAME)
 
             truncated = False
             if token_count > self.MAX_OUTPUT_TOKENS:

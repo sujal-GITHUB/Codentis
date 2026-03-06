@@ -46,10 +46,11 @@ Handles all external communication with Large Language Models.
 Contains the core agentic loop and event orchestration.
 
 - **`Agent`** (`agent.py`): Manages conversation state and the agentic loop.
-  - Initializes `LLMClient`, `ContextManager`, and `ToolRegistry`.
+  - Initializes `Config`, `LLMClient`, `ContextManager`, and `ToolRegistry`.
+  - Exposes `self.config` so callers (e.g. CLI) can read active configuration.
   - Implements `async with` context manager for graceful client cleanup.
   - `run()` — top-level entry point; emits `AGENT_START` → loop events → `AGENT_END`.
-  - `agentic_loop()` — streams LLM response, accumulates tool calls, dispatches them sequentially, and feeds results back into context.
+  - `agentic_loop()` — streams LLM response, accumulates tool calls, serializes them into context with full OpenAI `tool_calls` format, dispatches them sequentially, and feeds results back into context.
 - **`events.py`**: Defines high-level agent events emitted to the CLI:
 
 | Event | Payload |
@@ -91,7 +92,8 @@ Manages the conversation history passed to the LLM.
 - **`ContextManager`** (`contextManager.py`):
   - Maintains an ordered list of `MessageItem` objects.
   - Prepends the system prompt on every call to `get_messages()`.
-  - Tracks token counts per message.
+  - Tracks token counts per message (user, assistant, and tool messages).
+  - `add_assistant_message(content, tool_calls=None)` — now accepts the serialized tool call list so the LLM receives proper function-call history on the next turn.
   - Methods: `add_user_message()`, `add_assistant_message()`, `add_tool_result()`, `get_messages()`.
 - **`MessageItem`**: Dataclass representing a single conversation turn. Serialises to OpenAI message dict format, supporting `role`, `content`, `tool_call_id`, and `tool_calls`.
 
@@ -101,6 +103,7 @@ Manages the conversation history passed to the LLM.
 Terminal rendering using `rich`.
 
 - **`TUI`** (`renderer.py`): Handles all terminal output.
+  - `print_welcome(title, lines)` — renders a styled welcome panel at startup showing model, cwd, and available commands.
   - `begin_assistant()` / `end_assistant()` — framed streaming output.
   - `stream_assistant_delta()` — live text streaming.
   - `tool_call_start()` — renders a running panel with tool name, call ID, and arguments.
@@ -112,7 +115,11 @@ Terminal rendering using `rich`.
 ---
 
 ### 6. Config Layer (`config/`)
-- **`Config`**: Loads configuration (model name, API keys, etc.) from environment and `.env` via `python-dotenv`.
+- **`Config`** (`config.py`): Loads runtime configuration from environment via `python-dotenv`.
+  - `model_name` — read from `MODEL_NAME` env var (set in `.env`).
+  - `cwd` — current working directory.
+  - `developer_instructions` / `user_instructions` — optional prompt overrides.
+  - Instantiated by both `Agent` and `ContextManager` so all layers share the same env-driven configuration.
 
 ---
 
@@ -142,17 +149,39 @@ Agent.agentic_loop()
 
 ---
 
+## CLI Modes
+
+### Single-shot mode
+```
+python main.py "<prompt>"
+```
+Runs one message through the agent and exits.
+
+### Interactive mode
+```
+python main.py
+```
+Launches a persistent REPL loop:
+- Prints a welcome panel (model, cwd, available commands) at startup.
+- Reads input via `asyncio.to_thread` (non-blocking, safely cancellable).
+- **Ctrl+C** (during input or agent processing) prints an interrupt message and continues — never exits.
+- Supported commands: `/exit`, `/quit` (clean exit), `/help`, `/config`, `/model`, `/approval`.
+- `EOFError` (Ctrl+D) exits cleanly.
+
+---
+
 ## Event Flow Summary
 
 ```
 User Input
-  → CLI.run_single()
+  → CLI.run_single()  OR  CLI.run_interactive()
     → Agent.run()
       → ContextManager.add_user_message()
       → Agent.agentic_loop()
         → LLMClient.chat_completion()  [streaming]
           → TEXT_DELTA events  →  TUI.stream_assistant_delta()
           → TOOL_CALL_COMPLETE events  →  accumulated
+        → ContextManager.add_assistant_message(text, tool_calls=[...])
         → For each tool call:
           → TOOL_CALL_START  →  TUI.tool_call_start()
           → ToolRegistry.invoke()  →  ToolResult
@@ -165,7 +194,8 @@ User Input
 
 ## Future Extensions
 
-- **Multi-turn agentic loop**: Re-run `agentic_loop` after tool results if the LLM wants to call more tools.
+- **Multi-turn agentic loop**: Re-run `agentic_loop` after tool results if the LLM wants to call more tools (tool_calls are already serialized into context, ready for this).
+- **Interactive commands**: `/help`, `/config`, `/model`, `/approval` commands are defined in the welcome panel but not yet implemented.
 - **Additional built-in tools**: `write_file`, `search_file`, `execute_shell`, web search, etc.
 - **Tool confirmation**: `ToolConfirmation` infrastructure exists for prompting the user before mutating operations.
 - **Memory**: A `Memory` component can be injected into `ContextManager` for long-term context.
