@@ -50,7 +50,7 @@ Contains the core agentic loop and event orchestration.
   - Exposes `self.config` so callers (e.g. CLI) can read active configuration.
   - Implements `async with` context manager for graceful client cleanup.
   - `run()` — top-level entry point; emits `AGENT_START` → loop events → `AGENT_END`.
-  - `agentic_loop()` — streams LLM response, accumulates tool calls, serializes them into context with full OpenAI `tool_calls` format, dispatches them sequentially, and feeds results back into context.
+  - `agentic_loop()` — streams LLM response, accumulates tool calls, serializes them strictly into OpenAI-compatible representation (forcing `type='function'` and JSON-stringified `arguments`) before dispatch, and feeds results back into context.
 - **`events.py`**: Defines high-level agent events emitted to the CLI:
 
 | Event | Payload |
@@ -93,7 +93,8 @@ Manages the conversation history passed to the LLM.
   - Maintains an ordered list of `MessageItem` objects.
   - Prepends the system prompt on every call to `get_messages()`.
   - Tracks token counts per message (user, assistant, and tool messages).
-  - `add_assistant_message(content, tool_calls=None)` — now accepts the serialized tool call list so the LLM receives proper function-call history on the next turn.
+  - `add_assistant_message(content, tool_calls=None)` — accepts the serialized tool call list so the LLM receives proper function-call history.
+  - `add_tool_result()` — explicitly tracks and preserves `tool_call_id` to prevent provider matching errors.
   - Methods: `add_user_message()`, `add_assistant_message()`, `add_tool_result()`, `get_messages()`.
 - **`MessageItem`**: Dataclass representing a single conversation turn. Serialises to OpenAI message dict format, supporting `role`, `content`, `tool_call_id`, and `tool_calls`.
 
@@ -115,11 +116,12 @@ Terminal rendering using `rich`.
 ---
 
 ### 6. Config Layer (`config/`)
-- **`Config`** (`config.py`): Loads runtime configuration from environment via `python-dotenv`.
-  - `model_name` — read from `MODEL_NAME` env var (set in `.env`).
+- **`Config`** (`config.py`) & **`loader.py`**: Loads runtime configuration from TOML files.
+  - Implements a hierarchical configuration strategy, merging system-wide settings with project-specific settings (from `.agent/codentis.toml`).
+  - `model_name` — read from the `[model]` block.
   - `cwd` — current working directory.
-  - `developer_instructions` / `user_instructions` — optional prompt overrides.
-  - Instantiated by both `Agent` and `ContextManager` so all layers share the same env-driven configuration.
+  - `developer_instructions` — can be automatically loaded from `.agent/agent.md`.
+  - Instantiated by loader and shared by `Agent` and `ContextManager` across all layers.
 
 ---
 

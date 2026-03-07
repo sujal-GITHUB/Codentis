@@ -33,6 +33,7 @@ def get_system_prompt(
 
     if user_memory:
         parts.append(_get_memory_section(user_memory))
+        
     # Operational guidelines
     parts.append(_get_operational_section())
 
