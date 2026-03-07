@@ -17,13 +17,11 @@ class CLI:
         self.tui = TUI(config, console)
 
     def get_tool_kind(self, tool_name: str)->str | None:
-        tool_kind = None
-        tool = self.agent.tool_registry.get(tool_name)
-        if not tool:
-            tool_kind = None
+        if not self.agent or not self.agent.session:
+            return None
         
-        tool_kind = tool.kind.value if tool else None
-        return tool_kind
+        tool = self.agent.session.tool_registry.get(tool_name)
+        return tool.kind.value if tool else None
 
     async def run_single(self, message: str):
         async with Agent(self.config) as agent:
