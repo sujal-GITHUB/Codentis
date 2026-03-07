@@ -1,13 +1,9 @@
 import os
 from pydantic import BaseModel, Field
 from pathlib import Path
-from dotenv import load_dotenv
-
-load_dotenv()
-MODEL_NAME = os.getenv("MODEL_NAME", "gpt-4o")
 
 class ModelConfig(BaseModel):
-    name: str = MODEL_NAME
+    name: str = "gpt-4o"
     temperature: float = Field(default=1, ge=0.0, le=2.0)
     context_window: int = 256000
 
@@ -15,18 +11,11 @@ class Config(BaseModel):
     model: ModelConfig = Field(default_factory=ModelConfig)
     cwd: Path = Field(default_factory=lambda: Path.cwd())
     max_turns: int = 100
-    max_tool_output_tokens: int = 50000
     developer_instructions: str | None = None
     user_instructions: str | None = None
     debug: bool = False
-
-    @property
-    def api_key(self) -> str | None:
-        return os.getenv("API_KEY")
-        
-    @property
-    def base_url(self) -> str | None:
-        return os.getenv("BASE_URL")
+    api_key: str | None = None
+    base_url: str | None = None
 
     @property
     def model_name(self) -> str:
@@ -56,7 +45,7 @@ class Config(BaseModel):
         errors = []
 
         if not self.api_key:
-            errors.append("No API key found. Set API_KEY environment variable.")
+            errors.append("No API key found. Please define `api_key` in your `codentis.toml` config file.")
         
         if not self.cwd.exists():
             errors.append("Working directory does not exist : " + str(self.cwd))

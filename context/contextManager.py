@@ -27,8 +27,8 @@ class MessageItem:
         return result 
 
 class ContextManager:
-    def __init__(self)->None:
-        self.config = Config()
+    def __init__(self, config: Config)->None:
+        self.config = config
         self.system_prompt = get_system_prompt(self.config)
         self.messages: list[MessageItem] = []
         self.model_name = self.config.model_name
@@ -58,6 +58,7 @@ class ContextManager:
             role="tool",
             content=content,
             token_count=count_tokens(content, self.model_name),
+            tool_call_id=tool_call_id,
         )
 
         self.messages.append(item)

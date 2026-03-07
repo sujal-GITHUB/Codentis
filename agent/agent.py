@@ -7,6 +7,7 @@ from context.contextManager import ContextManager
 from tools.registry import create_default_registry
 from config.config import Config
 from pathlib import Path
+import json
 
 class Agent:
     def __init__(self, config: Config):
@@ -14,7 +15,9 @@ class Agent:
         self.client = LLMClient(
             config = self.config
         )
-        self.context_manager = ContextManager()
+        self.context_manager = ContextManager(
+            config = self.config
+        )
         self.tool_registry = create_default_registry()
 
     async def run(self, message: str)->AsyncGenerator[AgentEvent, None]:
@@ -58,10 +61,10 @@ class Agent:
             [
                 {
                     'id': tool_call.call_id,
-                    'type': tool_call.type,
+                    'type': 'function',
                     'function': {
                         'name': tool_call.name,
-                        'arguments': tool_call.arguments
+                        'arguments': json.dumps(tool_call.arguments)
                     }
                 }
                 for tool_call in tool_calls
@@ -84,7 +87,7 @@ class Agent:
             result = await self.tool_registry.invoke(
                 tool_call.name,
                 tool_call.arguments,
-                Path.cwd()
+                self.config.cwd
             )
 
             yield AgentEvent.tool_call_complete(
