@@ -1,0 +1,7 @@
+api_key = "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"
+base_url = "https://openrouter.ai/api/v1"
+
+[model]
+name = "arcee-ai/trinity-large-preview:free"
+temperature = 0.5
+context_window = 128000

@@ -1,14 +1,10 @@
 from openai import AsyncOpenAI
-from dotenv import load_dotenv
 from typing import AsyncGenerator, Any
 from client.response import StreamEvent, TextDelta, TokenUsage, StreamEventType, ToolCall, ToolCallDelta, parse_tool_call_arguements
 from openai import RateLimitError, APIConnectionError, APIError
 from config.config import Config
 import asyncio
 import os
-
-load_dotenv()
-MODEL_NAME = os.getenv("MODEL_NAME", "gpt-4o")
 
 class LLMClient:
     def __init__(self, config: Config)->None:
@@ -46,7 +42,7 @@ class LLMClient:
     async def chat_completion(self, messages: list[dict[str, Any]], tools: list[dict[str, Any]] | None = None, stream: bool = True)->AsyncGenerator[StreamEvent, None]:
         client = self.get_client()
         kwargs = {
-                "model": MODEL_NAME,
+                "model": self.config.model_name,
                 "messages": messages,
                 "stream": stream,
             }

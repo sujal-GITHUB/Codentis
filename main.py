@@ -13,8 +13,8 @@ console = get_console()
 class CLI:
     def __init__(self, config: Config):
         self.agent : Agent | None = None
-        self.tui = TUI(console)
         self.config = config
+        self.tui = TUI(config, console)
 
     def get_tool_kind(self, tool_name: str)->str | None:
         tool_kind = None

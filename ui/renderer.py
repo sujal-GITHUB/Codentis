@@ -8,6 +8,7 @@ from rich.syntax import Syntax
 from typing import Any, Tuple
 from utils.paths import display_path_relative_to_cwd
 from utils.text import truncate_text
+from config.config import Config
 from pathlib import Path
 from rich import box
 try:
@@ -67,11 +68,12 @@ def get_console()->Console:
     return console
 
 class TUI:
-    def __init__(self, console: Console | None = None):
+    def __init__(self, config = Config, console: Console | None = None):
+        self.config = config
         self.console = console or get_console()
         self.assistant_stream_open = False
         self.tool_args_by_call_id: dict[str, dict[str, Any]] = {}
-        self.cwd = Path.cwd()   
+        self.cwd = self.config.cwd     
 
     def begin_assistant(self)->None:
         self.console.print()

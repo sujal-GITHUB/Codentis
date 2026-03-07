@@ -5,13 +5,15 @@ import tomli
 from platformdirs import user_config_dir
 from utils.errors import ConfigError
 import logging
+from ui.renderer import get_console
 
+console = get_console()
 logger = logging.getLogger(__name__)
-CONFIG_FILE_NAME = "codentis.json"
+CONFIG_FILE_NAME = "codentis.toml"
 AGENT_MD_FILE = "agent.md"
 
 def get_config_dir()->Path:
-    return Path(user_config_dir("codentis"))
+    return Path(user_config_dir("codentis", appauthor=False))
 
 def get_system_config_path()->Path:
     return get_config_dir() / CONFIG_FILE_NAME
@@ -71,15 +73,6 @@ def get_agent_md_files(cwd: Path)->Path | None:
 def load_config(cwd: Path | None)->Config:
     cwd = cwd or Path.cwd()
     system_path = get_system_config_path()
-    
-    if system_path.is_file():
-        try:
-            with open(system_path, "rb") as f:
-                config_dict = tomli.load(f)
-                return Config(**config_dict)
-        except Exception:
-            pass
-
     config_dict: dict[str, Any] = {}
     
     if system_path.is_file():
