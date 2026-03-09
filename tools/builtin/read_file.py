@@ -10,7 +10,7 @@ MODEL_NAME = os.getenv("MODEL_NAME")
 
 class ReadFileParams(BaseModel):
     path: str = Field(...,
-        description="Path to the file to read"
+        description="Path to the file to read (relative to the current working directory or absolute path)"
     )
 
     offset: int = Field(1, ge=1, description="Offset to start reading from (1-indexed)")

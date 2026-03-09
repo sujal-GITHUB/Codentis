@@ -30,3 +30,9 @@ def display_path_relative_to_cwd(path: Path) -> str:
         pass
     
     return str(path)
+
+def ensure_parent_directory_exists(path: Path) -> None:
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    
+    return path
