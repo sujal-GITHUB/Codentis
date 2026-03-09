@@ -111,7 +111,8 @@ class CLI:
                     event.data.get("output", ""),
                     event.data.get("error", None),
                     event.data.get("metadata", {}),
-                    event.data.get("truncated", False)
+                    event.data.get("truncated", False),
+                    event.data.get("diff"),
                 )
 
         return final_response

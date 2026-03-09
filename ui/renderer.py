@@ -105,7 +105,7 @@ class TUI:
     def ordered_args(self, tool_name: str, args: dict[str, Any])->list[tuple[str, Any]]:
         PREFERRED_ORDER = {
             'read_file': ['path', 'offset', 'limit'],
-            'write_file': ['path', 'content'],
+            'write_file': ['path', 'create_directory', 'content'],
             'search_file': ['path', 'query'],
             'execute_file': ['path', 'args']
         }
@@ -135,7 +135,12 @@ class TUI:
         table.add_column(style="code", overflow="fold")
 
         for arg_name, arg_value in self.ordered_args(tool_name, args):
-            table.add_row(arg_name, str(arg_value))
+            if isinstance(value, str):
+                if arg_name in {'content', 'old_string', 'new_string'}:
+                    line_count = len(arg_value.splitlines()) or 0
+                    byte_count = len(value.encode('utf-8', errors='replace'))
+                    value = f'[{line_count} lines ☸ {byte_count} bytes]'
+                table.add_row(arg_name, str(arg_value))
 
         return table
 
@@ -255,7 +260,18 @@ class TUI:
 
         return start_line, "\n".join(code_lines)
 
-    def tool_call_complete(self, call_id: str, name: str, tool_kind: str | None, success: bool, output: str, error: str | None, metadata: dict[str, Any], truncated: bool)->None:
+    def tool_call_complete(
+        self, 
+        call_id: str, 
+        name: str, 
+        tool_kind: str | None, 
+        success: bool, 
+        output: str, 
+        error: str | None, 
+        metadata: dict[str, Any], 
+        truncated: bool,
+        diff: str | None
+        )->None:
         border_style = f"tool.{tool_kind}" if tool_kind else "tool"
         status_icon = "✔" if success else "✘"
         status_style = 'success' if success else 'error'
@@ -306,6 +322,9 @@ class TUI:
                     )
                 )
 
+        if name == 'write_file' and success:
+            
+        
         if truncated:
             blocks.append(Text("note: Tool output was truncated", style="warning"))
 
