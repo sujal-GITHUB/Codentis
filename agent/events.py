@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from typing import Any
 from dataclasses import field
 from client.response import TokenUsage
-from tools.base import ToolResult
+from tools.base import ToolResult, FileDiff
 
 class AgentEventType(Enum):
     # Agent Lifecycle
@@ -82,6 +82,7 @@ class AgentEvent:
                 "output": result.output,
                 "error": result.error,
                 "metadata": result.metadata,
-                "truncated": result.truncated
+                "truncated": result.truncated,
+                "diff": result.diff.to_diff() if result.diff else None
             }
         )
