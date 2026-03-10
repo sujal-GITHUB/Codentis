@@ -50,6 +50,10 @@ AGENT_THEME = Theme(
         "tool.write": "green",
         "tool.search": "blue",
         "tool.execute": "yellow",
+        "tool.shell": "yellow",
+        "tool.network": "blue",
+        "tool.memory": "magenta",
+        "tool.mcp": "bright_cyan",
         "tool.error": "red",
         "tool.result": "green",
 
@@ -107,8 +111,7 @@ class TUI:
         PREFERRED_ORDER = {
             'read_file': ['path', 'offset', 'limit'],
             'write_file': ['path', 'create_directory', 'content'],
-            'search_file': ['path', 'query'],
-            'execute_file': ['path', 'args']
+            'edit_file':['path', 'replace_all', 'old_string', 'new_string']
         }
 
         preferred = PREFERRED_ORDER.get(tool_name, [])
@@ -326,7 +329,7 @@ class TUI:
                     )
                 )
 
-        elif name == 'write_file' and success:
+        elif name in {'write_file', 'edit_file'} and success:
             output_line = output.strip() if output.strip() else 'Completed'
             blocks.append(Text(output_line, style='muted'))
             if diff:
