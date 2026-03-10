@@ -1,7 +1,7 @@
 from tools.base import Tool
 from pydantic import BaseModel, Field
 from tools.base import ToolResult, FileDiff, ToolInvocation, ToolKind
-from utils.paths import ensure_parent_directory_exists
+from utils.paths import resolve_path, ensure_parent_directory_exists
 
 class WriteFileParams(BaseModel):
     path: str = Field(...,

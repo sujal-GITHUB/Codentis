@@ -24,29 +24,47 @@ class FileDiff:
     is_new_file: bool = False
     is_deletion: bool = False
     
-    def create_diff(self)->str:
+    def to_diff(self) -> str:
         import difflib
-        
+
         old_lines = self.old_content.splitlines(keepends=True)
         new_lines = self.new_content.splitlines(keepends=True)
 
-        old_name = '/dev/null' if self.is_new_file else str(self.path)
-        new_name = '/dev/null' if self.is_deletion else str(self.path)
-
         if old_lines and not old_lines[-1].endswith('\n'):
             old_lines[-1] += '\n'
-
         if new_lines and not new_lines[-1].endswith('\n'):
             new_lines[-1] += '\n'
 
-        diff = difflib.unified_diff(
+        path_str = str(self.path)
+
+        if self.is_new_file:
+            # difflib produces no hunks when old is empty; build the header manually
+            diff_lines = [
+                f"--- /dev/null\n",
+                f"+++ {path_str}\n",
+            ]
+            if new_lines:
+                diff_lines.append(f"@@ -0,0 +1,{len(new_lines)} @@\n")
+                diff_lines.extend(f"+{line}" for line in new_lines)
+            return "".join(diff_lines)
+
+        if self.is_deletion:
+            diff_lines = [
+                f"--- {path_str}\n",
+                f"+++ /dev/null\n",
+            ]
+            if old_lines:
+                diff_lines.append(f"@@ -1,{len(old_lines)} +0,0 @@\n")
+                diff_lines.extend(f"-{line}" for line in old_lines)
+            return "".join(diff_lines)
+
+        result = "".join(difflib.unified_diff(
             old_lines,
             new_lines,
-            fromfile=old_name,
-            tofile=new_name,
-        )
-
-        return "".join(diff)
+            fromfile=path_str,
+            tofile=path_str,
+        ))
+        return result or "(no changes)"
 
 @dataclass
 class ToolInvocation:
