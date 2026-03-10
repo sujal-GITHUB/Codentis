@@ -21,47 +21,17 @@ class EditFileToolParams(BaseModel):
         description="If true, will replace all occurrences of the old string"
     )
 
-def no_match_error(old_string: str, old_content: str, path: Path)->ToolResult:
-    lines = old_content.splitlines()
-    partial_matches = []
-    search_terms = old_string.split()[:5]
-
-    if search_terms:
-        first_term = search_terms[0]
-        for i, line in enumerate(lines, 1):
-            partial_matches.append((i, line.strip()[:80]))
-            if len(partial_matches) >= 3:
-                break
-    
-    error_msg = f"old_string not found in path"
-
-    if partial_matches:
-        error_msg += f"\nPossible matches:"
-        for line_num, line_content in partial_matches:
-            error_msg += f"\n  {line_num}: {line_content}"
-            error_msg += f"Make sure old_string matches exaclty (including whitespace and indentation)"
-    else:
-        error_msg += (
-            "\nNo partial matches found. The string may be too long, contain special characters, or not exist in the file."
-            "\nIf you are trying to create a new file, use an empty old_string."
-            "\nIf you are trying to replace a string, make sure it exists in the file."
-            "\nIf you are trying to delete a string, make sure it exists in the file."
-            "\nTry re - reading the file to confirm the content"
-        )
-
-    return ToolResult.error_result(
-        error=error_msg,
-        output=""
-    )
-
 class EditFileTool(Tool):
     name = "edit_file"
     description = (
-        "Edit a file by replacing a string with another string"
-        "The old string must match exctly including whitespace and indentation"
-        "and must be unique in the file unless replace_all is true. USe this"
-        "for precise, surgical edits. For bulk edits, use write_file."
-        )
+        "Edit a file by replacing a string with another string. "
+        "The old string must match exactly including whitespace and indentation "
+        "and must be unique in the file unless replace_all is true. Use this "
+        "ONLY for a SINGLE replacement. "
+        "CRITICAL: DO NOT use this tool multiple times in parallel! If you need to make "
+        "multiple edits, you MUST use apply_patch instead. Multiple parallel edit_file "
+        "calls will corrupt the file and are strictly forbidden."
+    )
     kind = ToolKind.WRITE
     schema = EditFileToolParams
 

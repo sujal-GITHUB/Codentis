@@ -78,7 +78,7 @@ class ToolResult:
     error: str | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
     truncated: bool = False
-    diff: FileDiff | None = None
+    diff: FileDiff | str | None = None
 
     @classmethod
     def error_result(cls, error: str, output: str = "", **kwargs) -> ToolResult:
@@ -145,6 +145,39 @@ class Tool(abc.ABC):
             params=invocation.params,
             tool_name=self.name,
             description=self.description
+        )
+
+    def no_match_error(self, old_string: str, old_content: str, path: Path | str) -> ToolResult:
+        lines = old_content.splitlines()
+        partial_matches = []
+        search_terms = old_string.split()[:5]
+
+        if search_terms:
+            first_term = search_terms[0]
+            for i, line in enumerate(lines, 1):
+                partial_matches.append((i, line.strip()[:80]))
+                if len(partial_matches) >= 3:
+                    break
+
+        error_msg = f"old_string not found in {path}"
+
+        if partial_matches:
+            error_msg += f"\nPossible matches:"
+            for line_num, line_content in partial_matches:
+                error_msg += f"\n  {line_num}: {line_content}"
+            error_msg += f"\nMake sure old_string matches exactly (including whitespace and indentation)"
+        else:
+            error_msg += (
+                "\nNo partial matches found. The string may be too long, contain special characters, or not exist in the file."
+                "\nIf you are trying to create a new file, use an empty old_string."
+                "\nIf you are trying to replace a string, make sure it exists in the file."
+                "\nIf you are trying to delete a string, make sure it exists in the file."
+                "\nTry re-reading the file to confirm the content"
+            )
+
+        return ToolResult.error_result(
+            error=error_msg,
+            output=""
         )
 
     def to_openai_schema(self)->dict[str, Any]:

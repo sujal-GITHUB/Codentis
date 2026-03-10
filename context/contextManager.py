@@ -26,10 +26,12 @@ class MessageItem:
 
         return result 
 
+from tools.base import Tool
+
 class ContextManager:
-    def __init__(self, config: Config)->None:
+    def __init__(self, config: Config, tools: list[Tool] | None = None)->None:
         self.config = config
-        self.system_prompt = get_system_prompt(self.config)
+        self.system_prompt = get_system_prompt(self.config, tools=tools)
         self.messages: list[MessageItem] = []
         self.model_name = self.config.model_name
     
