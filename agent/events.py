@@ -73,6 +73,10 @@ class AgentEvent:
 
     @classmethod
     def tool_call_complete(cls, call_id: str, name: str, result: ToolResult):
+        diff_str = None
+        if result.diff:
+            diff_str = str(result.diff) if isinstance(result.diff, str) else result.diff.to_diff()
+
         return cls(
             type=AgentEventType.TOOL_CALL_COMPLETE,
             data={
@@ -83,6 +87,6 @@ class AgentEvent:
                 "error": result.error,
                 "metadata": result.metadata,
                 "truncated": result.truncated,
-                "diff": result.diff.to_diff() if result.diff else None
+                "diff": diff_str
             }
         )

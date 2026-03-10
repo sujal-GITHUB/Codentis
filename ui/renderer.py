@@ -111,7 +111,8 @@ class TUI:
         PREFERRED_ORDER = {
             'read_file': ['path', 'offset', 'limit'],
             'write_file': ['path', 'create_directory', 'content'],
-            'edit_file':['path', 'replace_all', 'old_string', 'new_string']
+            'edit_file':['path', 'replace_all', 'old_string', 'new_string'],
+            'apply_patch': ['edits']
         }
 
         preferred = PREFERRED_ORDER.get(tool_name, [])
@@ -140,8 +141,17 @@ class TUI:
 
         for arg_name, arg_value in self.ordered_args(tool_name, args):
             display_value = str(arg_value)
-            if isinstance(arg_value, str):
-                if arg_name in {'content', 'old_string', 'new_string'}:
+            if arg_name == 'edits' and isinstance(arg_value, list):
+                parts = [f"[{len(arg_value)} edits]"]
+                for edit in arg_value:
+                    if isinstance(edit, dict):
+                        p = edit.get('path', 'unknown')
+                        o_lines = len(str(edit.get('old_string', '')).splitlines())
+                        n_lines = len(str(edit.get('new_string', '')).splitlines())
+                        parts.append(f"  {p}: [old: {o_lines} lines] -> [new: {n_lines} lines]")
+                display_value = "\n".join(parts)
+            elif isinstance(arg_value, str):
+                if arg_name in {'content', 'old_string', 'new_string', 'patch'}:
                     line_count = len(arg_value.splitlines()) or 0
                     byte_count = len(arg_value.encode('utf-8', errors='replace'))
                     display_value = f'[{line_count} lines ☸ {byte_count} bytes]'
@@ -329,14 +339,17 @@ class TUI:
                     )
                 )
 
-        elif name in {'write_file', 'edit_file'} and success:
-            output_line = output.strip() if output.strip() else 'Completed'
-            blocks.append(Text(output_line, style='muted'))
-            if diff:
-                diff_display = truncate_text(diff, self.max_block_tokens, self.config.model_name)
-                blocks.append(Syntax(diff_display, "diff", theme="monokai", word_wrap=True))
+        elif name in {'write_file', 'edit_file', 'apply_patch'}:
+            if success:
+                output_line = output.strip() if output.strip() else 'Completed'
+                blocks.append(Text(output_line, style='muted'))
+                if diff:
+                    diff_display = truncate_text(diff, self.max_block_tokens, self.config.model_name)
+                    blocks.append(Syntax(diff_display, "diff", theme="monokai", word_wrap=True))
+                else:
+                    blocks.append(Text("(no diff)", style="muted"))
             else:
-                blocks.append(Text("(no diff)", style="muted"))
+                blocks.append(Text(error or output or "Unknown error", style="error"))
         
         if truncated:
             blocks.append(Text("note: Tool output was truncated", style="warning"))

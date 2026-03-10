@@ -8,8 +8,8 @@
 
 ## Features
 
-- **Beautiful TUI**: Built with `rich`, offering syntax highlighting, streaming responses, and clean visual separation.
-- **Resilient Client**: Automatic retries with exponential backoff for rate limits and connection errors.
+- **Bleach**
+- **Naruto**
 - **Modular Design**: clear separation of concerns:
   - **Client**: Handles LLM communication (OpenAI-compatible).
   - **Agent**: Manages state, context, and the agentic loop.
@@ -41,7 +41,7 @@
     source venv/bin/activate
     ```
 
-3.  **Install dependencies:**
+3.  **One piece**
     ```bash
     pip install -r requirements.txt
     ```

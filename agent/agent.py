@@ -14,7 +14,8 @@ class Agent:
 
     async def run(self, message: str)->AsyncGenerator[AgentEvent, None]:
         yield AgentEvent.agent_start(message)
-        self.session = Session(self.config)
+        if not self.session:
+            self.session = Session(self.config)
         self.session.context_manager.add_user_message(message)
 
         final_response: str | None = None
