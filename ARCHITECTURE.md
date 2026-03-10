@@ -82,7 +82,10 @@ A pluggable tool execution layer with validation, kind-based categorisation, and
   - `create_default_registry()` — factory that auto-registers all built-in tools.
 
 - **`builtin/`**: Built-in tool implementations.
-  - **`read_file.py`** (`ReadFileTool`): Reads text files with line numbers, optional offset/limit pagination, token-budget truncation, and binary-file detection. Returns structured metadata (`path`, `total_lines`, `shown_start`, `shown_end`).
+  - **`read_file.py`** (`ReadFileTool`): Reads text files with line numbers, optional offset/limit pagination, token-budget truncation, and binary-file detection.
+  - **`write_file.py`** (`WriteFileTool`): Writes full content to files, supporting directory creation.
+  - **`edit_file.py`** (`EditFileTool`): Performs precise, surgical search-and-replace line edits within existing files.
+  - **`shell.py`** (`ShellTool`): Executes shell commands, capturing STDOUT/STDERR separately and supporting timeout limits.
 
 ---
 
@@ -117,7 +120,7 @@ Terminal rendering using `rich`.
 
 ### 6. Config Layer (`config/`)
 - **`Config`** (`config.py`) & **`loader.py`**: Loads runtime configuration from TOML files.
-  - Implements a hierarchical configuration strategy, merging system-wide settings with project-specific settings (from `.agent/codentis.toml`).
+  - Implements a hierarchical configuration strategy, merging system-wide settings with project-specific settings (from `.agent/codentis.toml`, which is kept untracked by Git).
   - `model_name` — read from the `[model]` block.
   - `cwd` — current working directory.
   - `developer_instructions` — can be automatically loaded from `.agent/agent.md`.
@@ -198,7 +201,7 @@ User Input
 
 - **Multi-turn agentic loop**: Re-run `agentic_loop` after tool results if the LLM wants to call more tools (tool_calls are already serialized into context, ready for this).
 - **Interactive commands**: `/help`, `/config`, `/model`, `/approval` commands are defined in the welcome panel but not yet implemented.
-- **Additional built-in tools**: `write_file`, `search_file`, `execute_shell`, web search, etc.
+- **Additional built-in tools**: `search_file`, web search, etc.
 - **Tool confirmation**: `ToolConfirmation` infrastructure exists for prompting the user before mutating operations.
 - **Memory**: A `Memory` component can be injected into `ContextManager` for long-term context.
 - **MCP tools**: `ToolKind.MCP` is already reserved for Model Context Protocol tool integration.
