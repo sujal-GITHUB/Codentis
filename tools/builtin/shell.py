@@ -1,20 +1,29 @@
 import asyncio
 import sys
 from pydantic import BaseModel, Field
-from tools.base import Tool, ToolResult, ToolInvocation, ToolKind
+from tools.base import Tool, ToolResult, ToolInvocation, ToolKind, is_a
 
+BLOCKED_COMMANDS = {
+    "rm -rf /", "rm -rf", "sudo", "su", "shutdown", "reboot",
+    "halt", "poweroff", "mkfs", "dd", "passwd", "chown", "chmod",
+    "nano", "vim", "vi", "emacs", "less", "more", "top", "htop",
+    "ssh", "ftp", "telnet", "mysql", "psql", "sqlite3", "redis-cli",
+    "init", "init 0", "init 6", ":(){", "chmod 777", "chmod 7777",
+    "chmod -R 777", "chmod -R 7777", "halt", "poweroff"
+}
 
 class ShellParams(BaseModel):
     command: str = Field(
         ...,
-        description="The shell command to execute (e.g. 'echo hello', 'ls -la', 'python script.py')"
+        description="The shell command to execute (e.g. 'dir', 'python script.py')"
     )
     timeout: int = Field(
-        30,
+        120,
         ge=1,
-        le=300,
+        le=600,
         description="Maximum number of seconds to wait for the command to complete (default: 30, max: 300)"
     )
+    cwd: str | None = Field(None, description='Working directory for the command')
 
 
 class ShellTool(Tool):
@@ -29,67 +38,17 @@ class ShellTool(Tool):
 
     async def execute(self, invocation: ToolInvocation) -> ToolResult:
         params = ShellParams(**invocation.params)
-        cwd = invocation.cwd
 
-        # On Windows use cmd /c, on Unix use sh -c
-        if sys.platform == "win32":
-            args = ["cmd", "/c", params.command]
-        else:
-            args = ["sh", "-c", params.command]
-
-        try:
-            proc = await asyncio.create_subprocess_exec(
-                *args,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE,
-                cwd=str(cwd),
-            )
-
-            try:
-                stdout_bytes, stderr_bytes = await asyncio.wait_for(
-                    proc.communicate(), timeout=params.timeout
-                )
-            except asyncio.TimeoutError:
-                proc.kill()
-                await proc.communicate()
+        cmd_lower = params.command.strip().lower()
+        cmd_parts = cmd_lower.split()
+        if cmd_parts:
+            base_cmd = cmd_parts[0]
+            if base_cmd in BLOCKED_COMMANDS or any(b in cmd_lower for b in BLOCKED_COMMANDS if ' ' in b):
                 return ToolResult.error_result(
-                    f"Command timed out after {params.timeout}s: {params.command}"
+                    f"Command '{base_cmd}' is blocked for safety and cannot be executed.",
+                    metadata = {'blocked': True}
                 )
 
-            stdout = stdout_bytes.decode("utf-8", errors="replace").rstrip()
-            stderr = stderr_bytes.decode("utf-8", errors="replace").rstrip()
-            returncode = proc.returncode
-
-            output_parts = []
-            if stdout:
-                output_parts.append(stdout)
-            if stderr:
-                output_parts.append(f"[stderr]\n{stderr}")
-            output = "\n".join(output_parts) if output_parts else "(no output)"
-
-            if returncode == 0:
-                return ToolResult.success_result(
-                    output,
-                    metadata={
-                        "command": params.command,
-                        "returncode": returncode,
-                        "cwd": str(cwd),
-                    }
-                )
-            else:
-                return ToolResult.error_result(
-                    f"Command exited with code {returncode}",
-                    output=output,
-                    metadata={
-                        "command": params.command,
-                        "returncode": returncode,
-                        "cwd": str(cwd),
-                    }
-                )
-
-        except FileNotFoundError:
-            return ToolResult.error_result(
-                f"Shell executable not found. Cannot run: {params.command}"
-            )
-        except Exception as e:
-            return ToolResult.error_result(f"Unexpected error running command: {e}")
+        if params.cwd:
+            cwd = Path(params.cwd)
+            if not cwd.is_a
