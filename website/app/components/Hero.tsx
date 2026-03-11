@@ -1,148 +1,189 @@
+"use client";
+import { useEffect, useState } from "react";
+
 export default function Hero() {
+    const [step, setStep] = useState(0);
+
+    useEffect(() => {
+        const timers = [
+            setTimeout(() => setStep(1), 800),
+            setTimeout(() => setStep(2), 2000),
+            setTimeout(() => setStep(3), 3500),
+            setTimeout(() => setStep(4), 4800),
+            setTimeout(() => setStep(5), 6500),
+            setTimeout(() => setStep(6), 7800),
+        ];
+        return () => timers.forEach(clearTimeout);
+    }, []);
+
     return (
         <section
             id="hero"
-            className="relative min-h-screen flex flex-col items-center justify-center px-6 pt-36 pb-16 overflow-hidden"
+            className="relative min-h-screen flex flex-col items-center justify-center px-6 pt-32 pb-24 overflow-hidden bg-black"
         >
-            {/* ── Light Sticks Background ── */}
-            <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
-                {/* Stick 1 */}
-                <div
-                    className="light-stick absolute bottom-0 left-[22%] w-[14px] h-[70%]"
-                    style={{
-                        background: "linear-gradient(to top, #0891b2 0%, #22d3ee 40%, transparent 100%)",
-                        filter: "blur(40px)",
-                        animation: "stick-1 10s ease-in-out infinite",
-                    }}
-                />
+            <style dangerouslySetInnerHTML={{
+                __html: `
+                @keyframes slide-grid {
+                    0% { transform: translateY(0); }
+                    100% { transform: translateY(4rem); }
+                }
+                @keyframes streak-x {
+                    0% { transform: translateX(-100vw); opacity: 0; }
+                    50% { opacity: 1; }
+                    100% { transform: translateX(100vw); opacity: 0; }
+                }
+                @keyframes streak-x-reverse {
+                    0% { transform: translateX(100vw); opacity: 0; }
+                    50% { opacity: 1; }
+                    100% { transform: translateX(-100vw); opacity: 0; }
+                }
+                @keyframes streak-y {
+                    0% { transform: translateY(-100vh); opacity: 0; }
+                    50% { opacity: 1; }
+                    100% { transform: translateY(100vh); opacity: 0; }
+                }
+            `}} />
 
-                {/* Stick 2 */}
+            {/* ── Grid & Glow Background ── */}
+            <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
                 <div
-                    className="light-stick absolute bottom-0 left-[38%] w-[18px] h-[80%]"
-                    style={{
-                        background: "linear-gradient(to top, #06b6d4 0%, #22d3ee 35%, transparent 100%)",
-                        filter: "blur(50px)",
-                        animation: "stick-2 8s ease-in-out infinite",
-                    }}
-                />
+                    className="absolute inset-[-100%] bg-[linear-gradient(rgba(34,211,238,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(34,211,238,0.05)_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_70%_60%_at_50%_0%,#000_80%,transparent_100%)]"
+                    style={{ animation: 'slide-grid 10s linear infinite' }}
+                ></div>
 
-                {/* Stick 3 — brightest, center */}
-                <div
-                    className="light-stick absolute bottom-0 left-[50%] w-[20px] h-[85%]"
-                    style={{
-                        background: "linear-gradient(to top, #22d3ee 0%, #67e8f9 30%, transparent 100%)",
-                        filter: "blur(45px)",
-                        animation: "stick-3 12s ease-in-out infinite",
-                    }}
-                />
+                {/* Animated Matrix Streaks */}
+                <div className="absolute inset-0 overflow-hidden [mask-image:radial-gradient(ellipse_80%_60%_at_50%_0%,#000_70%,transparent_100%)]">
+                    {/* Horizontal Streaks */}
+                    <div className="absolute top-[15%] left-0 w-64 h-[1px] bg-gradient-to-r from-transparent via-cyan-400 to-transparent shadow-[0_0_10px_#22d3ee]" style={{ animation: 'streak-x 7s linear infinite 1s' }}></div>
+                    <div className="absolute top-[35%] left-0 w-48 h-[1px] bg-gradient-to-r from-transparent via-cyan-300 to-transparent shadow-[0_0_10px_#22d3ee]" style={{ animation: 'streak-x-reverse 9s linear infinite 4s' }}></div>
+                    <div className="absolute top-[55%] left-0 w-96 h-[1px] bg-gradient-to-r from-transparent via-cyan-400 to-transparent shadow-[0_0_10px_#22d3ee]" style={{ animation: 'streak-x 6s linear infinite 2s' }}></div>
+                    <div className="absolute top-[75%] left-0 w-32 h-[1px] bg-gradient-to-r from-transparent via-cyan-500 to-transparent shadow-[0_0_10px_#22d3ee]" style={{ animation: 'streak-x-reverse 8s linear infinite 0.5s' }}></div>
+                    <div className="absolute top-[85%] left-0 w-72 h-[1px] bg-gradient-to-r from-transparent via-cyan-300 to-transparent shadow-[0_0_10px_#22d3ee]" style={{ animation: 'streak-x 11s linear infinite 5s' }}></div>
 
-                {/* Stick 4 */}
-                <div
-                    className="light-stick absolute bottom-0 left-[62%] w-[16px] h-[75%]"
-                    style={{
-                        background: "linear-gradient(to top, #0e7490 0%, #0891b2 40%, transparent 100%)",
-                        filter: "blur(50px)",
-                        animation: "stick-4 9s ease-in-out infinite",
-                    }}
-                />
+                    {/* Vertical Streaks (Concentrated on Left & Right) */}
+                    <div className="absolute top-0 left-[10%] w-[1px] h-64 bg-gradient-to-b from-transparent via-cyan-400 to-transparent shadow-[0_0_10px_#22d3ee]" style={{ animation: 'streak-y 8s linear infinite 0.5s' }}></div>
+                    <div className="absolute top-0 left-[20%] w-[1px] h-48 bg-gradient-to-b from-transparent via-cyan-300 to-transparent shadow-[0_0_10px_#22d3ee]" style={{ animation: 'streak-y 6s linear infinite 3s' }}></div>
+                    <div className="absolute top-0 left-[30%] w-[1px] h-96 bg-gradient-to-b from-transparent via-cyan-500 to-transparent shadow-[0_0_10px_#22d3ee]" style={{ animation: 'streak-y 12s linear infinite 1s' }}></div>
 
-                {/* Stick 5 */}
-                <div
-                    className="light-stick absolute bottom-0 left-[76%] w-[12px] h-[65%]"
-                    style={{
-                        background: "linear-gradient(to top, #155e75 0%, #06b6d4 35%, transparent 100%)",
-                        filter: "blur(45px)",
-                        animation: "stick-5 11s ease-in-out infinite",
-                    }}
-                />
+                    <div className="absolute top-0 left-[70%] w-[1px] h-32 bg-gradient-to-b from-transparent via-cyan-400 to-transparent shadow-[0_0_10px_#22d3ee]" style={{ animation: 'streak-y 9s linear infinite 2.5s' }}></div>
+                    <div className="absolute top-0 left-[80%] w-[1px] h-72 bg-gradient-to-b from-transparent via-cyan-300 to-transparent shadow-[0_0_10px_#22d3ee]" style={{ animation: 'streak-y 7s linear infinite 4.5s' }}></div>
+                    <div className="absolute top-0 left-[90%] w-[1px] h-48 bg-gradient-to-b from-transparent via-cyan-500 to-transparent shadow-[0_0_10px_#22d3ee]" style={{ animation: 'streak-y 11s linear infinite 0s' }}></div>
+                </div>
 
-                {/* Soft ambient glow behind sticks */}
-                <div
-                    className="absolute bottom-0 left-[30%] w-[40%] h-[50%] opacity-20"
-                    style={{
-                        background: "radial-gradient(ellipse at center bottom, #0891b2, transparent 70%)",
-                        filter: "blur(100px)",
-                    }}
-                />
+                {/* Center Glow */}
+                <div className="absolute top-[-10%] left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-cyan-700/20 rounded-full blur-[120px] opacity-70 mix-blend-screen"></div>
+                {/* Secondary Cyan Glow */}
+                <div className="absolute top-[10%] left-[30%] w-[500px] h-[400px] bg-cyan-500/20 rounded-full blur-[100px] opacity-50 mix-blend-screen"></div>
             </div>
 
-            {/* ── Noise Texture ── */}
-            <div
-                className="absolute inset-0 pointer-events-none z-[1] opacity-[0.03]"
-                style={{
-                    backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
-                }}
-                aria-hidden="true"
-            />
-
-            {/* ── Content ── */}
-            <div className="relative z-[2] text-center max-w-[800px]">
+            {/* ── Hero Content ── */}
+            <div className="relative z-10 w-full max-w-[900px] flex flex-col items-center text-center">
                 {/* Badge */}
-                <div
-                    className="inline-flex items-center gap-2.5 px-5 py-2 mb-10 border border-cyan-500/15 bg-cyan-500/[0.04] rounded-full text-[0.78rem] font-medium text-cyan-300/80 relative overflow-hidden"
-                    style={{ animation: "fade-up 0.7s cubic-bezier(0.4,0,0.2,1) both" }}
-                >
-                    <span
-                        className="absolute left-[-60px] w-[40px] h-full bg-gradient-to-r from-transparent via-cyan-400/10 to-transparent"
-                        style={{ animation: "badge-shine 3s ease-in-out infinite" }}
-                    />
-                    AI-Powered CLI Agent
+                <div className="inline-flex items-center gap-2.5 px-4 py-1.5 mb-8 border border-cyan-500/20 bg-cyan-500/10 rounded-full text-sm font-medium text-cyan-300 shadow-[0_0_15px_rgba(34,211,238,0.15)] relative overflow-hidden transition-all duration-300 hover:bg-cyan-500/15">
+                    <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
+                    <span className="bg-gradient-to-r from-cyan-200 to-cyan-400 bg-clip-text text-transparent">AI Developer Agent</span>
                 </div>
 
                 {/* Heading */}
-                <h1
-                    className="text-[clamp(2.5rem,6vw,4rem)] font-semibold tracking-[-0.03em] leading-[1.08] mb-7 text-gradient"
-                    style={{ animation: "fade-up 0.7s 0.1s cubic-bezier(0.4,0,0.2,1) both" }}
-                >
-                    Intelligence Meets
-                    <br />
-                    <span className="bg-gradient-to-r from-cyan-400 to-cyan-300 bg-clip-text text-transparent" style={{ WebkitTextFillColor: 'transparent' }}>the Terminal</span>
+                <h1 className="text-3xl sm:text-4xl md:text-5xl font-semibold tracking-tight leading-[1.1] mb-6 text-white">
+                    Intelligence Meets <br className="hidden sm:block" />
+                    <span className="bg-gradient-to-r from-cyan-400 to-cyan-200 bg-clip-text text-transparent drop-shadow-[0_0_20px_rgba(34,211,238,0.3)]">
+                        The Terminal
+                    </span>
                 </h1>
 
                 {/* Subtitle */}
-                <p
-                    className="text-[clamp(0.95rem,1.8vw,1.1rem)] text-zinc-500 leading-[1.8] max-w-[540px] mx-auto mb-11"
-                    style={{ animation: "fade-up 0.7s 0.2s cubic-bezier(0.4,0,0.2,1) both" }}
-                >
-                    Bring the power of large language models directly to your command
-                    line.
-                    <br />
-                    Streaming responses, agentic loops, tool use — built for developers.
+                <p className="text-sm text-zinc-400 leading-relaxed max-w-[550px] mx-auto mb-10">
+                    Run intelligent workflows directly in your terminal.
+                    <span className="text-zinc-300 block mt-2 font-normal text-xs sm:text-sm">Faster code generation, robust refactoring, and AI-powered system tools.</span>
                 </p>
 
-                {/* CTA */}
-                <a
-                    href="#install"
-                    className="inline-flex items-center gap-2.5 px-8 py-3.5 bg-white text-black font-semibold text-[0.9rem] rounded-full hover:shadow-[0_0_40px_rgba(6,182,212,0.25)] hover:-translate-y-0.5 transition-all duration-400"
-                    style={{ animation: "fade-up 0.7s 0.3s cubic-bezier(0.4,0,0.2,1) both" }}
-                >
-                    Get Started
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                        <path d="M5 12h14M12 5l7 7-7 7" />
-                    </svg>
-                </a>
-            </div>
-
-            {/* ── Feature Pills ── */}
-            <div
-                className="relative z-[2] flex justify-center gap-3 flex-wrap mt-20 px-4"
-                style={{ animation: "fade-up 0.7s 0.5s cubic-bezier(0.4,0,0.2,1) both" }}
-            >
-                {[
-                    "Real-time Streaming",
-                    "Resilient Error Handling",
-                    "Modular Architecture",
-                    "Fully Async",
-                    "Extensible Tools",
-                ].map((label) => (
-                    <div
-                        key={label}
-                        className="flex items-center gap-2 px-5 py-2.5 border border-white/[0.04] rounded-full text-[0.78rem] font-medium text-zinc-500 bg-white/[0.02] hover:border-cyan-400/20 hover:text-zinc-300 transition-all duration-400"
+                {/* CTAs */}
+                <div className="flex flex-col sm:flex-row items-center gap-4 mb-20 w-full sm:w-auto">
+                    <a
+                        href="#install"
+                        className="inline-flex items-center justify-center gap-2 px-6 py-2.5 w-full sm:w-auto bg-white text-black text-sm font-medium rounded-full hover:bg-zinc-100"
                     >
-                        <span className="w-1.5 h-1.5 bg-cyan-400/60 rounded-full" />
-                        {label}
+                        <span className="flex items-center gap-2">
+                            Install Codentis
+                            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
+                        </span>
+                    </a>
+
+                    <a
+                        href="https://github.com/codentis"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center justify-center gap-2 px-6 py-2.5 w-full sm:w-auto bg-zinc-900 border border-cyan-900/50 text-white text-sm font-normal rounded-full"
+                    >
+                        <svg className="w-4 h-4 text-zinc-400" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-3.96-1.38-.09-.225-.48-1.38-.825-1.65-.285-.225-.69-.57-.015-.585.645-.015 1.11.585 1.275.855.75 1.26 1.95.885 2.43.675.075-.525.285-.885.51-1.08-2.37-.255-4.86-1.155-4.86-5.13 0-1.125.39-2.07 1.035-2.82-.105-.27-.45-1.35.105-2.805 0 0 .855-.27 2.79 1.05A9.73 9.73 0 0 1 12 6.84c.855.015 1.71.12 2.52.345 1.935-1.32 2.79-1.05 2.79-1.05.555 1.455.21 2.535.105 2.805.645.75 1.035 1.695 1.035 2.82 0 3.99-2.49 4.875-4.875 5.13.3.255.555.75.555 1.5 0 1.08-.015 1.95-.015 2.22 0 .315.225.69.84.57C20.58 21.78 24 17.295 24 12c0-6.63-5.37-12-12-12z" />
+                        </svg>
+                        View on GitHub
+                    </a>
+                </div>
+
+                {/* ── Terminal Mockup ── */}
+                <div className="w-full max-w-[800px] border border-cyan-500/10 rounded-xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5),0_0_40px_rgba(34,211,238,0.1)] text-left bg-[#0A0A0A]/90 backdrop-blur-xl relative transform transition-transform duration-700 hover:scale-[1.01]">
+
+                    {/* Terminal Header */}
+                    <div className="flex items-center px-4 py-3 border-b border-cyan-500/10 bg-cyan-950/20">
+                        <div className="flex gap-2">
+                            <div className="w-3 h-3 rounded-full bg-red-500/80 hover:bg-red-400 transition-colors"></div>
+                            <div className="w-3 h-3 rounded-full bg-yellow-500/80 hover:bg-yellow-400 transition-colors"></div>
+                            <div className="w-3 h-3 rounded-full bg-green-500/80 hover:bg-green-400 transition-colors"></div>
+                        </div>
+                        <div className="w-full text-center text-xs text-cyan-500/50 font-mono tracking-wider items-center justify-center pointer-events-none absolute left-0 pr-12">
+                            codentis — bash
+                        </div>
                     </div>
-                ))}
+
+                    {/* Terminal Body */}
+                    <div className="p-6 font-mono text-sm leading-relaxed text-zinc-300 min-h-[300px]">
+                        {/* Command 1 */}
+                        <div className={`transition-all duration-500 ease-in-out overflow-hidden ${step >= 1 ? 'max-h-[100px] opacity-100' : 'max-h-0 opacity-0'}`}>
+                            <span className="text-cyan-400">~/project</span>
+                            <span className="text-cyan-700"> $ </span>
+                            <span className="text-zinc-100">codentis analyze repo</span>
+                        </div>
+                        <div className={`mt-2 mb-4 text-emerald-400 pl-4 border-l-2 border-cyan-500/20 transition-all duration-700 ease-in-out overflow-hidden ${step >= 2 ? 'max-h-[200px] opacity-100' : 'max-h-0 opacity-0 mb-0'}`}>
+                            &gt; Analyzing repository structure...<br />
+                            &gt; Found Next.js app, Express backend, and 45 components.<br />
+                            &gt; Suggested optimizations: 3 performance, 2 security.
+                        </div>
+
+                        {/* Command 2 */}
+                        <div className={`transition-all duration-500 ease-in-out overflow-hidden ${step >= 3 ? 'max-h-[100px] opacity-100' : 'max-h-0 opacity-0'}`}>
+                            <span className="text-cyan-400">~/project</span>
+                            <span className="text-cyan-700"> $ </span>
+                            <span className="text-zinc-100">codentis generate tests</span>
+                        </div>
+                        <div className={`mt-2 mb-4 text-cyan-200 pl-4 border-l-2 border-cyan-500/20 transition-all duration-700 ease-in-out overflow-hidden ${step >= 4 ? 'max-h-[200px] opacity-100' : 'max-h-0 opacity-0 mb-0'}`}>
+                            &gt; Generating unit tests for auth module...<br />
+                            <span className="text-zinc-400">  CREATE  tests/auth.test.ts (240ms)</span><br />
+                            <span className="text-emerald-400">✔ 12 tests passed, 0 failed.</span>
+                        </div>
+
+                        {/* Command 3 */}
+                        <div className={`transition-all duration-500 ease-in-out overflow-hidden ${step >= 5 ? 'max-h-[100px] opacity-100' : 'max-h-0 opacity-0'}`}>
+                            <span className="text-cyan-400">~/project</span>
+                            <span className="text-cyan-700"> $ </span>
+                            <span className="text-zinc-100">codentis refactor module</span>
+                        </div>
+                        <div className={`mt-2 text-cyan-300 pl-4 border-l-2 border-cyan-500/20 transition-all duration-700 ease-in-out overflow-hidden ${step >= 6 ? 'max-h-[200px] opacity-100' : 'max-h-0 opacity-0 mt-0'}`}>
+                            &gt; Applying modern React patterns to legacy classes.<br />
+                            &gt; Refactored 3 files to functional components.<br />
+                            <span className="animate-pulse inline-block w-2 h-4 bg-cyan-400 align-middle ml-1"></span>
+                        </div>
+
+                        {/* Base blinking cursor when waiting */}
+                        <div className={`transition-all duration-300 ease-in-out overflow-hidden ${step === 0 || step === 2 || step === 4 ? 'max-h-[50px] opacity-100' : 'max-h-0 opacity-0'}`}>
+                            <span className="text-cyan-400">~/project</span>
+                            <span className="text-cyan-700"> $ </span>
+                            <span className="animate-pulse inline-block w-2 h-4 bg-cyan-300 align-middle ml-1 shadow-[0_0_8px_rgba(34,211,238,0.6)]"></span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </section>
     );
