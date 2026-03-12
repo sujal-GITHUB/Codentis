@@ -97,10 +97,10 @@ export default function Architecture() {
                 </div>
 
                 {/* Flow */}
-                <div className="flex items-center justify-center gap-0 flex-wrap mb-16">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:flex items-center justify-center gap-4 md:gap-0 flex-wrap mb-16">
                     {steps.map((step, i) => (
                         <div key={step.label} className="contents">
-                            <div className="reveal card-glow flex flex-col items-center text-center px-8 py-7 bg-bg-2 border border-white/[0.05] rounded-2xl min-w-[140px] group">
+                            <div className="reveal card-glow flex flex-col items-center text-center px-6 py-7 sm:px-8 bg-bg-2 border border-white/[0.05] rounded-2xl min-w-[140px] group">
                                 <div className="w-12 h-12 flex items-center justify-center text-cyan-400/80 bg-cyan-400/[0.06] border border-cyan-400/10 rounded-xl mb-3.5 group-hover:text-cyan-400 group-hover:border-cyan-400/25 transition-all duration-300">
                                     {step.icon}
                                 </div>

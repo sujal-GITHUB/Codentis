@@ -23,11 +23,15 @@
   /* Fonts */
   --font-sans: 'Onest', ui-sans-serif, system-ui, -apple-system, sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+
+  /* Breakpoints */
+  --breakpoint-xs: 480px;
 }
 
 /* ── Base ── */
 html {
   scroll-behavior: smooth;
+  scroll-padding-top: 80px;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }

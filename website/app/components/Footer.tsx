@@ -5,8 +5,8 @@ export default function Footer() {
         <footer className="border-t border-white/[0.04] pt-12 pb-9 px-6 bg-bg-0">
             <div className="max-w-[1120px] mx-auto">
                 {/* Top */}
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8">
-                    <div>
+                <div className="flex flex-col sm:flex-row items-center sm:items-center justify-between gap-6 sm:gap-0 mb-8 text-center sm:text-left">
+                    <div className="flex flex-col items-center sm:items-start">
                         <div className="flex items-center gap-2.5 font-semibold text-lg tracking-tight mb-2">
                             <Image
                                 src="/codentis.svg"
@@ -20,7 +20,7 @@ export default function Footer() {
                         <p className="text-zinc-500 text-sm">Intelligence meets the terminal.</p>
                     </div>
 
-                    <div className="flex gap-7 mt-4 sm:mt-0">
+                    <div className="flex gap-7">
                         {[
                             { label: "GitHub", href: "https://github.com/sujal-GITHUB/Codentis" },
                             { label: "Issues", href: "https://github.com/sujal-GITHUB/Codentis/issues" },

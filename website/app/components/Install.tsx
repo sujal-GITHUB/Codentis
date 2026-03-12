@@ -65,14 +65,14 @@ export default function Install() {
     }, []);
 
     return (
-        <section id="install" className="py-32 sm:py-40 bg-bg-1 relative" ref={ref}>
+        <section id="install" className="py-24 sm:py-32 sm:py-40 bg-bg-1 relative" ref={ref}>
             {/* Top fade */}
             <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-bg-0 to-transparent pointer-events-none z-[1]" />
 
-            <div className="max-w-[1120px] mx-auto px-6 relative z-[2]">
+            <div className="max-w-[1120px] mx-auto px-4 sm:px-6 relative z-[2]">
                 {/* Header */}
-                <div className="text-center mb-20 reveal">
-                    <span className="text-[0.7rem] font-semibold uppercase tracking-[0.2em] text-cyan-400/80 mb-5 block">
+                <div className="text-center mb-12 sm:mb-20 reveal">
+                    <span className="text-[0.65rem] sm:text-[0.7rem] font-semibold uppercase tracking-[0.2em] text-cyan-400/80 mb-4 sm:mb-5 block">
                         Get Started
                     </span>
                     <h2 className="text-[clamp(1.75rem,4vw,2.6rem)] font-semibold tracking-[-0.03em] leading-[1.15] text-gradient">
@@ -85,18 +85,18 @@ export default function Install() {
                 </div>
 
                 {/* Steps */}
-                <div className="max-w-[620px] mx-auto flex flex-col gap-8">
+                <div className="max-w-[620px] mx-auto flex flex-col gap-6 sm:gap-8">
                     {steps.map((step) => (
                         <div
                             key={step.num}
-                            className="reveal flex gap-5 items-start group"
+                            className="reveal flex gap-3.5 sm:gap-5 items-start group"
                         >
-                            <div className="w-[36px] h-[36px] shrink-0 flex items-center justify-center rounded-xl bg-cyan-400/[0.05] border border-cyan-400/15 text-cyan-400/80 font-semibold text-sm group-hover:border-cyan-400/30 group-hover:text-cyan-400 transition-all duration-300">
+                            <div className="w-[30px] h-[30px] sm:w-[36px] sm:h-[36px] shrink-0 flex items-center justify-center rounded-lg sm:rounded-xl bg-cyan-400/[0.05] border border-cyan-400/15 text-cyan-400/80 font-semibold text-xs sm:text-sm group-hover:border-cyan-400/30 group-hover:text-cyan-400 transition-all duration-300">
                                 {step.num}
                             </div>
-                            <div className="flex-1">
-                                <h4 className="text-[0.95rem] font-semibold mb-2.5 text-white/85">{step.title}</h4>
-                                <div className="is-code flex items-center justify-between gap-3 px-4 py-3 bg-black/40 border border-white/[0.05] rounded-xl font-mono text-[0.78rem] text-cyan-300/70 overflow-x-auto group-hover:border-white/[0.1] transition-colors duration-300">
+                            <div className="flex-1 min-w-0">
+                                <h4 className="text-[0.9rem] sm:text-[0.95rem] font-semibold mb-2 sm:mb-2.5 text-white/85">{step.title}</h4>
+                                <div className="is-code flex items-center justify-between gap-3 px-3 sm:px-4 py-2.5 sm:py-3 bg-black/40 border border-white/[0.05] rounded-xl font-mono text-[0.72rem] sm:text-[0.78rem] text-cyan-300/70 overflow-x-auto group-hover:border-white/[0.1] transition-colors duration-300">
                                     <code className="whitespace-nowrap">{step.code}</code>
                                     <button
                                         onClick={(e) => copyCode(e.currentTarget)}

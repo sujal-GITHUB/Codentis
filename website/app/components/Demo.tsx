@@ -46,11 +46,11 @@ export default function Demo() {
     }, []);
 
     return (
-        <section id="demo" className="py-32 sm:py-40" ref={ref}>
-            <div className="max-w-[1120px] mx-auto px-6">
+        <section id="demo" className="py-24 sm:py-32 sm:py-40" ref={ref}>
+            <div className="max-w-[1120px] mx-auto px-4 sm:px-6">
                 {/* Header */}
-                <div className="text-center mb-20 reveal">
-                    <span className="text-[0.7rem] font-semibold uppercase tracking-[0.2em] text-cyan-400/80 mb-5 block">
+                <div className="text-center mb-12 sm:mb-20 reveal">
+                    <span className="text-[0.65rem] sm:text-[0.7rem] font-semibold uppercase tracking-[0.2em] text-cyan-400/80 mb-4 sm:mb-5 block">
                         Use Cases
                     </span>
                     <h2 className="text-[clamp(1.75rem,4vw,2.6rem)] font-semibold tracking-[-0.03em] leading-[1.15] text-gradient">
@@ -63,24 +63,24 @@ export default function Demo() {
                 </div>
 
                 {/* Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                     {demos.map((d) => (
                         <div
                             key={d.tag}
-                            className="reveal card-glow bg-bg-2 border border-white/[0.05] rounded-2xl p-8 group"
+                            className="reveal card-glow bg-bg-2 border border-white/[0.05] rounded-2xl p-6 sm:p-8 group"
                         >
-                            <span className="inline-block text-[0.68rem] font-semibold text-cyan-400/80 px-3.5 py-1 border border-cyan-500/15 bg-cyan-500/[0.04] rounded-full mb-6">
+                            <span className="inline-block text-[0.62rem] sm:text-[0.68rem] font-semibold text-cyan-400/80 px-3.5 py-1 border border-cyan-500/15 bg-cyan-500/[0.04] rounded-full mb-5 sm:mb-6">
                                 {d.tag}
                             </span>
 
                             <div className="flex items-center gap-2.5 px-4 py-3 bg-black/50 border border-white/[0.05] rounded-xl mb-4 overflow-x-auto">
-                                <span className="text-cyan-400/70 font-mono font-bold text-sm shrink-0">$</span>
-                                <code className="font-mono text-[0.78rem] text-zinc-400 whitespace-nowrap group-hover:text-zinc-300 transition-colors duration-300">
+                                <span className="text-cyan-400/70 font-mono font-bold text-[13px] sm:text-sm shrink-0">$</span>
+                                <code className="font-mono text-[0.72rem] sm:text-[0.78rem] text-zinc-400 whitespace-nowrap group-hover:text-zinc-300 transition-colors duration-300">
                                     {d.cmd}
                                 </code>
                             </div>
 
-                            <p className="text-[0.88rem] text-zinc-600 leading-relaxed group-hover:text-zinc-500 transition-colors duration-300">
+                            <p className="text-[0.82rem] sm:text-[0.88rem] text-zinc-600 leading-relaxed group-hover:text-zinc-500 transition-colors duration-300">
                                 {d.desc}
                             </p>
                         </div>

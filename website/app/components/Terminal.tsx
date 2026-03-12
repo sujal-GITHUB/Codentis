@@ -75,29 +75,29 @@ export default function Terminal() {
     };
 
     return (
-        <section className="pb-28 sm:pb-32 px-6">
+        <section className="pb-20 sm:pb-32 px-4 sm:px-6">
             <div
                 className="max-w-[1120px] mx-auto rounded-2xl border border-white/[0.04] bg-bg-1 overflow-hidden shadow-[0_0_80px_rgba(6,182,212,0.04)]"
                 ref={containerRef}
             >
                 {/* Title Bar */}
-                <div className="flex items-center gap-3.5 px-5 py-3.5 bg-bg-2 border-b border-white/[0.04]">
-                    <div className="flex gap-1.5">
-                        <span className="w-2.5 h-2.5 rounded-full bg-[#ff5f57]" />
-                        <span className="w-2.5 h-2.5 rounded-full bg-[#febc2e]" />
-                        <span className="w-2.5 h-2.5 rounded-full bg-[#28c840]" />
+                <div className="flex items-center gap-3 px-4 sm:px-5 py-3 sm:py-3.5 bg-bg-2 border-b border-white/[0.04]">
+                    <div className="flex gap-1.5 shrink-0">
+                        <span className="w-2 sm:w-2.5 h-2 sm:h-2.5 rounded-full bg-[#ff5f57]" />
+                        <span className="w-2 sm:w-2.5 h-2 sm:h-2.5 rounded-full bg-[#febc2e]" />
+                        <span className="w-2 sm:w-2.5 h-2 sm:h-2.5 rounded-full bg-[#28c840]" />
                     </div>
-                    <span className="font-mono text-[0.72rem] text-zinc-500">
+                     <span className="font-mono text-[10px] sm:text-[0.72rem] text-zinc-500 truncate ml-1">
                         codentis — ~/projects
                     </span>
                 </div>
 
                 {/* Body */}
-                <div className="p-6 font-mono text-[0.85rem] min-h-[220px]">
+                <div className="p-4 sm:p-6 font-mono text-[11px] sm:text-[0.85rem] min-h-[180px] sm:min-h-[220px]">
                     {/* Command Line */}
-                    <div className="flex items-center gap-2.5">
+                    <div className="flex items-center gap-2 sm:gap-2.5">
                         <span className="text-cyan-400 font-bold">$</span>
-                        <span className="text-white">{typedCmd}</span>
+                        <span className="text-white truncate">{typedCmd}</span>
                         {showCursor && (
                             <span className="text-cyan-400" style={{ animation: "blink 1s step-end infinite" }}>
                                 ▊
@@ -106,16 +106,16 @@ export default function Terminal() {
                     </div>
 
                     {/* Output */}
-                    <div className="mt-4 space-y-0">
+                    <div className="mt-3 sm:mt-4 space-y-0 text-wrap break-words">
                         {outputLines.slice(0, visibleLines).map((line, i) => (
                             <div
                                 key={i}
-                                className={`leading-[1.9] transition-all duration-300 ${colorMap[line.cls]}`}
+                                className={`leading-[1.7] sm:leading-[1.9] transition-all duration-300 ${colorMap[line.cls]}`}
                                 style={{
                                     animation: "fade-up 0.3s cubic-bezier(0.4,0,0.2,1) both",
                                 }}
                             >
-                                {line.text}
+                                {line.text === "\u00A0" ? <br /> : line.text}
                             </div>
                         ))}
                     </div>
