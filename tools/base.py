@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from pydantic import ValidationError
 from dataclasses import field
+from config.config import Config
 
 class ToolKind(Enum):
     READ = "read"
@@ -105,11 +106,8 @@ class Tool(abc.ABC):
     description: str = "Base tool"
     kind: ToolKind = ToolKind.READ
 
-    def __init__(self, name: str | None = None, description: str | None = None):
-        if name is not None:
-            self.name = name
-        if description is not None:
-            self.description = description
+    def __init__(self, config: Config):
+        self.config = config
 
     @property
     def schema(self)->dict[str, Any] | type["BaseModel"]:

@@ -1,11 +1,18 @@
-import os
 from pydantic import BaseModel, Field
+from enum import Enum
 from pathlib import Path
 
 class ModelConfig(BaseModel):
     name: str = "gpt-4o"
     temperature: float = Field(default=1, ge=0.0, le=2.0)
     context_window: int = 256000
+
+class ShellEnvironmentPolicy(BaseModel):
+    ignore_default_excludes: bool = False
+    exclude_patterns: list[str] = Field(
+        default_factory=lambda: ["*KEY*", "*SECRET*", "*TOKEN*", "*PASSWORD*", "*CREDENTIALS*"]
+    )
+    set_vars: dict[str, str] = Field(default_factory=dict)
 
 class Config(BaseModel):
     model: ModelConfig = Field(default_factory=ModelConfig)
@@ -16,6 +23,7 @@ class Config(BaseModel):
     debug: bool = False
     api_key: str | None = None
     base_url: str | None = None
+    shell_environment: ShellEnvironmentPolicy = Field(default_factory=ShellEnvironmentPolicy)
 
     @property
     def model_name(self) -> str:

@@ -3,6 +3,7 @@ from pathlib import Path
 from tools.base import Tool, ToolResult, ToolInvocation
 import logging
 from tools.builtin import get_all_builtin_tools
+from config.config import Config
 
 logger = logging.getLogger(__name__)
 
@@ -79,10 +80,10 @@ class ToolRegistry:
 
         return result
 
-def create_default_registry() -> ToolRegistry:
+def create_default_registry(config: Config) -> ToolRegistry:
     registry = ToolRegistry()
 
     for tool_class in get_all_builtin_tools():
-        registry.register(tool_class())
+        registry.register(tool_class(config))
     
     return registry

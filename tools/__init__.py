@@ -1,7 +1,3 @@
-from tools.builtin.edit_file import EditFileTool
-from tools.builtin.write_file import WriteFileTool
-from tools.builtin.read_file import ReadFileTool
-from tools.builtin.apply_patch import ApplyPatchTool
 
 __all__ = [
     "EditFileTool",
@@ -11,6 +7,11 @@ __all__ = [
 ]
 
 def get_all_builtin_tools()->list[type]:
+    from tools.builtin.edit_file import EditFileTool
+    from tools.builtin.write_file import WriteFileTool
+    from tools.builtin.read_file import ReadFileTool
+    from tools.builtin.apply_patch import ApplyPatchTool
+    
     return [
         ReadFileTool,
         WriteFileTool,

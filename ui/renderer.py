@@ -38,6 +38,14 @@ AGENT_THEME = Theme(
         "border": "grey35",
         "highlight": "bold white",
         "muted": "grey50",
+        "primary": "#00FFFF",
+        "secondary": "orange3",
+
+        # Welcome Screen
+        "welcome.title": "bold black on #00FFFF",
+        "welcome.border": "#00FFFF",
+        "welcome.heading": "bold #00FFFF",
+        "welcome.mascot": "#00FFFF",
 
         # Roles
         "user": "bold blue",
@@ -95,17 +103,84 @@ class TUI:
         self.console.print(delta, end="", markup=False)
 
     def print_welcome(self, title: str, lines: list[str])->None:
-        body = "\n".join(lines)
+        import getpass
+        import os
+        try:
+            username = getpass.getuser()
+        except:
+            username = "User"
+            
+        model_name = "Agent"
+        cwd = str(self.cwd)
+        commands = ""
+        
+        for line in lines:
+            if "model:" in line.lower():
+                model_name = line.split(":", 1)[1].strip()
+            elif "cwd:" in line.lower():
+                cwd = line.split(":", 1)[1].strip()
+            elif "commands:" in line.lower():
+                commands = line.split(":", 1)[1].strip()
+
+        # Mascot: Pirate Ship Wheel
+        mascot = Text.assemble(
+            ("\n           O\n", "welcome.mascot"),
+            ("           █\n", "welcome.mascot"),
+            ("   O  \\ ▄▄███▄▄ /  O\n", "welcome.mascot"),
+            ("      ▄██▀▀█▀▀██▄\n", "welcome.mascot"),
+            ("     ██▀ \\ █ / ▀██\n", "welcome.mascot"),
+            ("O---███----O----███---O\n", "welcome.mascot"),
+            ("     ██▄ / █ \\ ▄██\n", "welcome.mascot"),
+            ("      ▀██▄▄█▄▄██▀\n", "welcome.mascot"),
+            ("   O  / ▀▀███▀▀ \\  O\n", "welcome.mascot"),
+            ("           █\n", "welcome.mascot"),
+            ("           O", "welcome.mascot")
+        )
+
+        left_column = Group(
+            Text(f"Welcome back, {username}!", style="bold white"),
+            mascot,
+            Text("\n"),
+            Text.assemble(
+                (model_name, "bold white"),
+                (" • ", "dim"),
+                ("API Usage", "dim"),
+                (" • ", "dim"),
+                ("Codentis", "dim"),
+            ),
+            Text(f"~{cwd}", style="dim")
+        )
+
+        right_column = Group(
+            Text("Tips for getting started", style="welcome.heading"),
+            Text("Ask Codentis to create a new app or help with code", style="white"),
+            Rule(style="dim", align="left"),
+            Text("Recent activity", style="welcome.heading"),
+            Text("No recent activity", style="dim"),
+        )
+
+        layout_table = Table.grid(expand=True)
+        layout_table.add_column(ratio=1)
+        layout_table.add_column(ratio=1)
+        layout_table.add_row(left_column, right_column)
+
+        self.console.print()
         self.console.print(
             Panel(
-                Text(body, style="code"),
-                title=Text(title, style="highlight"),
+                layout_table,
+                title=Text(f" {title} v0.1.0 ", style="welcome.title"),
                 title_align="left",
-                border_style="border",
+                border_style="welcome.border",
                 box=box.ROUNDED,
                 padding=(1, 2)
             )
         )
+        if commands:
+            self.console.print(Text.assemble(
+                (" ", ""),
+                (commands, "dim italic")
+            ))
+        self.console.print()
 
     def ordered_args(self, tool_name: str, args: dict[str, Any])->list[tuple[str, Any]]:
         PREFERRED_ORDER = {
