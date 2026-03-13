@@ -6,9 +6,10 @@ Codentis is built on a clean, event-driven, multi-layered architecture designed 
 graph TD
     CLI["CLI (main.py)"] -->|Initializes| Agent["Agent (agent/agent.py)"]
     CLI -->|Initializes| TUI["TUI (ui/renderer.py)"]
-    Agent -->|Uses| LLMClient["LLMClient (client/llm_client.py)"]
-    Agent -->|Uses| ContextManager["ContextManager (context/contextManager.py)"]
-    Agent -->|Uses| ToolRegistry["ToolRegistry (tools/registry.py)"]
+    Agent -->|Uses| Session["Session (agent/session.py)"]
+    Session -->|Initializes| LLMClient["LLMClient (client/llm_client.py)"]
+    Session -->|Initializes| ContextManager["ContextManager (context/contextManager.py)"]
+    Session -->|Initializes| ToolRegistry["ToolRegistry (tools/registry.py)"]
     LLMClient -->|API Calls| OpenAI["OpenAI / OpenRouter API"]
     ToolRegistry -->|Executes| Tools["Built-in Tools (tools/builtin/)"]
 
@@ -21,6 +22,10 @@ graph TD
         Agent -->|TOOL_CALL_COMPLETE| CLI
         Agent -->|AgentEvent| CLI
         CLI -->|Render| TUI
+    end
+
+    subgraph Marketing
+        Website["Website (website/)"]
     end
 ```
 
@@ -45,12 +50,13 @@ Handles all external communication with Large Language Models.
 ### 2. Agent Layer (`agent/`)
 Contains the core agentic loop and event orchestration.
 
-- **`Agent`** (`agent.py`): Manages conversation state and the agentic loop.
-  - Initializes `Config`, `LLMClient`, `ContextManager`, and `ToolRegistry`.
-  - Exposes `self.config` so callers (e.g. CLI) can read active configuration.
-  - Implements `async with` context manager for graceful client cleanup.
+- **`Agent`** (`agent.py`): The high-level orchestrator for the agentic loop.
+  - Manages a **`Session`** object.
   - `run()` — top-level entry point; emits `AGENT_START` → loop events → `AGENT_END`.
-  - `agentic_loop()` — streams LLM response, accumulates tool calls, serializes them strictly into OpenAI-compatible representation (forcing `type='function'` and JSON-stringified `arguments`) before dispatch, and feeds results back into context.
+  - `agentic_loop()` — implements the multi-turn logic: streams LLM response, accumulates tool calls, invokes tools via the session, and feeds results back into context until completion or max turns.
+- **`Session`** (`session.py`): Encapsulates the state for a single conversation thread.
+  - Holds instances of `LLMClient`, `ContextManager`, and `ToolRegistry`.
+  - Manages `session_id`, `created_at`, `updated_at`, and `turn_count`.
 - **`events.py`**: Defines high-level agent events emitted to the CLI:
 
 | Event | Payload |
@@ -84,7 +90,8 @@ A pluggable tool execution layer with validation, kind-based categorisation, and
 - **`builtin/`**: Built-in tool implementations.
   - **`read_file.py`** (`ReadFileTool`): Reads text files with line numbers, optional offset/limit pagination, token-budget truncation, and binary-file detection.
   - **`write_file.py`** (`WriteFileTool`): Writes full content to files, supporting directory creation.
-  - **`edit_file.py`** (`EditFileTool`): Performs precise, surgical search-and-replace line edits within existing files.
+  - **`edit_file.py`** (`EditFileTool`): Performs precise search-and-replace line edits within existing files.
+  - **`apply_patch.py`** (`ApplyPatchTool`): Similar to `EditFileTool` but supports multiple non-contiguous edits in a single call.
   - **`shell.py`** (`ShellTool`): Executes shell commands, capturing STDOUT/STDERR separately and supporting timeout limits.
 
 ---
@@ -131,6 +138,15 @@ Terminal rendering using `rich`.
 ### 7. Utilities (`utils/`)
 - **`paths.py`**: `resolve_path()` (resolves relative paths against a base), `is_binary_file()`, `display_path_relative_to_cwd()`.
 - **`text.py`**: Token counting (`count_tokens`, `estimate_tokens`) and text truncation (`truncate_text`, `truncate_by_lines`, `truncate_by_characters`).
+
+---
+
+### 8. Website Layer (`website/`)
+A Next.js-based presentation layer for Codentis.
+
+- **Next.js App Router**: Located in `website/app/`.
+- **Components**: Reusable UI elements in `website/app/components/` (Hero, Features, Architecture diagram, etc.).
+- **Styling**: Global CSS and Tailwind-like utility styles in `website/app/globals.css`.
 
 ---
 
@@ -199,10 +215,10 @@ User Input
 
 ## Future Extensions
 
-- **Multi-turn agentic loop**: Re-run `agentic_loop` after tool results if the LLM wants to call more tools (tool_calls are already serialized into context, ready for this).
-- **Interactive commands**: `/help`, `/config`, `/model`, `/approval` commands are defined in the welcome panel but not yet implemented.
-- **Additional built-in tools**: `search_file`, web search, etc.
+- **Multi-turn agentic loop**: Now robustly supported in `agentic_loop()`.
+- **Interactive commands**: Implementation of `/help`, `/config`, etc.
+- **Built-in tools**: Continued expansion (e.g. `search_file`, web search).
 - **Tool confirmation**: `ToolConfirmation` infrastructure exists for prompting the user before mutating operations.
 - **Memory**: A `Memory` component can be injected into `ContextManager` for long-term context.
-- **MCP tools**: `ToolKind.MCP` is already reserved for Model Context Protocol tool integration.
-- **Multi-Agent**: The `CLI` can orchestrate multiple `Agent` instances for complex workflows.
+- **MCP tools**: Future integration with Model Context Protocol.
+- **Multi-Agent**: Orchestration of multiple specialist agents.
