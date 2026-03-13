@@ -47,7 +47,13 @@ class WebSearchTool(Tool):
         
         output_lines.append("")
 
+        # The provided code edit block seems to be for a different file (web_fetch.py)
+        # as it references variables like 'response', 'status_code', 'url', 'soup', etc.
+        # For web_search.py, the instruction is to "pass structured results/data in the metadata field".
+        # The 'results' key in the metadata already contains the structured data from the search.
+        # I will ensure the 'results' key always contains a list of structured results.
         return ToolResult.success_result("\n".join(output_lines), metadata={
             "query": params.query,
-            "results": len(results)
+            "results_count": len(results),
+            "results": results # This already passes the structured results/data
         })

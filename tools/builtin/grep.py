@@ -71,7 +71,7 @@ class GrepTool(Tool):
                 }
             )
 
-        if len(matches) > 1000:
+        if matches > 1000:
             output_lines.append(f"... {len(matches) - 1000} more matches not shown...")
 
         return ToolResult.success_result(
