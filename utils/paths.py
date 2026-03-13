@@ -2,11 +2,12 @@ from pathlib import Path
 
 def resolve_path(base: str | Path, path: str | Path) -> Path:
     path = Path(path)
+    base = Path(base)
+    
     if path.is_absolute():
         return path.resolve()
 
-    base = Path(base)
-    return base.resolve() / path.resolve() 
+    return (base / path).resolve()
 
 def is_binary_file(path: Path) -> bool:
     """Check if a file is binary by looking for null bytes."""
