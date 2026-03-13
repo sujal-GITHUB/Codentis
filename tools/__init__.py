@@ -5,7 +5,9 @@ __all__ = [
     "ReadFileTool",
     "ApplyPatchTool",
     "ShellTool",
-    "ListDirTool"
+    "ListDirTool",
+    "GrepTool",
+    "GlobTool"
 ]
 
 def get_all_builtin_tools()->list[type]:
@@ -14,6 +16,9 @@ def get_all_builtin_tools()->list[type]:
     from tools.builtin.read_file import ReadFileTool
     from tools.builtin.apply_patch import ApplyPatchTool
     from tools.builtin.list_dir import ListDirTool
+    from tools.builtin.grep import GrepTool
+    from tools.builtin.glob import GlobTool
+    from tools.builtin.shell import ShellTool
     
     return [
         ReadFileTool,
@@ -21,5 +26,7 @@ def get_all_builtin_tools()->list[type]:
         EditFileTool,
         ApplyPatchTool,
         ShellTool,
-        ListDirTool
+        ListDirTool,
+        GrepTool,
+        GlobTool
     ]

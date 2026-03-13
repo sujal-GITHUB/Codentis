@@ -21,7 +21,7 @@ const steps = [
     {
         num: "4",
         title: "Run",
-        code: 'python main.py "Hello, Codentis!"',
+        code: 'python main.py "Hello, Codentis"',
     },
 ];
 
