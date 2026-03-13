@@ -2,7 +2,17 @@ from .config import Config
 from .config_manager import ConfigManager
 from pathlib import Path
 from typing import Any
-import tomli
+import sys
+
+# Use built-in tomllib for Python 3.11+, fallback to tomli for older versions
+if sys.version_info >= (3, 11):
+    import tomllib
+else:
+    try:
+        import tomli as tomllib
+    except ImportError:
+        import tomllib
+
 from platformdirs import user_config_dir
 from codentis.utils.errors import ConfigError
 import logging
@@ -22,14 +32,15 @@ def get_system_config_path()->Path:
 def parse_toml(path: Path)->Config:
     try:
         with open(path, "rb") as f:
-            return tomli.load(f)
-    except tomli.TOMLDecodeError as e:
-        raise ConfigError(
-            message="Failed to parse config file : {e}",
-            config_file=str(path),
-            cause=e
-        )
-    except (OSError, IOError) as e:
+            return tomllib.load(f)
+    except Exception as e:
+        # Handle both tomli.TOMLDecodeError and tomllib.TOMLDecodeError
+        if "TOML" in type(e).__name__:
+            raise ConfigError(
+                message="Failed to parse config file : {e}",
+                config_file=str(path),
+                cause=e
+            )
         raise ConfigError(
             message="Failed to read config file : {e}",
             config_file=str(path),

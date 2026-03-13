@@ -94,8 +94,7 @@ export default function Hero() {
                 {/* CTAs */}
                 <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 mb-16 sm:mb-20 px-4 sm:px-0">
                     <a
-                        href="/Codentis.exe"
-                        download
+                        href="/download"
                         className="inline-flex items-center justify-center gap-2 px-7 py-2.5 sm:px-8 sm:py-3 w-fit sm:w-auto bg-white text-black text-[13px] sm:text-sm font-bold rounded-full hover:bg-zinc-100 transition-all active:scale-95 shadow-[0_0_20px_rgba(255,255,255,0.2)]"
                     >
                         Download Codentis

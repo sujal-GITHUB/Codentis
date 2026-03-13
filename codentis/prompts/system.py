@@ -123,7 +123,7 @@ The user can use these commands while interacting with you:
 **Workspace Trust**:
 - Codentis implements a security feature similar to Claude Code
 - On first access to any directory, user is prompted to trust the workspace
-- Trusted workspaces are stored in `~/.local/share/codentis/trusted_workspaces.json` (Linux/Mac) or `%LOCALAPPDATA%\codentis\trusted_workspaces.json` (Windows)
+- Trusted workspaces are stored in `~/.local/share/codentis/trusted_workspaces.json` (Linux/Mac) or `%LOCALAPPDATA%\\codentis\\trusted_workspaces.json` (Windows)
 - Once trusted, no prompt is shown on subsequent runs in that directory
 
 If a user asks about these commands, configuration, or how to use Codentis, you can reference this information."""
