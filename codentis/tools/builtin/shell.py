@@ -78,9 +78,12 @@ class ShellTool(Tool):
                 f"Working directory doesn't exist: {cwd}"
             )
 
-        env = self.build_environment()           
-        if sys.platform == "win32":
-           shell_command = ["cmd.exe", "/c", params.command]
+        env = self.build_environment()
+        
+        # Use platform from config instead of sys.platform
+        platform_name = self.config.shell_environment.platform
+        if platform_name == "Windows":
+            shell_command = ["cmd.exe", "/c", params.command]
         else:
             shell_command = ["/bin/sh", "-c", params.command]
 
@@ -100,7 +103,8 @@ class ShellTool(Tool):
                     timeout=params.timeout
                 )
             except asyncio.TimeoutError:
-                if sys.platform != "win32":
+                platform_name = self.config.shell_environment.platform
+                if platform_name != "Windows":
                     os.killpg(os.getpgid(process.pid), signal.SIGKILL)
                 else:
                     process.kill()

@@ -5,23 +5,23 @@ import { useRef, useEffect } from "react";
 const steps = [
     {
         num: "1",
-        title: "Download",
-        code: "Click the 'Download Codentis' button at the top of the page.",
+        title: "Download & Install",
+        code: "Download the installer for your platform and run it.",
     },
     {
         num: "2",
-        title: "Initialize",
-        code: "Open Codentis.exe and authorize the initial setup.",
+        title: "Configure",
+        code: "codentis config",
     },
     {
         num: "3",
-        title: "Configure",
-        code: "Answer a few quick questions (takes ~2 minutes) to tune the AI to your workflow.",
+        title: "Start Interactive Chat",
+        code: "codentis chat",
     },
     {
         num: "4",
-        title: "Start Coding",
-        code: "You're ready! Start using Codentis directly in any project folder.",
+        title: "Or Send Quick Queries",
+        code: 'codentis chat "your question here"',
     },
 ];
 
