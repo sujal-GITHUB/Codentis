@@ -80,6 +80,7 @@ class ToolResult:
     metadata: dict[str, Any] = field(default_factory=dict)
     truncated: bool = False
     diff: FileDiff | str | None = None
+    exit_code: int | None = None
 
     @classmethod
     def error_result(cls, error: str, output: str = "", **kwargs) -> ToolResult:

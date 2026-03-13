@@ -123,18 +123,19 @@ class TUI:
                 commands = line.split(":", 1)[1].strip()
 
         # Mascot: Pirate Ship Wheel
+        # Mascot: Refined Pirate Ship Wheel
         mascot = Text.assemble(
-            ("\n           O\n", "welcome.mascot"),
-            ("           █\n", "welcome.mascot"),
-            ("   O  \\ ▄▄███▄▄ /  O\n", "welcome.mascot"),
-            ("      ▄██▀▀█▀▀██▄\n", "welcome.mascot"),
-            ("     ██▀ \\ █ / ▀██\n", "welcome.mascot"),
-            ("O---███----O----███---O\n", "welcome.mascot"),
-            ("     ██▄ / █ \\ ▄██\n", "welcome.mascot"),
-            ("      ▀██▄▄█▄▄██▀\n", "welcome.mascot"),
-            ("   O  / ▀▀███▀▀ \\  O\n", "welcome.mascot"),
-            ("           █\n", "welcome.mascot"),
-            ("           O", "welcome.mascot")
+            ("\n                O\n", "welcome.mascot"),
+            ("                |\n", "welcome.mascot"),
+            ("         O  ▄▄▄███▄▄▄  O\n", "welcome.mascot"),
+            ("          \\▄█▀  |  ▀█▄/\n", "welcome.mascot"),
+            ("          ██  \\ | /  ██\n", "welcome.mascot"),
+            ("     O----██----O----██----O\n", "welcome.mascot"),
+            ("          ██  / | \\  ██\n", "welcome.mascot"),
+            ("          /▀█▄  |  ▄█▀\\\n", "welcome.mascot"),
+            ("         O  ▀▀▀███▀▀▀  O\n", "welcome.mascot"),
+            ("                |\n", "welcome.mascot"),
+            ("                O", "welcome.mascot")
         )
 
         left_column = Group(
@@ -187,7 +188,8 @@ class TUI:
             'read_file': ['path', 'offset', 'limit'],
             'write_file': ['path', 'create_directory', 'content'],
             'edit_file':['path', 'replace_all', 'old_string', 'new_string'],
-            'apply_patch': ['edits']
+            'apply_patch': ['edits'],
+            'run_command': ['command', 'cwd', 'timeout', 'capture_output', 'env', 'shell', 'stdin']
         }
 
         preferred = PREFERRED_ORDER.get(tool_name, [])
@@ -362,7 +364,8 @@ class TUI:
         error: str | None, 
         metadata: dict[str, Any], 
         truncated: bool,
-        diff: str | None
+        diff: str | None,
+        exit_code: int | None
         )->None:
         border_style = f"tool.{tool_kind}" if tool_kind else "tool"
         status_icon = "✔" if success else "✘"
@@ -375,6 +378,7 @@ class TUI:
             (f"#{call_id[:8]}", "muted")
         )
 
+        args = self.tool_args_by_call_id.get(call_id, {})
         primary_path = None
         blocks = []
         if isinstance(metadata, dict) and isinstance(metadata.get('path'), str):
@@ -425,6 +429,16 @@ class TUI:
                     blocks.append(Text("(no diff)", style="muted"))
             else:
                 blocks.append(Text(error or output or "Unknown error", style="error"))
+
+        elif name == 'shell':
+            command = args.get('command')
+            if isinstance(command, str) and command.strip():
+                blocks.append(Text(f"$ {command}", style="muted"))
+            if exit_code is not None:
+                blocks.append(Text(f"exit-code: {exit_code}", style="muted"))
+            
+            output_display = truncate_text(output, self.max_block_tokens, self.config.model_name)
+            blocks.append(Syntax(output_display, "text", theme="monokai", word_wrap=False))
         
         if truncated:
             blocks.append(Text("note: Tool output was truncated", style="warning"))

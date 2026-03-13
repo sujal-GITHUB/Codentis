@@ -120,10 +120,8 @@ class ShellTool(Tool):
             return ToolResult(
                 success=exit_code == 0,
                 output=output,
-                metadata={
-                    "returncode": exit_code,
-                    "stderr": stderr_str
-                }
+                error=stderr_str if exit_code != 0 else None,
+                exit_code=exit_code
             )
         except Exception as e:
             return ToolResult.error_result(

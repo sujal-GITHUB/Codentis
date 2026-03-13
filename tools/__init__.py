@@ -3,7 +3,8 @@ __all__ = [
     "EditFileTool",
     "WriteFileTool",
     "ReadFileTool",
-    "ApplyPatchTool"
+    "ApplyPatchTool",
+    "ShellTool"
 ]
 
 def get_all_builtin_tools()->list[type]:
@@ -16,5 +17,6 @@ def get_all_builtin_tools()->list[type]:
         ReadFileTool,
         WriteFileTool,
         EditFileTool,
-        ApplyPatchTool
+        ApplyPatchTool,
+        ShellTool
     ]
