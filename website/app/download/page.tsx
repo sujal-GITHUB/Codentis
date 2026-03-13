@@ -37,7 +37,7 @@ export default function DownloadPage() {
                 </div>
                 <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
                   <a
-                    href="/Codentis.exe"
+                    href="/Codentis-Setup-0.1.0.exe"
                     download
                     className="px-4 sm:px-5 py-2 sm:py-2.5 bg-cyan-500 hover:bg-cyan-600 text-black text-xs sm:text-sm font-semibold rounded-full transition-all active:scale-95 flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(34,211,238,0.2)]"
                   >
@@ -46,25 +46,13 @@ export default function DownloadPage() {
                       <polyline points="7 10 12 15 17 10"></polyline>
                       <line x1="12" y1="15" x2="12" y2="3"></line>
                     </svg>
-                    <span>64-bit</span>
-                  </a>
-                  <a
-                    href="/Codentis-32bit.exe"
-                    download
-                    className="px-4 sm:px-5 py-2 sm:py-2.5 bg-cyan-500/80 hover:bg-cyan-500 text-black text-xs sm:text-sm font-semibold rounded-full transition-all active:scale-95 flex items-center justify-center gap-2"
-                  >
-                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                      <polyline points="7 10 12 15 17 10"></polyline>
-                      <line x1="12" y1="15" x2="12" y2="3"></line>
-                    </svg>
-                    <span>32-bit</span>
+                    <span>Download Installer</span>
                   </a>
                 </div>
               </div>
               <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-3 sm:p-4 text-xs sm:text-sm">
                 <p className="text-zinc-500 text-[0.75rem] sm:text-[0.8rem]">
-                  Most users should download the 64-bit version. Use 32-bit only if you have an older 32-bit Windows system.
+                  💡 Double-click the installer and follow the setup wizard. It will automatically add Codentis to your PATH.
                 </p>
               </div>
             </div>
@@ -78,24 +66,39 @@ export default function DownloadPage() {
                   </svg>
                   <div>
                     <h3 className="text-base sm:text-lg font-semibold text-white/90 group-hover:text-white transition-colors">macOS</h3>
-                    <p className="text-xs sm:text-sm text-zinc-500">macOS 11+ (Intel & Apple Silicon)</p>
+                    <p className="text-xs sm:text-sm text-zinc-500">macOS 11+</p>
                   </div>
                 </div>
-                <button
-                  disabled
-                  className="px-5 sm:px-6 py-2.5 sm:py-3 bg-zinc-900 border border-white/[0.05] text-zinc-600 text-xs sm:text-sm font-semibold rounded-full cursor-not-allowed flex items-center gap-2"
-                >
-                  <svg className="w-4 h-4 sm:w-5 sm:h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <line x1="12" y1="5" x2="12" y2="19"></line>
-                    <polyline points="19 12 12 19 5 12"></polyline>
-                  </svg>
-                  Coming Soon
-                </button>
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+                  <a
+                    href="/Codentis-0.1.0-arm64.pkg"
+                    download
+                    className="px-4 sm:px-5 py-2 sm:py-2.5 bg-cyan-500 hover:bg-cyan-600 text-black text-xs sm:text-sm font-semibold rounded-full transition-all active:scale-95 flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(34,211,238,0.2)]"
+                  >
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                      <polyline points="7 10 12 15 17 10"></polyline>
+                      <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    <span>Apple Silicon</span>
+                  </a>
+                  <a
+                    href="/Codentis-0.1.0-intel.pkg"
+                    download
+                    className="px-4 sm:px-5 py-2 sm:py-2.5 bg-cyan-500/80 hover:bg-cyan-500 text-black text-xs sm:text-sm font-semibold rounded-full transition-all active:scale-95 flex items-center justify-center gap-2"
+                  >
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                      <polyline points="7 10 12 15 17 10"></polyline>
+                      <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    <span>Intel</span>
+                  </a>
+                </div>
               </div>
               <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-3 sm:p-4 text-xs sm:text-sm">
-                <p className="text-blue-400 font-semibold mb-2">Use pip for now</p>
-                <p className="text-zinc-400 text-[0.8rem] sm:text-[0.85rem] leading-relaxed">
-                  macOS standalone app is coming soon. Use <code className="text-cyan-300 bg-black/50 px-2 py-1 rounded font-mono text-[0.75rem]">pip install codentis</code> for now.
+                <p className="text-zinc-500 text-[0.75rem] sm:text-[0.8rem]">
+                  💡 M1/M2/M3 Macs use Apple Silicon. Older Macs use Intel. Double-click the .pkg file to install.
                 </p>
               </div>
             </div>
@@ -113,59 +116,22 @@ export default function DownloadPage() {
                     <p className="text-xs sm:text-sm text-zinc-500">Ubuntu, Debian, Fedora, Arch</p>
                   </div>
                 </div>
-                <button
-                  disabled
-                  className="px-5 sm:px-6 py-2.5 sm:py-3 bg-zinc-900 border border-white/[0.05] text-zinc-600 text-xs sm:text-sm font-semibold rounded-full cursor-not-allowed flex items-center gap-2"
+                <a
+                  href="/codentis_0.1.0_amd64.deb"
+                  download
+                  className="px-4 sm:px-5 py-2 sm:py-2.5 bg-cyan-500 hover:bg-cyan-600 text-black text-xs sm:text-sm font-semibold rounded-full transition-all active:scale-95 flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(34,211,238,0.2)]"
                 >
-                  <svg className="w-4 h-4 sm:w-5 sm:h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <line x1="12" y1="5" x2="12" y2="19"></line>
-                    <polyline points="19 12 12 19 5 12"></polyline>
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
                   </svg>
-                  Coming Soon
-                </button>
+                  <span>Download .deb</span>
+                </a>
               </div>
               <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-3 sm:p-4 text-xs sm:text-sm">
-                <p className="text-blue-400 font-semibold mb-2">Use pip (recommended)</p>
-                <p className="text-zinc-400 text-[0.8rem] sm:text-[0.85rem] leading-relaxed">
-                  Linux users should use <code className="text-cyan-300 bg-black/50 px-2 py-1 rounded font-mono text-[0.75rem]">pip install codentis</code> for the best experience.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Installation Instructions */}
-          <div className="mt-10 sm:mt-12 p-6 sm:p-8 border border-white/[0.05] bg-bg-2 rounded-2xl">
-            <h2 className="text-lg sm:text-xl font-semibold mb-5 sm:mb-6 text-white/90">Installation Instructions</h2>
-            
-            <div className="space-y-5 sm:space-y-6">
-              <div>
-                <h3 className="text-sm sm:text-base font-semibold text-cyan-400/90 mb-2">1. Install Python (if using pip)</h3>
-                <p className="text-[0.8rem] sm:text-[0.85rem] text-zinc-500 leading-relaxed">
-                  Codentis requires Python 3.10 or higher. Download from{' '}
-                  <a href="https://python.org" target="_blank" rel="noopener noreferrer" className="text-cyan-400 hover:text-cyan-300 transition-colors underline">
-                    python.org
-                  </a>
-                </p>
-              </div>
-
-              <div>
-                <h3 className="text-sm sm:text-base font-semibold text-cyan-400/90 mb-2">2. Install Codentis</h3>
-                <div className="bg-black/50 p-3 sm:p-4 rounded-xl border border-cyan-500/20 font-mono text-xs sm:text-sm">
-                  <code className="text-cyan-300">pip install codentis</code>
-                </div>
-              </div>
-
-              <div>
-                <h3 className="text-sm sm:text-base font-semibold text-cyan-400/90 mb-2">3. Run Codentis</h3>
-                <div className="bg-black/50 p-3 sm:p-4 rounded-xl border border-cyan-500/20 font-mono text-xs sm:text-sm">
-                  <code className="text-cyan-300">codentis</code>
-                </div>
-              </div>
-
-              <div>
-                <h3 className="text-sm sm:text-base font-semibold text-cyan-400/90 mb-2">4. Configure</h3>
-                <p className="text-[0.8rem] sm:text-[0.85rem] text-zinc-500 leading-relaxed">
-                  On first run, Codentis will guide you through setup. You&apos;ll need an API key from OpenRouter, OpenAI, or Anthropic.
+                <p className="text-zinc-500 text-[0.75rem] sm:text-[0.8rem]">
+                  💡 Double-click the .deb file to install, or run <code className="text-cyan-300 bg-black/50 px-1.5 py-0.5 rounded font-mono text-[0.7rem]">sudo dpkg -i codentis_0.1.0_amd64.deb</code>
                 </p>
               </div>
             </div>
