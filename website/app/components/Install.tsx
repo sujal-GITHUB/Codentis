@@ -5,23 +5,23 @@ import { useRef, useEffect } from "react";
 const steps = [
     {
         num: "1",
-        title: "Clone",
-        code: "git clone https://github.com/sujal-GITHUB/Codentis.git && cd Codentis",
+        title: "Download",
+        code: "Click the 'Download Codentis' button at the top of the page.",
     },
     {
         num: "2",
-        title: "Setup",
-        code: "python -m venv venv && venv\\Scripts\\activate && pip install -r requirements.txt",
+        title: "Initialize",
+        code: "Open Codentis.exe and authorize the initial setup.",
     },
     {
         num: "3",
         title: "Configure",
-        code: "echo API_KEY=your_key > .env",
+        code: "Answer a few quick questions (takes ~2 minutes) to tune the AI to your workflow.",
     },
     {
         num: "4",
-        title: "Run",
-        code: 'python main.py "Hello, Codentis"',
+        title: "Start Coding",
+        code: "You're ready! Start using Codentis directly in any project folder.",
     },
 ];
 

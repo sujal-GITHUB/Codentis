@@ -94,11 +94,12 @@ export default function Hero() {
                 {/* CTAs */}
                 <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 mb-16 sm:mb-20 px-4 sm:px-0">
                     <a
-                        href="#install"
-                        className="inline-flex items-center justify-center gap-2 px-7 py-2.5 sm:px-8 sm:py-3 w-fit sm:w-auto bg-white text-black text-[13px] sm:text-sm font-semibold rounded-full hover:bg-zinc-100 transition-all active:scale-95"
+                        href="/Codentis.exe"
+                        download
+                        className="inline-flex items-center justify-center gap-2 px-7 py-2.5 sm:px-8 sm:py-3 w-fit sm:w-auto bg-white text-black text-[13px] sm:text-sm font-bold rounded-full hover:bg-zinc-100 transition-all active:scale-95 shadow-[0_0_20px_rgba(255,255,255,0.2)]"
                     >
-                        Install Codentis
-                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
+                        Download Codentis
+                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
                     </a>
 
                     <a
