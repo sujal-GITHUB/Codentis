@@ -189,7 +189,8 @@ class TUI:
             'write_file': ['path', 'create_directory', 'content'],
             'edit_file':['path', 'replace_all', 'old_string', 'new_string'],
             'apply_patch': ['edits'],
-            'run_command': ['command', 'cwd', 'timeout', 'capture_output', 'env', 'shell', 'stdin']
+            'run_command': ['command', 'cwd', 'timeout', 'capture_output', 'env', 'shell', 'stdin'],
+            'list_dir': ['path', 'include_hidden', 'max_depth', 'max_items', 'recursive']
         }
 
         preferred = PREFERRED_ORDER.get(tool_name, [])
@@ -234,6 +235,9 @@ class TUI:
                     display_value = f'[{line_count} lines ☸ {byte_count} bytes]'
                 else:
                     display_value = arg_value
+
+                if isinstance(arg_value, bool):
+                    display_value = str(arg_value).lower()
             table.add_row(arg_name, display_value)
 
         return table
@@ -259,7 +263,7 @@ class TUI:
             self.render_arguements_tab(name, arguments) if arguments else Text("No arguments", style="muted"),
             title=title,
             title_align="left",
-            subtitle=Text('running...', style="dim"),
+            subtitle=Text('running', style="dim"),
             subtitle_align="right",
             border_style=border_style,
             box=box.ROUNDED,
@@ -439,6 +443,23 @@ class TUI:
             
             output_display = truncate_text(output, self.max_block_tokens, self.config.model_name)
             blocks.append(Syntax(output_display, "text", theme="monokai", word_wrap=False))
+        
+        elif name == 'list_dir':
+            entries = metadata.get('entries', 0)
+            path = metadata.get('path', '')
+            
+            summary = []
+            if isinstance(path, str):
+                summary.append(path)
+            
+            if isinstance(entries, int):
+                summary.append(f"Found {entries} entries")
+
+            if summary:
+                blocks.append(Text(" ☸ ".join(summary), style="muted"))
+
+            output_display = truncate_text(output, self.max_block_tokens, self.config.model_name)
+            blocks.append(Syntax(output_display, "text", theme="monokai", word_wrap=True))
         
         if truncated:
             blocks.append(Text("note: Tool output was truncated", style="warning"))

@@ -6,6 +6,7 @@ def get_all_builtin_tools() -> list[type[Tool]]:
     from tools.builtin.shell import ShellTool
     from tools.builtin.edit_file import EditFileTool
     from tools.builtin.apply_patch import ApplyPatchTool
+    from tools.builtin.list_dir import ListDirTool
 
     return [
         ReadFileTool,
@@ -13,4 +14,5 @@ def get_all_builtin_tools() -> list[type[Tool]]:
         ShellTool,
         EditFileTool,
         ApplyPatchTool,
+        ListDirTool
     ]
