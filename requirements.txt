@@ -12,3 +12,6 @@ ddgs
 httpx
 beautifulsoup4
 textual
+pyinstaller
+Pillow
+typer   

@@ -40,6 +40,37 @@ body {
   background: var(--color-bg-0);
   color: #e5e5e5;
   font-family: var(--font-sans);
+  width: 100%;
+}
+
+/* ── Custom Cyan Scrollbar ── */
+::-webkit-scrollbar {
+  width: 2px;
+  height: 2px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #0891b2; /* cyan-600 */
+  border-radius: 2px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #22d3ee; /* cyan-400 */
+}
+
+/* Firefox support */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #0891b2 transparent;
+}
+
+/* Specific styling for scrollable code blocks */
+.is-code::-webkit-scrollbar {
+  height: 2px;
 }
 
 ::selection {
