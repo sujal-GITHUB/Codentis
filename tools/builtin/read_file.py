@@ -51,7 +51,7 @@ class ReadFileTool(Tool):
             size_str = f"{file_size_mb:.2f} MB" if file_size >= 1 else f"{file_size} bytes"
             return ToolResult.error_result(
                 f"Cannot read binary file: {path.name} ({size_str})"
-                f"Condentis can only read text files."
+                f"Codentis can only read text files."
             )
         
         try:

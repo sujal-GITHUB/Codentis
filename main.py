@@ -120,16 +120,10 @@ class CLI:
 
 @click.command()
 @click.argument("prompt", required=False)
-@click.option(
-    '--cwd',
-    '-c',
-    type=click.Path(exists=True, file_okay=False, path_type=Path),
-    help='Current working directory'
-)
-
+@click.option("--cwd", type=click.Path(exists=True, path_type=Path, file_okay=False), default=Path.cwd(), help="Working directory")
 def main(
     prompt: str | None,
-    cwd: Path | None,
+    cwd: Path,
 ):
     try:
         config = load_config(cwd)
@@ -137,23 +131,16 @@ def main(
         console.print(f"[error]Configuration Error: {e}[/error]")
         sys.exit(1)
 
-    errors = config.validate()
-    if errors: 
-        for error in errors:
-            console.print(f"[error]Configuration Error: {error}[/error]")
-
-        sys.exit(1)
-    
     cli = CLI(config)
-
     if prompt:
-        result = asyncio.run(cli.run_single(prompt))
-        if result is None:
-            sys.exit(1)
+        # Run a single prompt
+        asyncio.run(cli.run_single(prompt))
     else:
+        # Run interactive mode
         try:
             asyncio.run(cli.run_interactive())
         except KeyboardInterrupt:
-            pass  # suppress click's "Aborted!" message
+            pass
 
-main()
+if __name__ == "__main__":
+    main()

@@ -79,6 +79,9 @@ def get_console()->Console:
 
     return console
 
+from rich.markdown import Markdown
+from rich.live import Live
+
 class TUI:
     def __init__(self, config = Config, console: Console | None = None):
         self.config = config
@@ -86,21 +89,32 @@ class TUI:
         self.assistant_stream_open = False
         self.tool_args_by_call_id: dict[str, dict[str, Any]] = {}
         self.cwd = self.config.cwd  
-        self.max_block_tokens = 2700   
+        self.max_block_tokens = 2700
+        self.full_assistant_message = ""
+        self.live: Live | None = None
 
     def begin_assistant(self)->None:
         self.console.print()
-        self.console.print(Rule(Text("Assistant", style="assistant")))
+        self.console.print(Rule(Text("Codentis", style="assistant")))
+        self.console.print(Text("\n", style="assistant"))
         self.assistant_stream_open = True
+        self.full_assistant_message = ""
+        self.live = Live(Markdown(""), console=self.console, auto_refresh=True)
+        self.live.start()
 
     def end_assistant(self)->None:
         if self.assistant_stream_open:
+            if self.live:
+                self.live.stop()
+                self.live = None
             self.console.print()
             
         self.assistant_stream_open = False
 
     def stream_assistant_delta(self, delta: str)->None:
-        self.console.print(delta, end="", markup=False)
+        self.full_assistant_message += delta
+        if self.live:
+            self.live.update(Markdown(self.full_assistant_message))
 
     def print_welcome(self, title: str, lines: list[str])->None:
         import getpass
@@ -507,6 +521,32 @@ class TUI:
                  
             output_display = truncate_text(output, self.max_block_tokens, self.config.model_name)
             blocks.append(Syntax(output_display, "text", theme="monokai", word_wrap=True))
+
+        elif name == 'web_fetch' and success:
+            status_code = metadata.get('status_code', 0)
+            url = metadata.get('url', '')
+            content_length = metadata.get('content_length', 0)
+
+            summary = []
+            if isinstance(status_code, int):
+                summary.append(f"{status_code}")
+                
+                if isinstance(url, str):
+                    summary.append(f"{url}")
+
+                if isinstance(content_length, int):
+                    summary.append(f"{content_length} bytes")
+
+                is_raw = metadata.get('is_raw', False)
+                summary.append("raw" if is_raw else "cleaned")
+
+                if summary:
+                    blocks.append(Text(" ☸ ".join(summary), style="muted"))
+                 
+            output_display = truncate_text(output, self.max_block_tokens, self.config.model_name)
+            blocks.append(Syntax(output_display, "text", theme="monokai", word_wrap=True))
+
+
         if not blocks and not success:
             blocks.append(Text(f"Error: {error or 'Unknown error'}", style="error"))
             if output:

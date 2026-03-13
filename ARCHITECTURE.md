@@ -97,6 +97,7 @@ A pluggable tool execution layer with validation, kind-based categorisation, and
   - **`apply_patch.py`** (`ApplyPatchTool`): Similar to `EditFileTool` but supports multiple non-contiguous edits in a single call.
   - **`shell.py`** (`ShellTool`): Executes shell commands, capturing STDOUT/STDERR separately and supporting timeout limits.
   - **`web_search.py`** (`WebSearchTool`): Searches the web for information using DuckDuckGo, returning titles, links, and snippets.
+  - **`web_fetch.py`** (`WebFetchTool`): Fetches the raw content of a specific web page.
 
 ---
 

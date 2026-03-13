@@ -9,3 +9,6 @@ pydantic
 tomli
 platformdirs
 ddgs
+httpx
+beautifulsoup4
+textual
