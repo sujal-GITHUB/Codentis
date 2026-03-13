@@ -21,7 +21,9 @@ class MessageItem:
         if self.tool_calls:
             result['tool_calls'] = self.tool_calls
         
-        if self.content:
+        # Always include content field for assistant and user roles
+        # OpenAI API requires content field even if empty when tool_calls are present
+        if self.role in ('assistant', 'user', 'tool'):
             result['content'] = self.content
 
         return result 

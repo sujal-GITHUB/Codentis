@@ -5,17 +5,17 @@ import { useEffect, useRef } from "react";
 const demos = [
     {
         tag: "Quick Query",
-        cmd: 'python main.py "Explain async/await"',
+        cmd: 'codentis chat "Explain async/await"',
         desc: "Ask anything. Get a streamed, formatted answer in your terminal.",
     },
     {
         tag: "Code Generation",
-        cmd: 'python main.py "Write a REST API endpoint"',
+        cmd: 'codentis chat "Write a REST API endpoint"',
         desc: "Generate production-ready code with full context awareness.",
     },
     {
         tag: "Debugging",
-        cmd: 'python main.py "Why is this returning None?"',
+        cmd: 'codentis chat "Why is this returning None?"',
         desc: "Describe your bug. Codentis analyzes and suggests the fix.",
     },
 ];

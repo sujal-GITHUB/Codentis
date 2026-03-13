@@ -52,7 +52,10 @@ export default function DownloadPage() {
               </div>
               <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-3 sm:p-4 text-xs sm:text-sm">
                 <p className="text-zinc-500 text-[0.75rem] sm:text-[0.8rem]">
-                  💡 Double-click the installer and follow the setup wizard. It will automatically add Codentis to your PATH.
+                  💡 Run the installer and follow the setup wizard. After installation, open a terminal and run <code className="text-cyan-300 bg-black/50 px-1.5 py-0.5 rounded font-mono text-[0.7rem]">codentis config</code> to set up your API key.
+                </p>
+                <p className="text-yellow-400 text-[0.75rem] sm:text-[0.8rem] mt-2">
+                  ⚠️ Windows may show a SmartScreen warning for unsigned apps. Click "More info" → "Run anyway" to proceed.
                 </p>
               </div>
             </div>
@@ -98,7 +101,7 @@ export default function DownloadPage() {
               </div>
               <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-3 sm:p-4 text-xs sm:text-sm">
                 <p className="text-zinc-500 text-[0.75rem] sm:text-[0.8rem]">
-                  💡 M1/M2/M3 Macs use Apple Silicon. Older Macs use Intel. Double-click the .pkg file to install.
+                  💡 M1/M2/M3 Macs use Apple Silicon. Older Macs use Intel. Double-click the .pkg file to install. After installation, run <code className="text-cyan-300 bg-black/50 px-1.5 py-0.5 rounded font-mono text-[0.7rem]">codentis config</code> in Terminal.
                 </p>
               </div>
             </div>
@@ -131,7 +134,7 @@ export default function DownloadPage() {
               </div>
               <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-3 sm:p-4 text-xs sm:text-sm">
                 <p className="text-zinc-500 text-[0.75rem] sm:text-[0.8rem]">
-                  💡 Double-click the .deb file to install, or run <code className="text-cyan-300 bg-black/50 px-1.5 py-0.5 rounded font-mono text-[0.7rem]">sudo dpkg -i codentis_0.1.0_amd64.deb</code>
+                  💡 Install with <code className="text-cyan-300 bg-black/50 px-1.5 py-0.5 rounded font-mono text-[0.7rem]">sudo dpkg -i codentis_0.1.0_amd64.deb</code> then run <code className="text-cyan-300 bg-black/50 px-1.5 py-0.5 rounded font-mono text-[0.7rem]">codentis config</code> to set up your API key.
                 </p>
               </div>
             </div>

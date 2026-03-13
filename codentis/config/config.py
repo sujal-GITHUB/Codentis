@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Field
 from enum import Enum
 from pathlib import Path
+import platform
 
 class ModelConfig(BaseModel):
     name: str = "gpt-4o"
@@ -13,6 +14,7 @@ class ShellEnvironmentPolicy(BaseModel):
         default_factory=lambda: ["*KEY*", "*SECRET*", "*TOKEN*", "*PASSWORD*", "*CREDENTIALS*"]
     )
     set_vars: dict[str, str] = Field(default_factory=dict)
+    platform: str = Field(default_factory=lambda: platform.system())
 
 class Config(BaseModel):
     model: ModelConfig = Field(default_factory=ModelConfig)

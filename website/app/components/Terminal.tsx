@@ -2,10 +2,10 @@
 
 import { useEffect, useRef, useState } from "react";
 
-const command = 'python main.py "Explain how Codentis works"';
+const command = 'codentis chat "Explain how Codentis works"';
 
 const outputLines = [
-    { cls: "accent", text: "───── Assistant ─────" },
+    { cls: "accent", text: "───── Codentis ─────" },
     { cls: "normal", text: "\u00A0" },
     { cls: "normal", text: "Codentis is a modular CLI AI agent built in Python." },
     { cls: "normal", text: "\u00A0" },

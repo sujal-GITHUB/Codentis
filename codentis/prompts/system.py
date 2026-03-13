@@ -59,15 +59,21 @@ def _get_environment_section(config: Config) -> str:
     """Generate the environment section."""
     now = datetime.now()
     os_info = f"{platform.system()} {platform.release()}"
+    platform_type = "Windows" if platform.system() == "Windows" else "Unix-like"
 
     return f"""# Environment
 
 - **Current Date**: {now.strftime("%A, %B %d, %Y")}
 - **Operating System**: {os_info}
+- **Platform Type**: {platform_type}
 - **Working Directory**: {config.cwd}
 - **Shell**: {_get_shell_info()}
 
 The user has granted you access to run tools in service of their request. Use them when needed.
+
+## Platform-Specific Command Guidelines
+
+{_get_platform_commands_section()}
 
 ## Available Codentis Commands
 
@@ -140,6 +146,44 @@ def _get_shell_info() -> str:
         return "PowerShell/cmd.exe"
     else:
         return os.environ.get("SHELL", "/bin/bash")
+
+
+def _get_platform_commands_section() -> str:
+    """Generate platform-specific command guidance."""
+    if platform.system() == "Windows":
+        return """**You are on Windows. Use Windows commands:**
+
+Common Windows Commands:
+- List files: `dir` (NOT `ls`)
+- System info: `systeminfo` (NOT `uname`)
+- View file: `type <file>` (NOT `cat`)
+- Environment vars: `set` (NOT `env`)
+- Find in files: `findstr` (NOT `grep`)
+- Network info: `ipconfig` (NOT `ifconfig`)
+- Processes: `tasklist` (NOT `ps`)
+- Copy: `copy` (NOT `cp`)
+- Move: `move` (NOT `mv`)
+- Delete: `del` (NOT `rm`)
+- Make directory: `mkdir` (NOT `mkdir -p`)
+- Path separator: `\\` (NOT `/`)
+
+**CRITICAL**: Do NOT use Unix commands like `uname`, `ls`, `cat`, `grep`, `ps`, etc. They will fail on Windows."""
+    else:
+        return """**You are on a Unix-like system (Linux/macOS). Use Unix commands:**
+
+Common Unix Commands:
+- List files: `ls -la`
+- System info: `uname -a`
+- View file: `cat <file>`
+- Environment vars: `env`
+- Find in files: `grep`
+- Network info: `ifconfig` or `ip addr`
+- Processes: `ps aux`
+- Copy: `cp`
+- Move: `mv`
+- Delete: `rm`
+- Make directory: `mkdir -p`
+- Path separator: `/`"""
 
 
 def _get_agents_md_section() -> str:
