@@ -333,7 +333,6 @@ class TUI:
 
     def extract_read_file_code(self, text: str) -> tuple[int, str] | None:
         body = text
-        # Match the actual header format: "Read X-Y of Z lines from filename"
         header_match = re.match(r"^Read \d+-\d+ of \d+ lines from .+?\n\n", text)
 
         if header_match:
@@ -492,6 +491,22 @@ class TUI:
                 output_display = truncate_text(output, self.max_block_tokens, self.config.model_name)
                 blocks.append(Syntax(output_display, "text", theme="monokai", word_wrap=True))
         
+        elif name == 'web_search' and success:
+            results = metadata.get('results', 0)
+            query = metadata.get('query', '')
+
+            summary = []
+            if isinstance(results, int):
+                summary.append(f"{results} results")
+                
+                if isinstance(query, str):
+                    summary.append(f"{query}")
+
+                if summary:
+                    blocks.append(Text(" ☸ ".join(summary), style="muted"))
+                 
+            output_display = truncate_text(output, self.max_block_tokens, self.config.model_name)
+            blocks.append(Syntax(output_display, "text", theme="monokai", word_wrap=True))
         if not blocks and not success:
             blocks.append(Text(f"Error: {error or 'Unknown error'}", style="error"))
             if output:

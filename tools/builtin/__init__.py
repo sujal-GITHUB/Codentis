@@ -9,6 +9,7 @@ def get_all_builtin_tools() -> list[type[Tool]]:
     from tools.builtin.list_dir import ListDirTool
     from tools.builtin.grep import GrepTool
     from tools.builtin.glob import GlobTool
+    from tools.builtin.web_search import WebSearchTool
 
     return [
         ReadFileTool,
@@ -18,5 +19,6 @@ def get_all_builtin_tools() -> list[type[Tool]]:
         ApplyPatchTool,
         ListDirTool,
         GrepTool,
-        GlobTool
+        GlobTool,
+        WebSearchTool
     ]

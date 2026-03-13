@@ -19,6 +19,7 @@ def get_all_builtin_tools()->list[type]:
     from tools.builtin.grep import GrepTool
     from tools.builtin.glob import GlobTool
     from tools.builtin.shell import ShellTool
+    from tools.builtin.web_search import WebSearchTool
     
     return [
         ReadFileTool,
@@ -28,5 +29,6 @@ def get_all_builtin_tools()->list[type]:
         ShellTool,
         ListDirTool,
         GrepTool,
-        GlobTool
+        GlobTool,
+        WebSearchTool
     ]
