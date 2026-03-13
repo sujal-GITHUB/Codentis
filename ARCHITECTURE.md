@@ -90,6 +90,8 @@ A pluggable tool execution layer with validation, kind-based categorisation, and
 - **`builtin/`**: Built-in tool implementations.
   - **`read_file.py`** (`ReadFileTool`): Reads text files with line numbers, optional offset/limit pagination, token-budget truncation, and binary-file detection.
   - **`list_dir.py`** (`ListDirTool`): Lists contents of a directory with support for recursion, hidden files, and item limits.
+  - **`grep.py`** (`GrepTool`): Searches for regex patterns in file contents, providing matching lines with line numbers.
+  - **`glob.py`** (`GlobTool`): Finds files by glob pattern with support for recursive search and directory pruning (skipping `venv`, `node_modules`, etc.).
   - **`write_file.py`** (`WriteFileTool`): Writes full content to files, supporting directory creation.
   - **`edit_file.py`** (`EditFileTool`): Performs precise search-and-replace line edits within existing files.
   - **`apply_patch.py`** (`ApplyPatchTool`): Similar to `EditFileTool` but supports multiple non-contiguous edits in a single call.

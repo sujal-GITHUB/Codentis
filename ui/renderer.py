@@ -86,7 +86,7 @@ class TUI:
         self.assistant_stream_open = False
         self.tool_args_by_call_id: dict[str, dict[str, Any]] = {}
         self.cwd = self.config.cwd  
-        self.max_block_tokens = 240   
+        self.max_block_tokens = 2700   
 
     def begin_assistant(self)->None:
         self.console.print()
@@ -190,7 +190,9 @@ class TUI:
             'edit_file':['path', 'replace_all', 'old_string', 'new_string'],
             'apply_patch': ['edits'],
             'run_command': ['command', 'cwd', 'timeout', 'capture_output', 'env', 'shell', 'stdin'],
-            'list_dir': ['path', 'include_hidden', 'max_depth', 'max_items', 'recursive']
+            'list_dir': ['path', 'include_hidden', 'max_depth', 'max_items', 'recursive'],
+            'grep': ['path', 'case_insensitive', 'pattern', 'recursive'],
+            'glob': ['path', 'pattern', 'recursive']
         }
 
         preferred = PREFERRED_ORDER.get(tool_name, [])
@@ -434,7 +436,7 @@ class TUI:
             else:
                 blocks.append(Text(error or output or "Unknown error", style="error"))
 
-        elif name == 'shell':
+        elif name == 'shell' and success:
             command = args.get('command')
             if isinstance(command, str) and command.strip():
                 blocks.append(Text(f"$ {command}", style="muted"))
@@ -444,7 +446,7 @@ class TUI:
             output_display = truncate_text(output, self.max_block_tokens, self.config.model_name)
             blocks.append(Syntax(output_display, "text", theme="monokai", word_wrap=False))
         
-        elif name == 'list_dir':
+        elif name == 'list_dir' and success:
             entries = metadata.get('entries', 0)
             path = metadata.get('path', '')
             
@@ -460,7 +462,43 @@ class TUI:
 
             output_display = truncate_text(output, self.max_block_tokens, self.config.model_name)
             blocks.append(Syntax(output_display, "text", theme="monokai", word_wrap=True))
+
+        elif name == 'grep' and success:
+            matches = metadata.get('matches', 0)
+            path = metadata.get('path', '')
+            files_searched = metadata.get('files_searched', 0)
+
+            summary = []
+            if isinstance(matches, int):
+                summary.append(f"{matches} matches")
+                
+                if isinstance(files_searched, int):
+                    summary.append(f"in {files_searched} files")
+
+                if summary:
+                    blocks.append(Text(" ☸ ".join(summary), style="muted"))
+
+                output_display = truncate_text(output, self.max_block_tokens, self.config.model_name)
+                blocks.append(Syntax(output_display, "text", theme="monokai", word_wrap=True))
         
+        elif name == 'glob' and success:
+            matches = metadata.get('matches', 0)
+            path = metadata.get('path', '')
+            files_searched = metadata.get('files_searched', 0)
+
+            if isinstance(matches, int):
+                blocks.append(Text(f"{matches} matches", style="muted"))
+                
+                output_display = truncate_text(output, self.max_block_tokens, self.config.model_name)
+                blocks.append(Syntax(output_display, "text", theme="monokai", word_wrap=True))
+        
+        if not blocks and not success:
+            blocks.append(Text(f"Error: {error or 'Unknown error'}", style="error"))
+            if output:
+                blocks.append(Text(output, style="muted"))
+        elif not blocks:
+            blocks.append(Text("No output", style="muted"))
+
         if truncated:
             blocks.append(Text("note: Tool output was truncated", style="warning"))
 
