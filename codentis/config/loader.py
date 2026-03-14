@@ -16,9 +16,7 @@ else:
 from platformdirs import user_config_dir
 from codentis.utils.errors import ConfigError
 import logging
-from codentis.ui.renderer import get_console
 
-console = get_console()
 logger = logging.getLogger(__name__)
 CONFIG_FILE_NAME = "codentis.toml"
 AGENT_MD_FILE = "agent.md"

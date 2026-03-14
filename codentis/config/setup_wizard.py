@@ -99,8 +99,8 @@ def run_setup_wizard(cwd: Optional[Path] = None) -> Dict[str, Any]:
                 ("We found API keys in your codentis.toml file.\n", "white"),
                 ("We'll use those settings and just need a few more details.\n", "dim"),
             ),
-            title="🚀 Setup Wizard",
-            border_style="cyan"
+            title="Setup Wizard",
+            border_style="bold cyan"
         ))
     else:
         console.print(Panel(
@@ -111,7 +111,7 @@ def run_setup_wizard(cwd: Optional[Path] = None) -> Dict[str, Any]:
                 ("~/.codentis/config.json", "bold dim"),
             ),
             title="🚀 First Run Setup",
-            border_style="cyan"
+            border_style="bold cyan"
         ))
     console.print()
     
@@ -220,7 +220,7 @@ def run_setup_wizard(cwd: Optional[Path] = None) -> Dict[str, Any]:
             ("You can now start using Codentis by running: ", "dim"),
             ("codentis", "bold cyan"),
         ),
-        title="✨ Setup Complete",
+        title="Setup Complete",
         border_style="green"
     ))
     console.print()

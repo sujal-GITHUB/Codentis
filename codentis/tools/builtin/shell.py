@@ -18,6 +18,64 @@ BLOCKED_COMMANDS = {
     "codentis doctor", "codentis version", "codentis"
 }
 
+# Commands that modify the filesystem or system state
+WRITE_COMMANDS = {
+    # File operations
+    "rm", "del", "rmdir", "mv", "move", "cp", "copy", "touch", "mkdir",
+    "echo", "cat", "type", "write", "tee",
+    # Package managers
+    "npm", "yarn", "pnpm", "pip", "pip3", "apt", "apt-get", "yum", "dnf",
+    "brew", "cargo", "gem", "composer", "go",
+    # Build tools
+    "make", "cmake", "gradle", "mvn", "ant",
+    # Git operations
+    "git",
+    # Archive operations
+    "tar", "zip", "unzip", "gzip", "gunzip",
+    # Download operations
+    "curl", "wget", "download",
+}
+
+def is_write_command(command: str) -> tuple[bool, str]:
+    """
+    Check if a command performs write operations.
+    Returns (is_write, reason)
+    """
+    cmd_lower = command.strip().lower()
+    cmd_parts = cmd_lower.split()
+    
+    if not cmd_parts:
+        return False, ""
+    
+    base_cmd = cmd_parts[0]
+    
+    # Check if it's a write command
+    if base_cmd in WRITE_COMMANDS:
+        # Special cases where we can determine it's read-only
+        if base_cmd == "git" and len(cmd_parts) > 1:
+            git_subcmd = cmd_parts[1]
+            read_only_git = {"status", "log", "diff", "show", "branch", "remote", "config"}
+            if git_subcmd in read_only_git:
+                return False, ""
+        
+        if base_cmd == "npm" and len(cmd_parts) > 1:
+            npm_subcmd = cmd_parts[1]
+            read_only_npm = {"list", "ls", "view", "show", "search", "outdated"}
+            if npm_subcmd in read_only_npm:
+                return False, ""
+        
+        # Check for output redirection (>, >>)
+        if ">" in command:
+            return True, "writes to file via redirection"
+        
+        return True, f"executes '{base_cmd}' which can modify files/system"
+    
+    # Check for output redirection even with read commands
+    if ">" in command or ">>" in command:
+        return True, "writes to file via redirection"
+    
+    return False, ""
+
 class ShellParams(BaseModel):
     command: str = Field(
         ...,
@@ -30,6 +88,10 @@ class ShellParams(BaseModel):
         description="Maximum number of seconds to wait for the command to complete (default: 30, max: 300)"
     )
     cwd: str | None = Field(None, description='Working directory for the command')
+    skip_permission_check: bool = Field(
+        False,
+        description="Internal flag to skip permission check (set automatically after user approval)"
+    )
 
 
 class ShellTool(Tool):
@@ -65,6 +127,25 @@ class ShellTool(Tool):
                     f"Command '{base_cmd}' is blocked for safety and cannot be executed.",
                     metadata = {'blocked': True}
                 )
+        
+        # Check if command requires permission (skip if already approved)
+        if not params.skip_permission_check:
+            is_write, reason = is_write_command(params.command)
+            if is_write:
+                # Use ask_user tool to get permission instead of returning error
+                return ToolResult(
+                    success=False,
+                    output="",
+                    error=f"This command {reason} and requires your approval.",
+                    metadata={
+                        'requires_user_input': True,
+                        'question': f"This command will {reason}:\n\n`{params.command}`\n\nDo you want to proceed?",
+                        'options': ["Yes, execute it", "No, cancel"],
+                        'allow_freeform': False,
+                        'permission_request': True,
+                        'command': params.command
+                    }
+                )
 
         if params.cwd:
             cwd = Path(params.cwd)
@@ -83,7 +164,9 @@ class ShellTool(Tool):
         # Use platform from config instead of sys.platform
         platform_name = self.config.shell_environment.platform
         if platform_name == "Windows":
-            shell_command = ["cmd.exe", "/c", params.command]
+            # On Windows, wrap the command in quotes to handle paths with spaces correctly
+            # This prevents issues with commands like: dir "C:\Program Files"
+            shell_command = ["cmd.exe", "/c", f'"{params.command}"']
         else:
             shell_command = ["/bin/sh", "-c", params.command]
 

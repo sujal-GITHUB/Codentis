@@ -19,6 +19,9 @@ class AgentEventType(Enum):
     # Tool calls
     TOOL_CALL_START = 'tool_call_start'
     TOOL_CALL_COMPLETE = 'tool_call_complete'
+    
+    # Permission requests
+    PERMISSION_REQUEST = 'permission_request'
 
 @dataclass
 class AgentEvent:
@@ -89,5 +92,16 @@ class AgentEvent:
                 "truncated": result.truncated,
                 "diff": diff_str,
                 "exit_code": result.exit_code
+            }
+        )
+    
+    @classmethod
+    def permission_request(cls, tool_name: str, command: str, reason: str):
+        return cls(
+            type=AgentEventType.PERMISSION_REQUEST,
+            data={
+                "tool_name": tool_name,
+                "command": command,
+                "reason": reason
             }
         )

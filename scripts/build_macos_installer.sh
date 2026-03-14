@@ -7,7 +7,7 @@ PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$PROJECT_ROOT"
 
 APP_NAME="Codentis"
-VERSION="0.1.0"
+VERSION="1.0.0"
 IDENTIFIER="com.codentis.app"
 INSTALL_LOCATION="/usr/local/bin"
 

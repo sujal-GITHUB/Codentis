@@ -14,5 +14,5 @@ beautifulsoup4
 textual
 pyinstaller
 Pillow
-typer   
-PIL
+typer
+packaging

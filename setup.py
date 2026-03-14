@@ -8,7 +8,7 @@ with open("requirements.txt", "r", encoding="utf-8") as fh:
 
 setup(
     name="codentis",
-    version="0.1.0",
+    version="1.0.0",
     author="Codentis Team",
     description="An intelligent CLI AI agent for developers",
     long_description=long_description,

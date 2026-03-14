@@ -4,12 +4,6 @@ import asyncio
 import typer
 from pathlib import Path
 from typing import Optional
-from rich.console import Console
-from rich.table import Table
-from rich.panel import Panel
-from rich.text import Text
-import httpx
-import platform
 
 from codentis import __version__
 from codentis.config import load_config
@@ -18,25 +12,30 @@ from codentis.config.config_manager import ConfigManager
 from codentis.app import CLI
 from codentis.utils.errors import ConfigError
 from codentis.utils.workspace_trust import check_workspace_trust
+from rich.console import Console
+from rich.panel import Panel
+from rich.table import Table
+from rich.text import Text
+
+console = Console()
 
 app = typer.Typer(
     name="codentis",
     help="An intelligent CLI AI agent for developers",
     add_completion=False
 )
-console = Console()
 
 def handle_exception(e: Exception) -> None:
     """Handle exceptions gracefully."""
     import traceback
-    console.print(f"\n[bold red]Error:[/bold red] {str(e)}")
+    print(f"\nError: {str(e)}")
     if isinstance(e, ConfigError):
-        console.print("\n[dim]Run 'codentis config' to reconfigure.[/dim]")
+        print("\nRun 'codentis config' to reconfigure.")
     
     # Show traceback in debug mode
     import os
     if os.environ.get('CODENTIS_DEBUG'):
-        console.print("\n[dim]Traceback:[/dim]")
+        print("\nTraceback:")
         traceback.print_exc()
     
     sys.exit(1)
@@ -49,25 +48,45 @@ def chat(
     """
     Start an interactive chat session with the AI agent (default command).
     """
+    # Check for updates (once per day)
+    try:
+        from codentis.utils.updater import check_for_updates, should_check_for_updates, mark_update_checked
+        
+        if should_check_for_updates():
+            update_info = check_for_updates()
+            if update_info:
+                console.print()
+                console.print(Panel(
+                    f"[bold cyan]New version available: v{update_info['version']}[/bold cyan]\n\n"
+                    f"[dim]Current version: v{__version__}[/dim]\n\n"
+                    f"Download: [link]{update_info.get('download_url') or update_info['url']}[/link]\n\n"
+                    f"[dim]Run 'codentis version' to see release notes[/dim]",
+                    title="[bold yellow]⚠ Update Available[/bold yellow]",
+                    border_style="yellow"
+                ))
+                console.print()
+            mark_update_checked()
+    except Exception:
+        pass  # Silently fail - don't interrupt user experience
     try:
         # Resolve working directory
         if cwd:
             cwd_path = Path(cwd).resolve()
             if not cwd_path.exists():
-                console.print(f"[bold red]Error:[/bold red] Directory does not exist: {cwd}")
+                print(f"Error: Directory does not exist: {cwd}")
                 sys.exit(1)
             if not cwd_path.is_dir():
-                console.print(f"[bold red]Error:[/bold red] Not a directory: {cwd}")
+                print(f"Error: Not a directory: {cwd}")
                 sys.exit(1)
         else:
             cwd_path = Path.cwd()
         
         # Check workspace trust
         if not check_workspace_trust(cwd_path):
-            console.print("[yellow]Workspace not trusted. Exiting.[/yellow]")
+            print("Workspace not trusted. Exiting.")
             sys.exit(0)
         
-        # Check and run setup if needed (pass cwd to load TOML configs)
+        # Check and run setup if needed
         user_config = check_and_run_setup(cwd_path)
         
         # Load full configuration
@@ -76,10 +95,10 @@ def chat(
         # Validate configuration
         errors = config.validate()
         if errors:
-            console.print("[bold red]Configuration errors:[/bold red]")
+            print("Configuration errors:")
             for error in errors:
-                console.print(f"  • {error}")
-            console.print("\n[dim]Run 'codentis config' to reconfigure.[/dim]")
+                print(f"  • {error}")
+            print("\nRun 'codentis config' to reconfigure.")
             sys.exit(1)
         
         # Run the agent
@@ -90,7 +109,7 @@ def chat(
             asyncio.run(cli.run_interactive())
             
     except KeyboardInterrupt:
-        console.print("\n[dim]Interrupted by user.[/dim]")
+        print("\nInterrupted by user.")
         sys.exit(0)
     except Exception as e:
         handle_exception(e)
@@ -147,6 +166,9 @@ def doctor():
     """
     Run diagnostics to check system health and configuration.
     """
+    import platform
+    import httpx
+    
     console.print()
     console.print(Panel(
         "[bold cyan]Running Codentis diagnostics...[/bold cyan]",
@@ -237,6 +259,8 @@ def version():
     """
     Show Codentis version information.
     """
+    import platform
+    
     console.print()
     console.print(Panel(
         Text.assemble(

@@ -1,0 +1,100 @@
+name: Build Test
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test-build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
+      
+      - name: Test Windows build
+        run: python scripts/build_exe.py 64
+      
+      - name: Check executable exists
+        run: |
+          if (Test-Path "dist\Codentis.exe") {
+            Write-Host "✓ Windows executable built successfully"
+            $size = (Get-Item "dist\Codentis.exe").Length / 1MB
+            Write-Host "Size: $([math]::Round($size, 2)) MB"
+          } else {
+            Write-Error "✗ Windows executable not found"
+            exit 1
+          }
+
+  test-build-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
+      
+      - name: Test macOS build
+        run: |
+          chmod +x scripts/build_macos.sh
+          ./scripts/build_macos.sh
+      
+      - name: Check binary exists
+        run: |
+          if [ -f "dist/codentis" ]; then
+            echo "✓ macOS binary built successfully"
+            ls -lh dist/codentis
+          else
+            echo "✗ macOS binary not found"
+            exit 1
+          fi
+
+  test-build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
+      
+      - name: Test Linux build
+        run: |
+          chmod +x scripts/build_linux.sh
+          ./scripts/build_linux.sh
+      
+      - name: Check binary exists
+        run: |
+          if [ -f "dist/codentis" ]; then
+            echo "✓ Linux binary built successfully"
+            ls -lh dist/codentis
+          else
+            echo "✗ Linux binary not found"
+            exit 1
+          fi

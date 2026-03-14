@@ -1,168 +1,265 @@
-from rich.console import Console
-from rich.theme import Theme
-from rich.rule import Rule
-from rich.text import Text
-from rich.panel import Panel
-from rich.table import Table
-from rich.syntax import Syntax
-from typing import Any, Tuple
-from codentis.utils.paths import display_path_relative_to_cwd
-from codentis.utils.text import truncate_text
+"""Lightweight terminal UI with expandable tool outputs.
+
+This module provides a minimal terminal UI using Rich for welcome/setup screens
+and ANSI escape codes for tool outputs to keep the interactive chat fast.
+
+Tool outputs are displayed in a collapsed format by default, showing:
+- Tool name with status icon (●)
+- Summary information
+- Expandable details with Ctrl+O
+
+This provides a clean, streamlined experience similar to Claude Code.
+"""
+
+import sys
+import threading
+from typing import Any, Dict, List
 from codentis.config.config import Config
-from pathlib import Path
-from rich import box
-try:
-    from rich.group import Group
-except ImportError:
-    from rich.text import Text as _Text
+from rich.console import Console
+from rich.panel import Panel
+from rich.text import Text
+from rich.table import Table
 
-    class Group:
-        """Minimal fallback for rich.group.Group (added in rich >=12)."""
-        def __init__(self, *renderables):
-            self.renderables = renderables
+console = Console()
 
-        def __rich_console__(self, console, options):
-            for renderable in self.renderables:
-                yield renderable
-import re
 
-AGENT_THEME = Theme(
-    {
-        # General
-        "info": "cyan",
-        "warning": "yellow",
-        "error": "red",
-        "success": "green",
-        "debug": "cyan",
-        "dim": "dim",
-        "border": "grey35",
-        "highlight": "bold white",
-        "muted": "grey50",
-        "primary": "#00FFFF",
-        "secondary": "orange3",
+class ToolOutput:
+    """Represents a tool call output."""
+    
+    def __init__(self, call_id: str, name: str, summary: str, details: str, success: bool = True, short_id: str = "", metadata: Dict[str, Any] = None):
+        self.call_id = call_id
+        self.name = name
+        self.summary = summary
+        self.details = details
+        self.success = success
+        self.expanded = False
+        self.index = 0  # Position in the list
+        self.short_id = short_id  # Short numeric ID for easy reference
+        self.metadata = metadata or {}  # Store metadata
 
-        # Welcome Screen
-        "welcome.title": "bold black on #00FFFF",
-        "welcome.border": "#00FFFF",
-        "welcome.heading": "bold #00FFFF",
-        "welcome.mascot": "#00FFFF",
-
-        # Roles
-        "user": "bold cyan",
-        "assistant": "bold white",
-        "system": "bold yellow",
-
-        # Tools
-        "tool": "bright_magenta bold",
-        "tool.read": "cyan",
-        "tool.write": "green",
-        "tool.search": "cyan",
-        "tool.execute": "yellow",
-        "tool.shell": "yellow",
-        "tool.network": "cyan",
-        "tool.memory": "magenta",
-        "tool.mcp": "bright_cyan",
-        "tool.error": "red",
-        "tool.result": "green",
-
-        # Code
-        "code": "white"
-    }
-)
-
-console: Console | None = None
-
-def get_console()->Console:
-    global console
-    if console is None:
-        console = Console(theme=AGENT_THEME, highlight=False, width=None)
-
-    return console
-
-from rich.markdown import Markdown
-from rich.live import Live
 
 class TUI:
-    def __init__(self, config = Config, console: Console | None = None):
+    """Lightweight terminal UI."""
+    
+    def __init__(self, config: Config, console=None):
         self.config = config
-        self.console = console or get_console()
-        self.assistant_stream_open = False
-        self.tool_args_by_call_id: dict[str, dict[str, Any]] = {}
-        self.cwd = self.config.cwd  
-        self.max_block_tokens = 2700
-        self.full_assistant_message = ""
-        self.live: Live | None = None
-
-    def begin_assistant(self)->None:
-        self.console.print()
-        self.console.print(Rule(Text("Codentis", style="assistant")))
-        self.console.print(Text("\n", style="assistant"))
-        self.assistant_stream_open = True
-        self.full_assistant_message = ""
-        self.live = Live(Markdown(""), console=self.console, auto_refresh=True)
-        self.live.start()
-
-    def end_assistant(self)->None:
-        if self.assistant_stream_open:
-            if self.live:
-                self.live.stop()
-                self.live = None
-            self.console.print()
-            
-        self.assistant_stream_open = False
-
-    def stream_assistant_delta(self, delta: str)->None:
-        self.full_assistant_message += delta
-        if self.live:
-            self.live.update(Markdown(self.full_assistant_message))
-
-    def print_welcome(self, title: str, lines: list[str])->None:
-        import getpass
-        import os
-        from codentis import __version__
+        self.tool_outputs: List[ToolOutput] = []
+        self.tool_outputs_by_id: Dict[str, ToolOutput] = {}  # Map short IDs to tool outputs
+        self.current_message = ""
+        self.assistant_streaming = False
+        self.last_tool_index = -1
+        self.next_tool_id = 1  # Counter for generating short IDs
+        self.thinking_active = False
+        self.thinking_thread = None
+        self.thinking_message = "Thinking"
         
+        # ANSI escape codes
+        self.BOLD = "\033[1m"
+        self.DIM = "\033[2m"
+        self.RESET = "\033[0m"
+        self.CYAN = "\033[36m"
+        self.GREEN = "\033[32m"
+        self.RED = "\033[31m"
+        self.YELLOW = "\033[33m"
+        self.BLUE = "\033[34m"
+        self.GRAY = "\033[90m"
+        self.MAGENTA = "\033[35m"
+        self.ORANGE = "\033[38;5;208m"
+        self.PURPLE = "\033[38;5;141m"
+        self.PINK = "\033[38;5;213m"
+        self.TEAL = "\033[38;5;51m"
+        self.LIME = "\033[38;5;154m"
+        self.BG_DARK = "\033[48;5;235m"
+        self.BG_DARKER = "\033[48;5;233m"
+        
+        # Tool color mapping
+        self.tool_colors = {
+            "web_search": self.PURPLE,
+            "web_fetch": self.TEAL,
+            "read_file": self.BLUE,
+            "write_file": self.ORANGE,
+            "edit_file": self.YELLOW,
+            "apply_patch": self.LIME,
+            "shell": self.MAGENTA,
+            "list_dir": self.CYAN,
+            "grep": self.PINK,
+            "glob": self.CYAN,
+            "ask_user": self.GREEN,
+        }
+    
+    def toggle_tool(self, tool_id: str = None):
+        """Toggle the expansion state of a tool output by ID, or the last one if no ID given."""
+        if tool_id:
+            # Toggle specific tool by ID
+            tool = self.tool_outputs_by_id.get(tool_id)
+            if tool:
+                tool.expanded = not tool.expanded
+                print()  # New line for separation
+                if tool.expanded:
+                    self._print_expanded_tool(tool)
+                else:
+                    print(f"{self.DIM}Tool output #{tool_id} collapsed. Type /e {tool_id} to expand again.{self.RESET}")
+            else:
+                print(f"{self.RED}Tool #{tool_id} not found. Use /list to see available tool IDs.{self.RESET}")
+        else:
+            # Toggle last tool
+            if self.tool_outputs:
+                tool = self.tool_outputs[-1]
+                tool.expanded = not tool.expanded
+                print()  # New line for separation
+                if tool.expanded:
+                    self._print_expanded_tool(tool)
+                else:
+                    print(f"{self.DIM}Tool output collapsed. Type /e to expand again.{self.RESET}")
+            else:
+                print(f"{self.DIM}No tool outputs to expand.{self.RESET}")
+    
+    def list_tools(self):
+        """List all tool outputs with their IDs."""
+        if not self.tool_outputs:
+            print(f"{self.DIM}No tool outputs yet.{self.RESET}")
+            return
+        
+        print(f"\n{self.BOLD}{self.CYAN}Tool Outputs:{self.RESET}\n")
+        for tool in self.tool_outputs:
+            tool_color = self.tool_colors.get(tool.name, self.GRAY)
+            status_color = self.GREEN if tool.success else self.RED
+            status = "✓" if tool.success else "✗"
+            print(f"  {tool_color}●{self.RESET} {status_color}#{tool.short_id}{self.RESET} {status} {self.BOLD}{tool.name}{self.RESET} - {self.DIM}{tool.summary}{self.RESET}")
+        print(f"\n{self.DIM}Type /e <id> to expand a specific tool output{self.RESET}\n")
+    
+    def toggle_last_tool(self):
+        """Toggle the expansion state of the most recent tool output."""
+        self.toggle_tool()
+    
+    def start_thinking(self, message: str = "Thinking"):
+        """Start animated thinking indicator."""
+        # If already active, just update the message
+        if self.thinking_active:
+            self.thinking_message = message
+            return
+        
+        self.thinking_active = True
+        self.thinking_message = message
+        
+        def animate():
+            frames = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
+            idx = 0
+            while self.thinking_active:
+                frame = frames[idx % len(frames)]
+                msg = self.thinking_message
+                print(f"\r{self.DIM}{frame} {msg}...{self.RESET}", end="", flush=True)
+                idx += 1
+                import time
+                time.sleep(0.1)
+            # Clear the line when done
+            print(f"\r{' ' * 50}\r", end="", flush=True)
+        
+        self.thinking_thread = threading.Thread(target=animate, daemon=True)
+        self.thinking_thread.start()
+    
+    def update_thinking(self, message: str):
+        """Update the thinking message."""
+        if self.thinking_active:
+            self.thinking_message = message
+    
+    def stop_thinking(self):
+        """Stop thinking indicator."""
+        if self.thinking_active:
+            self.thinking_active = False
+            if self.thinking_thread:
+                self.thinking_thread.join(timeout=0.5)
+            # Small delay to ensure the line is fully cleared
+            import time
+            time.sleep(0.05)
+            # Add a newline after clearing to ensure proper spacing
+            print()
+    
+    def _print_expanded_tool(self, tool: ToolOutput):
+        """Print the full expanded view of a tool output."""
+        # Get tool color
+        tool_color = self.tool_colors.get(tool.name, self.GRAY)
+        status_color = self.GREEN if tool.success else self.RED
+        
+        print(f"\n{self.GRAY}{'─' * 80}{self.RESET}")
+        print(f"{tool_color}● {self.RESET}{self.BOLD}{tool.name} #{tool.short_id}{self.RESET} {self.DIM}(expanded){self.RESET}")
+        print(f"  {self.DIM}└ {tool.summary}{self.RESET}")
+        print(f"{self.GRAY}{'─' * 80}{self.RESET}\n")
+        
+        # Show metadata if present
+        if tool.metadata:
+            print(f"{self.CYAN}{self.BOLD}Metadata:{self.RESET}")
+            import json
+            for key, value in tool.metadata.items():
+                # Format value nicely
+                if isinstance(value, (dict, list)):
+                    value_str = json.dumps(value, indent=2)
+                else:
+                    value_str = str(value)
+                print(f"  {self.CYAN}{key}:{self.RESET} {self.DIM}{value_str}{self.RESET}")
+            print()
+        
+        # Show full details
+        print(f"{self.CYAN}{self.BOLD}Output:{self.RESET}")
+        if tool.success:
+            lines = tool.details.split('\n')
+            for line in lines[:100]:  # Limit to 100 lines
+                print(f"{self.DIM}{line}{self.RESET}")
+            if len(lines) > 100:
+                print(f"\n{self.DIM}... ({len(lines) - 100} more lines truncated){self.RESET}")
+        else:
+            print(f"{self.RED}{tool.details}{self.RESET}")
+        
+        print(f"\n{self.GRAY}{'─' * 80}{self.RESET}")
+        print(f"{self.DIM}Type /e {tool.short_id} to collapse{self.RESET}\n")
+    
+    def print_welcome(self, title: str, lines: List[str]):
+        """Print welcome message using Rich with ASCII art mascot."""
+        import getpass
+        from codentis import __version__
+
         try:
             username = getpass.getuser()
         except:
             username = "User"
-            
+
         model_name = "Agent"
-        cwd = str(self.cwd)
+        cwd = str(self.config.cwd)
         provider = "AI Provider"
-        
+
         for line in lines:
             if "model:" in line.lower():
                 model_name = line.split(":", 1)[1].strip()
-            elif "cwd:" in line.lower():
+            elif "working directory:" in line.lower():
                 cwd = line.split(":", 1)[1].strip()
             elif "provider:" in line.lower():
                 provider = line.split(":", 1)[1].strip()
 
         # Create the welcome panel similar to Claude Code
         welcome_text = Text()
-        welcome_text.append(f"Welcome back, {username}!\n\n", style="bold white")
-        
+        welcome_text.append(f"Welcome back {username}!\n\n", style="bold white")
+
         mascot_lines = [
-"⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀",
-"⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣿⣿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀",
-"⠀⠀⠀⠀⠀⣤⣄⠀⠀⠀⠀⠀⠀⠐⠛⠛⠂⠀⠀⠀⠀⠀⠀⣠⣤⠀⠀⠀⠀⠀",
-"⠀⠀⠀⠀⠀⠙⢿⣷⡶⠀⣀⣴⣶⣾⣟⣻⣷⣶⣦⣀⠀⢶⣾⡿⠋⠀⠀⠀⠀⠀",
-"⠀⠀⠀⠀⠀⠀⠘⠋⣠⢞⣿⠿⠛⠉⣉⣉⠉⠛⠿⣿⡳⣄⠙⠃⠀⠀⠀⠀⠀⠀",
-"⠀⠀⠀⠀⠀⠀⢀⣼⣿⡟⠁⣤⡀⠀⢹⡏⠀⢀⣤⠈⢻⣿⣧⡀⠀⠀⠀⠀⠀⠀",
-"⠀⠀⠀⠀⢀⠀⣸⣿⡟⠀⠀⠈⠻⠂⢈⡁⠐⠟⠁⠀⠀⢻⣿⣇⠀⡀⠀⠀⠀⠀",
-"⠀⢾⣿⣿⣿⠀⣿⣹⡇⢸⡷⠶⠆⠰⣿⣿⠆⠰⠶⢾⡇⢸⣏⣿⠀⣿⣿⣿⡷⠀",
-"⠀⠀⠀⠀⠈⠀⢹⣿⣧⠀⠀⢀⣴⠄⢈⡁⠠⣦⡀⠀⠀⣼⣿⡏⠀⠁⠀⠀⠀⠀",
-"⠀⠀⠀⠀⠀⠀⠈⢻⣿⣧⡀⠛⠁⠀⣸⣇⠀⠈⠛⢀⣼⣿⡟⠁⠀⠀⠀⠀⠀⠀",
-"⠀⠀⠀⠀⠀⠀⢠⣄⠙⢮⣿⣶⣤⣀⣉⣉⣀⣤⣶⣿⡵⠋⣠⡄⠀⠀⠀⠀⠀⠀",
-"⠀⠀⠀⠀⠀⣠⣾⡿⠷⠀⠉⠻⠿⢿⣯⣽⡿⠿⠟⠉⠀⠾⢿⣷⣄⠀⠀⠀⠀⠀",
-"⠀⠀⠀⠀⠀⠛⠋⠀⠀⠀⠀⠀⠀⠠⣤⣤⠄⠀⠀⠀⠀⠀⠀⠙⠛⠀⠀⠀⠀⠀",
-"⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣿⣿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀",
-"⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⠋⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀"
-]
-        
+            "⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀",
+            "⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣿⣿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀",
+            "⠀⠀⠀⠀⠀⣤⣄⠀⠀⠀⠀⠀⠀⠐⠛⠛⠂⠀⠀⠀⠀⠀⠀⣠⣤⠀⠀⠀⠀⠀",
+            "⠀⠀⠀⠀⠀⠙⢿⣷⡶⠀⣀⣴⣶⣾⣟⣻⣷⣶⣦⣀⠀⢶⣾⡿⠋⠀⠀⠀⠀⠀",
+            "⠀⠀⠀⠀⠀⠀⠘⠋⣠⢞⣿⠿⠛⠉⣉⣉⠉⠛⠿⣿⡳⣄⠙⠃⠀⠀⠀⠀⠀⠀",
+            "⠀⠀⠀⠀⠀⠀⢀⣼⣿⡟⠁⣤⡀⠀⢹⡏⠀⢀⣤⠈⢻⣿⣧⡀⠀⠀⠀⠀⠀⠀",
+            "⠀⠀⠀⠀⢀⠀⣸⣿⡟⠀⠀⠈⠻⠂⢈⡁⠐⠟⠁⠀⠀⢻⣿⣇⠀⡀⠀⠀⠀⠀",
+            "⠀⢾⣿⣿⣿⠀⣿⣹⡇⢸⡷⠶⠆⠰⣿⣿⠆⠰⠶⢾⡇⢸⣏⣿⠀⣿⣿⣿⡷⠀",
+            "⠀⠀⠀⠀⠈⠀⢹⣿⣧⠀⠀⢀⣴⠄⢈⡁⠠⣦⡀⠀⠀⣼⣿⡏⠀⠁⠀⠀⠀⠀",
+            "⠀⠀⠀⠀⠀⠀⠈⢻⣿⣧⡀⠛⠁⠀⣸⣇⠀⠈⠛⢀⣼⣿⡟⠁⠀⠀⠀⠀⠀⠀",
+            "⠀⠀⠀⠀⠀⠀⢠⣄⠙⢮⣿⣶⣤⣀⣉⣉⣀⣤⣶⣿⡵⠋⣠⡄⠀⠀⠀⠀⠀⠀",
+            "⠀⠀⠀⠀⠀⣠⣾⡿⠷⠀⠉⠻⠿⢿⣯⣽⡿⠿⠟⠉⠀⠾⢿⣷⣄⠀⠀⠀⠀⠀",
+            "⠀⠀⠀⠀⠀⠛⠋⠀⠀⠀⠀⠀⠀⠠⣤⣤⠄⠀⠀⠀⠀⠀⠀⠙⠛⠀⠀⠀⠀⠀",
+            "⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣿⣿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀",
+            "⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⠋⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀"
+        ]
+
         for mascot_line in mascot_lines:
-            welcome_text.append(mascot_line + "\n", style="welcome.mascot")
-        
+            welcome_text.append(mascot_line + "\n", style="bold cyan")
+
         welcome_text.append("\n")
         welcome_text.append(model_name, style="bold white")
         welcome_text.append(" • ", style="dim")
@@ -172,406 +269,283 @@ class TUI:
 
         # Tips section
         tips_text = Text()
-        tips_text.append("Tips for getting started\n", style="welcome.heading")
+        tips_text.append("Tips for getting started\n", style="bold cyan")
         tips_text.append("Run ", style="white")
         tips_text.append("/init", style="cyan")
-        tips_text.append(" to create a CODENTIS.md file with instructions for...\n\n", style="white")
+        tips_text.append(" to create a CODENTIS.md file with instructions for Codentis\n\n", style="white")
         
-        tips_text.append("Recent activity\n", style="welcome.heading")
+        tips_text.append("Commands\n", style="bold cyan")
+        tips_text.append("/e <id>", style="cyan")
+        tips_text.append(" - Expand/collapse tool output by ID\n", style="white")
+        tips_text.append("/e", style="cyan")
+        tips_text.append(" - Expand/collapse last tool output\n", style="white")
+        tips_text.append("/list", style="cyan")
+        tips_text.append(" - List all tool outputs with IDs\n", style="white")
+        tips_text.append("/exit", style="cyan")
+        tips_text.append(" - Quit\n\n", style="white")
+
         tips_text.append("No recent activity", style="dim")
 
         # Create two-column layout
+        from rich.table import Table
         layout_table = Table.grid(expand=True)
         layout_table.add_column(ratio=1)
         layout_table.add_column(ratio=1)
         layout_table.add_row(welcome_text, tips_text)
 
-        self.console.print()
-        self.console.print(
+        console.print()
+        console.print(
             Panel(
                 layout_table,
-                title=Text(f" Codentis v{__version__} ", style="welcome.title"),
+                title=f"[bold cyan] Codentis v{__version__} [/bold cyan]",
                 title_align="left",
-                border_style="welcome.border",
-                box=box.ROUNDED,
+                border_style="bold cyan",
                 padding=(1, 2),
                 expand=True
             )
         )
-        self.console.print()
-
-    def ordered_args(self, tool_name: str, args: dict[str, Any])->list[tuple[str, Any]]:
-        PREFERRED_ORDER = {
-            'read_file': ['path', 'offset', 'limit'],
-            'write_file': ['path', 'create_directory', 'content'],
-            'edit_file':['path', 'replace_all', 'old_string', 'new_string'],
-            'apply_patch': ['edits'],
-            'run_command': ['command', 'cwd', 'timeout', 'capture_output', 'env', 'shell', 'stdin'],
-            'list_dir': ['path', 'include_hidden', 'max_depth', 'max_items', 'recursive'],
-            'grep': ['path', 'case_insensitive', 'pattern', 'recursive'],
-            'glob': ['path', 'pattern', 'recursive']
-        }
-
-        preferred = PREFERRED_ORDER.get(tool_name, [])
-        ordered: list[tuple[str, Any]] = []
-        seen = set()
-
-        if preferred:
-            for arg_name in preferred:
-                if arg_name in args:
-                    ordered.append((arg_name, args[arg_name]))
-                    seen.add(arg_name)
-
-        remaining_keys = set(args.keys()) - seen
-        for key in remaining_keys:
-            ordered.append((key, args[key]))
-
-        return ordered
-
-    def render_arguements_tab(self, tool_name: str, args: dict[str, Any])->Table:
-        table = Table.grid(
-            padding=(0, 1)
-        )
-
-        table.add_column(style="muted", justify="right", no_wrap=True)
-        table.add_column(style="code", overflow="fold")
-
-        for arg_name, arg_value in self.ordered_args(tool_name, args):
-            display_value = str(arg_value)
-            if arg_name == 'edits' and isinstance(arg_value, list):
-                parts = [f"[{len(arg_value)} edits]"]
-                for edit in arg_value:
-                    if isinstance(edit, dict):
-                        p = edit.get('path', 'unknown')
-                        o_lines = len(str(edit.get('old_string', '')).splitlines())
-                        n_lines = len(str(edit.get('new_string', '')).splitlines())
-                        parts.append(f"  {p}: [old: {o_lines} lines] -> [new: {n_lines} lines]")
-                display_value = "\n".join(parts)
-            elif isinstance(arg_value, str):
-                if arg_name in {'content', 'old_string', 'new_string', 'patch'}:
-                    line_count = len(arg_value.splitlines()) or 0
-                    byte_count = len(arg_value.encode('utf-8', errors='replace'))
-                    display_value = f'[{line_count} lines ☸ {byte_count} bytes]'
-                else:
-                    display_value = arg_value
-
-                if isinstance(arg_value, bool):
-                    display_value = str(arg_value).lower()
-            table.add_row(arg_name, display_value)
-
-        return table
-
-    def tool_call_start(self, call_id: str, name: str, tool_kind: str | None, arguments: dict[str, Any])->None:
-        self.tool_args_by_call_id[call_id] = arguments  
-        border_style = f"tool.{tool_kind}" if tool_kind else "tool"
-
-        title = Text.assemble(
-            ("☸ ", "muted"),
-            (name, "tool"),
-            (" ", "muted"),
-            (f"#{call_id[:8]}", "muted")
-        )
-
-        display_args = dict(arguments)
-        for key in ('path', 'cwd'):
-            val = display_args.get(key)
-            if isinstance(val, str):
-                display_args[key] = str(display_path_relative_to_cwd(val))
-
-        panel = Panel(
-            self.render_arguements_tab(name, arguments) if arguments else Text("No arguments", style="muted"),
-            title=title,
-            title_align="left",
-            subtitle=Text('running', style="dim"),
-            subtitle_align="right",
-            border_style=border_style,
-            box=box.ROUNDED,
-            padding=(1, 2)
-        )
-
-        self.console.print()
-        self.console.print(panel)
-
-    def guess_language(self, path: str| None)->str:
-        if not path:
-            return "text"
-
-        suffix = Path(path).suffix.lower()
-        return {
-            ".py":"python",
-            ".js":"javascript",
-            ".ts": "typescript",
-            ".tsx": "tsx",
-            ".jsx": "jsx",
-            ".html": "html",
-            ".css": "css",
-            ".json": "json",
-            ".yaml": "yaml",
-            ".yml": "yaml",
-            ".md": "markdown",
-            ".sh": "bash",
-            ".bash": "bash",
-            ".sql": "sql",
-            ".c": "c",
-            ".cpp": "cpp",
-            ".h": "c",
-            ".hpp": "cpp",
-            ".rs": "rust",
-            ".go": "go",
-            ".rb": "ruby",
-            ".php": "php",
-            ".java": "java",
-            ".kt": "kotlin",
-            ".swift": "swift",
-            "rs": "rust",
-            "go": "go",
-            "rb": "ruby",
-            "php": "php",
-            "java": "java",
-            "kt": "kotlin",
-            "swift": "swift",
-            "toml": "toml",
-            "xml": "xml",
-            "dockerfile": "dockerfile",
-            "makefile": "makefile",
-            "txt": "text",
-            ".ini": "ini",
-            ".cfg": "ini",
-            ".log": "text",
-            ".zsh": "bash",
-            ".fish": "fish",
-            ".rst": "restructuredtext",
-            ".adoc": "asciidoc",
-            ".cs": "csharp",
-            ".scala": "scala",
-            ".dart": "dart",
-            ".lua": "lua"
-        }.get(suffix, "text")
-
-    def extract_read_file_code(self, text: str) -> tuple[int, str] | None:
-        body = text
-        header_match = re.match(r"^Read \d+-\d+ of \d+ lines from .+?\n\n", text)
-
+        console.print()
+    
+    def begin_assistant(self):
+        """Start streaming assistant message."""
+        self.assistant_streaming = True
+        self.current_message = ""
+        self.markdown_buffer = ""  # Buffer for incomplete markdown patterns
+        self.stop_thinking()  # Stop thinking indicator when response starts
+        
+        # Don't print new line or arrow - continue on the same line where thinking was
+        print(f"{self.BOLD}❯{self.RESET} ", end="", flush=True)
+    
+    def stream_assistant_delta(self, delta: str):
+        """Stream assistant message delta with real-time markdown rendering."""
+        self.current_message += delta
+        self.markdown_buffer += delta
+        
+        # Process and render markdown patterns as they complete
+        rendered = self._render_streaming_markdown()
+        if rendered:
+            print(rendered, end="", flush=True)
+    
+    def end_assistant(self):
+        """End assistant message streaming."""
+        self.assistant_streaming = False
+        
+        # Flush any remaining buffer
+        if self.markdown_buffer:
+            print(self.markdown_buffer, end="", flush=True)
+            self.markdown_buffer = ""
+        
+        print()  # Add newline after output
+    
+    def _render_streaming_markdown(self) -> str:
+        """Render markdown patterns from buffer as they complete."""
+        import re
+        
+        output = ""
+        buffer = self.markdown_buffer
+        
+        # Check for complete markdown patterns and render them
+        
+        # Bold: **text** (only if pattern is complete)
+        bold_match = re.search(r'\*\*([^*]+)\*\*', buffer)
+        if bold_match:
+            # Found complete bold pattern
+            before = buffer[:bold_match.start()]
+            bold_text = bold_match.group(1)
+            after = buffer[bold_match.end():]
+            
+            output = before + f'{self.BOLD}{bold_text}{self.RESET}'
+            self.markdown_buffer = after
+            return output
+        
+        # Headers: ## Text (at start of line, complete when newline found)
+        header_match = re.match(r'^(#{1,6})\s+([^\n]+)\n', buffer)
         if header_match:
-            body = text[header_match.end():]
-
-        # Lines are formatted as "     1 | code_here"
-        code_lines: list[str] = []
-        start_line = None
-
-        for line in body.splitlines():
-            m = re.match(r"^\s*(\d+)\s*\|\s?(.*)$", line)
-            if not m:
-                if not code_lines:
-                    continue  # skip any unexpected preamble
-                break  # stop at truncation markers etc.
-
-            line_no = int(m.group(1))
-            if start_line is None:
-                start_line = line_no
-            code_lines.append(m.group(2))
-
-        if start_line is None or not code_lines:
-            return None
-
-        return start_line, "\n".join(code_lines)
-
+            header_text = header_match.group(2)
+            after = buffer[header_match.end():]
+            
+            output = f'{self.CYAN}{self.BOLD}{header_text}{self.RESET}\n'
+            self.markdown_buffer = after
+            return output
+        
+        # List items: - Item or * Item (complete when newline found)
+        list_match = re.match(r'^(\s*)([-*])\s+([^\n]+)\n', buffer, re.MULTILINE)
+        if list_match:
+            indent = list_match.group(1)
+            item_text = list_match.group(3)
+            after = buffer[list_match.end():]
+            
+            output = f'{indent}{self.CYAN}•{self.RESET} {item_text}\n'
+            self.markdown_buffer = after
+            return output
+        
+        # Inline code: `code` (only if pattern is complete)
+        code_match = re.search(r'`([^`]+)`', buffer)
+        if code_match:
+            before = buffer[:code_match.start()]
+            code_text = code_match.group(1)
+            after = buffer[code_match.end():]
+            
+            output = before + f'{self.YELLOW}{code_text}{self.RESET}'
+            self.markdown_buffer = after
+            return output
+        
+        # If buffer has complete lines without markdown, output them
+        if '\n' in buffer and not any(pattern in buffer for pattern in ['**', '##', '`', '- ', '* ']):
+            lines = buffer.split('\n')
+            if len(lines) > 1:
+                # Output all complete lines except the last (incomplete) one
+                output = '\n'.join(lines[:-1]) + '\n'
+                self.markdown_buffer = lines[-1]
+                return output
+        
+        # If buffer is getting long without patterns, output some of it
+        if len(buffer) > 100 and not any(pattern in buffer[-50:] for pattern in ['**', '##', '`', '- ', '* ']):
+            # Output first 50 chars
+            output = buffer[:50]
+            self.markdown_buffer = buffer[50:]
+            return output
+        
+        return ""
+    
+    def _apply_inline_markdown(self, text: str) -> str:
+        """Apply basic markdown styling to text for streaming."""
+        import re
+        
+        # Store original text for line-based processing
+        result = text
+        
+        # Bold: **text** -> styled text
+        result = re.sub(r'\*\*([^*]+)\*\*', f'{self.BOLD}\\1{self.RESET}', result)
+        
+        # Headers: ## Text -> colored and bold
+        result = re.sub(r'^(#{1,6})\s+(.+)$', f'{self.CYAN}{self.BOLD}\\2{self.RESET}', result, flags=re.MULTILINE)
+        
+        # List items: - Item or * Item -> colored bullet
+        result = re.sub(r'^(\s*)([-*])\s+', f'\\1{self.CYAN}•{self.RESET} ', result, flags=re.MULTILINE)
+        
+        # Inline code: `code` -> styled
+        result = re.sub(r'`([^`]+)`', f'{self.YELLOW}\\1{self.RESET}', result)
+        
+        return result
+    
+    def tool_call_start(self, call_id: str, name: str, tool_kind: str | None, arguments: Dict[str, Any]):
+        """Show tool call started."""
+        summary = self._generate_summary(name, arguments)
+        
+        # Generate short ID
+        short_id = str(self.next_tool_id)
+        self.next_tool_id += 1
+        
+        # Get color for this tool
+        tool_color = self.tool_colors.get(name, self.GRAY)
+        
+        # Show loading indicator with ID and colored dot
+        print(f"\n{tool_color}● {self.RESET}{self.BOLD}{name} #{short_id}{self.RESET}")
+        if summary:
+            print(f"  {self.DIM}└ {summary}{self.RESET}")
+        print(f"  {self.DIM}└ Fetching...{self.RESET}")
+        
+        # Store the short_id temporarily (will be used in tool_call_complete)
+        self._pending_tool_id = short_id
+    
     def tool_call_complete(
-        self, 
-        call_id: str, 
-        name: str, 
-        tool_kind: str | None, 
-        success: bool, 
-        output: str, 
-        error: str | None, 
-        metadata: dict[str, Any], 
+        self,
+        call_id: str,
+        name: str,
+        tool_kind: str | None,
+        success: bool,
+        output: str,
+        error: str | None,
+        metadata: Dict[str, Any],
         truncated: bool,
         diff: str | None,
         exit_code: int | None
-        )->None:
-        border_style = f"tool.{tool_kind}" if tool_kind else "tool"
-        status_icon = "✔" if success else "✘"
-        status_style = 'success' if success else 'error'
-
-        title = Text.assemble(
-            (f"{status_icon} ", status_style),
-            (name, "tool"),
-            (" ", "muted"),
-            (f"#{call_id[:8]}", "muted")
-        )
-
-        args = self.tool_args_by_call_id.get(call_id, {})
-        primary_path = None
-        blocks = []
-        if isinstance(metadata, dict) and isinstance(metadata.get('path'), str):
-            primary_path = metadata['path']
-
-        if name == "read_file" and success:
-            if primary_path:
-                result = self.extract_read_file_code(output)
-                if result is not None:
-                    start_line, code = result
-                    shown_start_line = metadata.get('shown_start')
-                    shown_end_line = metadata.get('shown_end')
-                    total_lines = metadata.get('total_lines')
-
-                    pl = self.guess_language(primary_path)
-
-                    blocks.append(Text())
-                    header_parts = display_path_relative_to_cwd(primary_path)
-                    
-                    header_parts += " ☸ "
-
-                    if shown_start_line and shown_end_line and total_lines:
-                        header_parts += f"{shown_start_line}-{shown_end_line} of {total_lines}"
-
-                    blocks.append(Text(header_parts, style="muted"))
-                    blocks.append(Syntax(code, pl, theme="monokai", word_wrap=False, start_line=start_line))
-                else:
-                    blocks.append(Text(output[:500] if len(output) > 500 else output, style="code"))
-            else:
-                output_display = truncate_text(output, self.max_block_tokens, self.config.model_name)
-                blocks.append(
-                    Syntax(
-                        output_display,
-                        "text",
-                        theme="monokai",
-                        word_wrap=False
-                    )
-                )
-
-        elif name in {'write_file', 'edit_file', 'apply_patch'}:
-            if success:
-                output_line = output.strip() if output.strip() else 'Completed'
-                blocks.append(Text(output_line, style='muted'))
-                if diff:
-                    diff_display = truncate_text(diff, self.max_block_tokens, self.config.model_name)
-                    blocks.append(Syntax(diff_display, "diff", theme="monokai", word_wrap=True))
-                else:
-                    blocks.append(Text("(no diff)", style="muted"))
-            else:
-                blocks.append(Text(error or output or "Unknown error", style="error"))
-
-        elif name == 'shell' and success:
-            command = args.get('command')
-            if isinstance(command, str) and command.strip():
-                blocks.append(Text(f"$ {command}", style="muted"))
-            if exit_code is not None:
-                blocks.append(Text(f"exit-code: {exit_code}", style="muted"))
-            
-            output_display = truncate_text(output, self.max_block_tokens, self.config.model_name)
-            blocks.append(Syntax(output_display, "text", theme="monokai", word_wrap=False))
+    ):
+        """Show completed tool output."""
+        summary = self._generate_summary_from_metadata(name, metadata, output, success)
+        details = output if success else (error or "Unknown error")
         
-        elif name == 'list_dir' and success:
+        # Get the short ID from the pending tool
+        short_id = getattr(self, '_pending_tool_id', str(self.next_tool_id))
+        
+        # Store tool output with metadata
+        tool = ToolOutput(
+            call_id=call_id,
+            name=name,
+            summary=summary,
+            details=details,
+            success=success,
+            short_id=short_id,
+            metadata=metadata  # Store metadata
+        )
+        tool.index = len(self.tool_outputs)
+        self.tool_outputs.append(tool)
+        self.tool_outputs_by_id[short_id] = tool
+        self.last_tool_index = tool.index
+        
+        # Clear the "Fetching..." line
+        print(f"\033[1A\033[2K", end="")  # Move up and clear line
+        
+        # Render collapsed by default - just show summary, no preview
+        color = self.GREEN if success else self.RED
+        status = "✓" if success else "✗"
+        
+        # Show tool name and summary with ID
+        print(f"  {self.DIM}└ {status} {summary}{self.RESET} {self.GRAY}(Type /e {short_id} to see output){self.RESET}")
+    
+    
+    def _generate_summary(self, name: str, arguments: Dict[str, Any]) -> str:
+        """Generate summary from arguments."""
+        if name == "web_search" and "query" in arguments:
+            return f"Searching for: {arguments['query']}"
+        elif name == "read_file" and "path" in arguments:
+            return f"Reading: {arguments['path']}"
+        elif name == "shell" and "command" in arguments:
+            return f"Running: {arguments['command']}"
+        elif name == "list_dir":
+            path = arguments.get("path", ".")
+            return f"Listing: {path}"
+        elif name == "web_fetch" and "url" in arguments:
+            return f"Fetching: {arguments['url']}"
+        elif name == "grep" and "pattern" in arguments:
+            return f"Searching for pattern: {arguments['pattern']}"
+        return "Processing..."
+    
+    def _generate_summary_from_metadata(self, name: str, metadata: Dict[str, Any], output: str, success: bool) -> str:
+        """Generate summary from metadata."""
+        if not success:
+            return "Failed"
+        
+        if name == "read_file":
+            total_lines = metadata.get('total_lines', 0)
+            return f"Read {total_lines} lines"
+        
+        elif name == "list_dir":
             entries = metadata.get('entries', 0)
-            path = metadata.get('path', '')
-            
-            summary = []
-            if isinstance(path, str):
-                summary.append(path)
-            
-            if isinstance(entries, int):
-                summary.append(f"Found {entries} entries")
-
-            if summary:
-                blocks.append(Text(" ☸ ".join(summary), style="muted"))
-
-            output_display = truncate_text(output, self.max_block_tokens, self.config.model_name)
-            blocks.append(Syntax(output_display, "text", theme="monokai", word_wrap=True))
-
-        elif name == 'grep' and success:
-            matches = metadata.get('matches', 0)
-            path = metadata.get('path', '')
-            files_searched = metadata.get('files_searched', 0)
-
-            summary = []
-            if isinstance(matches, int):
-                summary.append(f"{matches} matches")
-                
-                if isinstance(files_searched, int):
-                    summary.append(f"in {files_searched} files")
-
-                if summary:
-                    blocks.append(Text(" ☸ ".join(summary), style="muted"))
-
-                output_display = truncate_text(output, self.max_block_tokens, self.config.model_name)
-                blocks.append(Syntax(output_display, "text", theme="monokai", word_wrap=True))
+            return f"Found {entries} entries"
         
-        elif name == 'glob' and success:
+        elif name == "grep":
             matches = metadata.get('matches', 0)
-            path = metadata.get('path', '')
-            files_searched = metadata.get('files_searched', 0)
-
-            if isinstance(matches, int):
-                blocks.append(Text(f"{matches} matches", style="muted"))
-                
-                output_display = truncate_text(output, self.max_block_tokens, self.config.model_name)
-                blocks.append(Syntax(output_display, "text", theme="monokai", word_wrap=True))
+            return f"Found {matches} matches"
         
-        elif name == 'web_search' and success:
-            results = metadata.get('results', 0)
-            query = metadata.get('query', '')
-
-            summary = []
-            if isinstance(results, int):
-                summary.append(f"{results} results")
-                
-                if isinstance(query, str):
-                    summary.append(f"{query}")
-
-                if summary:
-                    blocks.append(Text(" ☸ ".join(summary), style="muted"))
-                 
-            output_display = truncate_text(output, self.max_block_tokens, self.config.model_name)
-            blocks.append(Syntax(output_display, "text", theme="monokai", word_wrap=True))
-
-        elif name == 'web_fetch' and success:
-            status_code = metadata.get('status_code', 0)
-            url = metadata.get('url', '')
-            content_length = metadata.get('content_length', 0)
-
-            summary = []
-            if isinstance(status_code, int):
-                summary.append(f"{status_code}")
-                
-                if isinstance(url, str):
-                    summary.append(f"{url}")
-
-                if isinstance(content_length, int):
-                    summary.append(f"{content_length} bytes")
-
-                is_raw = metadata.get('is_raw', False)
-                summary.append("raw" if is_raw else "cleaned")
-
-                if summary:
-                    blocks.append(Text(" ☸ ".join(summary), style="muted"))
-                 
-            output_display = truncate_text(output, self.max_block_tokens, self.config.model_name)
-            blocks.append(Syntax(output_display, "text", theme="monokai", word_wrap=True))
+        elif name == "web_search":
+            results_count = metadata.get('results_count', 0)
+            return f"Found {results_count} results"
+        
+        elif name == "web_fetch":
+            return "Content fetched"
+        
+        elif name == "shell":
+            exit_code = metadata.get('exit_code', 0)
+            if exit_code == 0:
+                return "Command completed successfully"
+            else:
+                return f"Command failed (exit code: {exit_code})"
+        
+        return "Completed"
 
 
-        if not blocks and not success:
-            blocks.append(Text(f"Error: {error or 'Unknown error'}", style="error"))
-            if output:
-                blocks.append(Text(output, style="muted"))
-        elif not blocks:
-            blocks.append(Text("No output", style="muted"))
-
-        if truncated:
-            blocks.append(Text("note: Tool output was truncated", style="warning"))
-
-        panel = Panel(
-            Group(
-                *blocks
-            ),
-            title=title,
-            title_align="left",
-            subtitle=Text('done' if success else 'failed', style=status_style),
-            subtitle_align="right",
-            border_style=border_style,
-            box=box.ROUNDED,
-            padding=(0, 2)
-        )
-
-        self.console.print()
-        self.console.print(panel)
+def get_console():
+    """Get Rich console instance."""
+    return console

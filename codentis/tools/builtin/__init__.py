@@ -11,6 +11,7 @@ def get_all_builtin_tools() -> list[type[Tool]]:
     from codentis.tools.builtin.glob import GlobTool
     from codentis.tools.builtin.web_search import WebSearchTool
     from codentis.tools.builtin.web_fetch import WebFetchTool
+    from codentis.tools.builtin.ask_user import AskUserTool
 
     return [
         ReadFileTool,
@@ -22,5 +23,6 @@ def get_all_builtin_tools() -> list[type[Tool]]:
         GrepTool,
         GlobTool,
         WebSearchTool,
-        WebFetchTool
+        WebFetchTool,
+        AskUserTool
     ]
