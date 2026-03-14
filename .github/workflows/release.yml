@@ -1,0 +1,170 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'  # Trigger on version tags like v0.1.0, v0.1.1, etc.
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
+      
+      - name: Build Windows executable
+        run: python scripts/build_exe.py 64
+      
+      - name: Install Inno Setup
+        run: |
+          choco install innosetup -y
+      
+      - name: Build Windows installer
+        run: |
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" scripts\installer_windows.iss
+      
+      - name: Upload Windows installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-installer
+          path: dist/Codentis-Setup-*.exe
+
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
+      
+      - name: Build macOS binary
+        run: |
+          chmod +x scripts/build_macos.sh
+          ./scripts/build_macos.sh
+      
+      - name: Build macOS installer
+        run: |
+          chmod +x scripts/build_macos_installer.sh
+          ./scripts/build_macos_installer.sh
+      
+      - name: Upload macOS installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-installer
+          path: dist/Codentis-*.pkg
+
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
+      
+      - name: Build Linux binary
+        run: |
+          chmod +x scripts/build_linux.sh
+          ./scripts/build_linux.sh
+      
+      - name: Build Debian package
+        run: |
+          chmod +x scripts/build_linux_deb.sh
+          ./scripts/build_linux_deb.sh
+      
+      - name: Upload Linux package
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-package
+          path: dist/codentis_*.deb
+
+  create-release:
+    needs: [build-windows, build-macos, build-linux]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      
+      - name: Display structure of downloaded files
+        run: ls -R artifacts
+      
+      - name: Extract version from tag
+        id: get_version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+      
+      - name: Read changelog
+        id: changelog
+        run: |
+          # Extract the latest version's changelog
+          VERSION=${{ steps.get_version.outputs.VERSION }}
+          CHANGELOG=$(sed -n "/## \[$VERSION\]/,/## \[/p" CHANGELOG.md | sed '$d')
+          echo "CHANGELOG<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGELOG" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+      
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: Codentis v${{ steps.get_version.outputs.VERSION }}
+          body: |
+            ${{ steps.changelog.outputs.CHANGELOG }}
+            
+            ## Installation
+            
+            ### Windows
+            Download and run `Codentis-Setup-${{ steps.get_version.outputs.VERSION }}.exe`
+            
+            ### macOS
+            Download and install the `.pkg` file:
+            ```bash
+            sudo installer -pkg Codentis-${{ steps.get_version.outputs.VERSION }}-arm64.pkg -target /
+            ```
+            
+            ### Linux (Debian/Ubuntu)
+            Download and install the `.deb` file:
+            ```bash
+            sudo dpkg -i codentis_${{ steps.get_version.outputs.VERSION }}_amd64.deb
+            ```
+            
+            ## What's Changed
+            See full changelog: [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md)
+          files: |
+            artifacts/windows-installer/*.exe
+            artifacts/macos-installer/*.pkg
+            artifacts/linux-package/*.deb
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

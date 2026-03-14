@@ -1,37 +1,148 @@
+"""Application with lightweight terminal UI."""
+
 import sys
 import asyncio
+import threading
 from typing import Any
 from pathlib import Path
 from codentis.agent.agent import Agent
 from codentis.agent.events import AgentEventType
-from codentis.ui.renderer import TUI, get_console
+from codentis.ui.renderer import TUI
 from codentis.config import Config
 
-console = get_console()
+# Platform-specific keyboard handling
+try:
+    import msvcrt  # Windows
+    WINDOWS = True
+except ImportError:
+    import termios
+    import tty
+    import select
+    WINDOWS = False
+
 
 class CLI:
     def __init__(self, config: Config):
-        self.agent : Agent | None = None
+        self.agent: Agent | None = None
         self.config = config
-        self.tui = TUI(config, console)
-
-    def get_tool_kind(self, tool_name: str)->str | None:
+        self.tui = TUI(config)
+        self.keyboard_listener_running = False
+        self.keyboard_thread = None
+    
+    def _keyboard_listener(self):
+        """Listen for Ctrl+O keypresses in the background."""
+        try:
+            if WINDOWS:
+                # Windows implementation
+                while self.keyboard_listener_running:
+                    try:
+                        if msvcrt.kbhit():
+                            key = msvcrt.getch()
+                            # Ctrl+O is ASCII 15 (0x0F)
+                            if key == b'\x0f':
+                                self.tui.toggle_last_tool()
+                    except Exception:
+                        pass  # Ignore keyboard errors
+                    import time
+                    time.sleep(0.1)  # Reduce CPU usage
+            else:
+                # Unix/Linux/Mac implementation
+                old_settings = termios.tcgetattr(sys.stdin)
+                try:
+                    tty.setcbreak(sys.stdin.fileno())
+                    while self.keyboard_listener_running:
+                        try:
+                            if sys.stdin in select.select([sys.stdin], [], [], 0.1)[0]:
+                                char = sys.stdin.read(1)
+                                # Ctrl+O is ASCII 15
+                                if ord(char) == 15:
+                                    self.tui.toggle_last_tool()
+                        except Exception:
+                            pass  # Ignore keyboard errors
+                finally:
+                    termios.tcsetattr(sys.stdin, termios.TCSADRAIN, old_settings)
+        except Exception as e:
+            # Silently fail if keyboard listener can't start
+            pass
+    
+    def start_keyboard_listener(self):
+        """Start the keyboard listener thread."""
+        if not self.keyboard_listener_running:
+            self.keyboard_listener_running = True
+            self.keyboard_thread = threading.Thread(target=self._keyboard_listener, daemon=True)
+            self.keyboard_thread.start()
+    
+    def stop_keyboard_listener(self):
+        """Stop the keyboard listener thread."""
+        self.keyboard_listener_running = False
+        if self.keyboard_thread:
+            self.keyboard_thread.join(timeout=1)
+    
+    def _get_thinking_message(self, tool_name: str) -> str:
+        """Get appropriate thinking message based on tool being used."""
+        thinking_messages = {
+            "read_file": "Reading",
+            "write_file": "Writing",
+            "edit_file": "Editing",
+            "apply_patch": "Applying changes",
+            "shell": "Executing",
+            "list_dir": "Exploring",
+            "grep": "Searching",
+            "glob": "Finding files",
+            "web_search": "Searching web",
+            "web_fetch": "Fetching content",
+            "ask_user": "Waiting for input",
+        }
+        return thinking_messages.get(tool_name, "Processing")
+    
+    def _should_show_thinking(self, tool_name: str) -> bool:
+        """Determine if thinking indicator should be shown for this tool."""
+        # Only show for tools that typically take longer
+        long_running_tools = {
+            "write_file",
+            "edit_file", 
+            "apply_patch",
+            "shell",
+            "web_search",
+            "web_fetch",
+            "grep",
+        }
+        return tool_name in long_running_tools
+    
+    def get_tool_kind(self, tool_name: str) -> str | None:
         if not self.agent or not self.agent.session:
             return None
         
         tool = self.agent.session.tool_registry.get(tool_name)
         return tool.kind.value if tool else None
-
+    
     async def run_single(self, message: str):
+        """Run a single query."""
         async with Agent(self.config) as agent:
             self.agent = agent
-            await self.__process_message(message)
-
+            
+            print(f"\nQuery: {message}\n")
+            
+            async for event in agent.run(message):
+                if event.type == AgentEventType.TEXT_DELTA:
+                    content = event.data.get("content")
+                    if content:
+                        print(content, end="", flush=True)
+                
+                elif event.type == AgentEventType.TOOL_CALL_COMPLETE:
+                    tool_name = event.data.get("name", "unknown")
+                    success = event.data.get("success", False)
+                    output = event.data.get("output", "")
+                    print(f"\n\n[{tool_name}]: {output[:200]}...\n")
+            
+            print("\n")
+    
     async def run_interactive(self):
+        """Run interactive mode."""
         async with Agent(self.config) as agent:
             self.agent = agent
-
-            # Get provider info from config
+            
+            # Show welcome
             provider = "OpenAI"
             if self.config.base_url:
                 if "openrouter" in self.config.base_url:
@@ -40,306 +151,235 @@ class CLI:
                     provider = "Anthropic"
                 else:
                     provider = "Custom API"
-
+            
             self.tui.print_welcome(
                 title="Codentis",
                 lines=[
-                    f'model: {self.agent.config.model_name}',
-                    f'cwd: {self.agent.config.cwd}',
-                    f'provider: {provider}',
+                    f'Model: {self.config.model_name}',
+                    f'Working Directory: {self.config.cwd}',
+                    f'Provider: {provider}',
                 ]
             )
-
-            while True:
-                try:
-                    user_input = await asyncio.to_thread(
-                        lambda: console.input("\n[user]> [/user]")
-                    )
-                    user_input = user_input.strip()
-                    if not user_input:
-                        continue
-
-                    if user_input.lower() in ("/exit", "/quit", "exit", "quit"):
-                        break
-
-                    # Check if user is trying to run Codentis CLI commands inside chat
-                    if user_input.startswith("codentis"):
-                        parts = user_input.split()
+            
+            # Start keyboard listener for Ctrl+O
+            self.start_keyboard_listener()
+            
+            try:
+                while True:
+                    try:
+                        # Get user input with prompt
+                        user_input = input(f"\n{self.tui.BOLD}❯{self.tui.RESET} ").strip()
                         
-                        # Handle flags
-                        if len(parts) == 2 and parts[1] in ["--help", "-h", "help"]:
-                            await self._run_help_command()
-                            continue
-                        elif len(parts) == 2 and parts[1] in ["--version", "-v"]:
-                            await self._run_version_command()
+                        if not user_input:
                             continue
                         
-                        # Handle commands
-                        command = parts[1] if len(parts) > 1 else ""
-                        
-                        # Execute CLI commands directly
-                        if command == "doctor":
-                            await self._run_doctor_command()
+                        # Check for special commands
+                        if user_input.lower() in ("/exit", "/quit", "exit", "quit"):
+                            break
+                        elif user_input.lower() == "/list":
+                            # List all tool outputs
+                            self.tui.list_tools()
                             continue
-                        elif command == "version":
-                            await self._run_version_command()
-                            continue
-                        elif command == "config":
-                            if len(parts) > 2 and parts[2] == "--show":
-                                await self._run_config_show_command()
+                        elif user_input.lower().startswith("/e "):
+                            # Expand specific tool by ID
+                            parts = user_input.split()
+                            if len(parts) == 2:
+                                tool_id = parts[1]
+                                self.tui.toggle_tool(tool_id)
                             else:
-                                console.print(f"\n[yellow]Note:[/yellow] Configuration wizard cannot be run inside chat.")
-                                console.print(f"[dim]Exit with[/dim] [cyan]/exit[/cyan] [dim]and run[/dim] [cyan]codentis config[/cyan] [dim]from your terminal.[/dim]\n")
+                                print(f"{self.tui.RED}Usage: /e <id>{self.tui.RESET}")
                             continue
-                        elif command in ["trust", "repo", "chat"]:
-                            console.print(f"\n[yellow]Note:[/yellow] [cyan]{user_input}[/cyan] should be run from your terminal.")
-                            console.print(f"[dim]Exit with[/dim] [cyan]/exit[/cyan] [dim]and run it from your command prompt.[/dim]\n")
+                        elif user_input.lower() in ("/expand", "/e"):
+                            # Expand last tool output
+                            self.tui.toggle_last_tool()
                             continue
-
-                    await self.__process_message(user_input)
-                except asyncio.CancelledError:
-                    console.print("\n[dim]Interrupted. Use /exit to quit.[/dim]")
-                    continue
-                except KeyboardInterrupt:
-                    console.print("\n[dim]Interrupted. Use /exit to quit.[/dim]")
-                    continue
-                except EOFError:
-                    break
-        console.print("\n[dim]Goodbye![/dim]\n")
+                        
+                        await self._process_message(user_input)
+                    
+                    except KeyboardInterrupt:
+                        print("\n\nInterrupted. Type /exit to quit.")
+                        continue
+                    except EOFError:
+                        break
+            
+            finally:
+                self.stop_keyboard_listener()
+                print(f"\n{self.tui.GRAY}{'─' * 80}{self.tui.RESET}")
+                print(f"\n{self.tui.DIM}Goodbye!{self.tui.RESET}\n")
     
-    async def __process_message(self, message: str):
+    async def _process_message(self, message: str):
+        """Process a message through the agent."""
         if not self.agent:
-            return None
-
-        assistant_streaming = False
-        final_response : str | None = None
-
-        async for event in self.agent.run(message):
-            if event.type == AgentEventType.TEXT_DELTA:
-                content = event.data.get("content")
-                if content:
-                    if not assistant_streaming:
-                        self.tui.begin_assistant()
-                        assistant_streaming = True
-                    self.tui.stream_assistant_delta(content)
-                
-            elif event.type == AgentEventType.TEXT_COMPLETE:
-                final_response = event.data.get("content")
-                if assistant_streaming:
-                    self.tui.end_assistant()
-                    assistant_streaming = False
-            
-            elif event.type == AgentEventType.AGENT_ERROR:
-                error = event.data.get("error") or "Unknown error occurred"
-                console.print(f"\n[bold red]Error: {error}[/bold red]")
-
-            elif event.type == AgentEventType.TOOL_CALL_START:
-                tool_name = event.data.get("name", "unknown")
-                tool_kind = self.get_tool_kind(tool_name)
-                self.tui.tool_call_start(
-                    event.data.get("call_id", ""), 
-                    tool_name, 
-                    tool_kind, 
-                    event.data.get("arguments", {})
-                )
-
-            elif event.type == AgentEventType.TOOL_CALL_COMPLETE:
-                tool_name = event.data.get("name", "unknown")
-                tool_kind = self.get_tool_kind(tool_name)
-                self.tui.tool_call_complete(
-                    event.data.get("call_id", ""), 
-                    tool_name, 
-                    tool_kind,
-                    event.data.get("success", False),
-                    event.data.get("output", ""),
-                    event.data.get("error", None),
-                    event.data.get("metadata", {}),
-                    event.data.get("truncated", False),
-                    event.data.get("diff"),
-                    event.data.get("exit_code"),
-                )
-
-        return final_response
-    
-    async def _run_doctor_command(self):
-        """Run the doctor command directly in chat."""
-        import platform
-        import httpx
-        from rich.table import Table
-        from rich.panel import Panel
-        from codentis.config.config_manager import ConfigManager
-        
-        console.print()
-        console.print(Panel(
-            "[bold cyan]Running Codentis diagnostics...[/bold cyan]",
-            border_style="cyan"
-        ))
-        console.print()
-        
-        results = Table(show_header=True, header_style="bold")
-        results.add_column("Check", style="cyan", width=30)
-        results.add_column("Status", width=15)
-        results.add_column("Details", style="dim")
-        
-        # Check Python version
-        py_version = platform.python_version()
-        py_ok = sys.version_info >= (3, 10)
-        results.add_row(
-            "Python Version",
-            "[green]✓ OK[/green]" if py_ok else "[red]✗ FAIL[/red]",
-            f"{py_version} {'(>= 3.10 required)' if not py_ok else ''}"
-        )
-        
-        # Check configuration
-        config_manager = ConfigManager()
-        config_exists = config_manager.config_exists()
-        results.add_row(
-            "Configuration File",
-            "[green]✓ OK[/green]" if config_exists else "[yellow]⚠ MISSING[/yellow]",
-            str(config_manager.config_file)
-        )
-        
-        # Check API key
-        if config_exists:
-            api_key = config_manager.get_api_key()
-            has_key = bool(api_key)
-            results.add_row(
-                "API Key",
-                "[green]✓ OK[/green]" if has_key else "[red]✗ MISSING[/red]",
-                f"{api_key[:8]}..." if has_key else "Not configured"
-            )
-            
-            # Check API connectivity
-            if has_key:
-                base_url = config_manager.get_base_url()
-                try:
-                    response = await asyncio.to_thread(
-                        lambda: httpx.get(base_url.replace('/v1', '') if base_url else "https://api.openai.com", timeout=5)
-                    )
-                    api_ok = response.status_code < 500
-                    results.add_row(
-                        "API Connectivity",
-                        "[green]✓ OK[/green]" if api_ok else "[yellow]⚠ WARN[/yellow]",
-                        base_url or "Default"
-                    )
-                except Exception as e:
-                    results.add_row(
-                        "API Connectivity",
-                        "[yellow]⚠ WARN[/yellow]",
-                        f"Could not connect: {str(e)[:40]}"
-                    )
-        else:
-            results.add_row(
-                "API Key",
-                "[red]✗ MISSING[/red]",
-                "Run 'codentis config' to set up"
-            )
-        
-        # Check working directory
-        cwd = Path.cwd()
-        results.add_row(
-            "Working Directory",
-            "[green]✓ OK[/green]",
-            str(cwd)
-        )
-        
-        console.print(results)
-        console.print()
-        
-        if not config_exists:
-            console.print("[yellow]⚠ Configuration not found. Run 'codentis config' to set up.[/yellow]")
-        elif not py_ok:
-            console.print("[red]✗ Python 3.10+ is required.[/red]")
-        else:
-            console.print("[green]✓ All checks passed! You're ready to use Codentis.[/green]")
-        
-        console.print()
-    
-    async def _run_version_command(self):
-        """Run the version command directly in chat."""
-        import platform
-        from rich.panel import Panel
-        from rich.text import Text
-        from codentis import __version__
-        
-        console.print()
-        console.print(Panel(
-            Text.assemble(
-                ("Codentis ", "bold cyan"),
-                (f"v{__version__}\n\n", "white"),
-                ("An intelligent CLI AI agent for developers\n", "dim"),
-                ("Python ", "dim"), (f"{platform.python_version()}", "white"),
-            ),
-            border_style="cyan"
-        ))
-        console.print()
-    
-    async def _run_config_show_command(self):
-        """Run the config --show command directly in chat."""
-        from rich.table import Table
-        from codentis.config.config_manager import ConfigManager
-        
-        config_manager = ConfigManager()
-        
-        if not config_manager.config_exists():
-            console.print("\n[yellow]No configuration found.[/yellow]")
-            console.print("Run 'codentis config --reset' to create one.\n")
+            print(f"{self.tui.RED}Error: Agent not initialized{self.tui.RESET}")
             return
         
-        cfg = config_manager.load_config()
-        table = Table(title="Current Configuration", show_header=True)
-        table.add_column("Setting", style="cyan")
-        table.add_column("Value", style="white")
+        assistant_streaming = False
         
-        for key, value in cfg.items():
-            if key == "api_key":
-                value = f"{value[:8]}..." if value else "Not set"
-            table.add_row(key, str(value))
-        
-        console.print()
-        console.print(table)
-        console.print(f"\n[dim]Config file: {config_manager.config_file}[/dim]")
-        console.print()
-    
-    async def _run_help_command(self):
-        """Run the help command directly in chat."""
-        from rich.table import Table
-        from rich.panel import Panel
-        
-        console.print()
-        console.print(Panel(
-            "[bold cyan]Codentis CLI Commands[/bold cyan]\n\n"
-            "An intelligent CLI AI agent for developers",
-            border_style="cyan"
-        ))
-        console.print()
-        
-        # Commands table
-        commands = Table(title="Commands", show_header=True, header_style="bold cyan")
-        commands.add_column("Command", style="cyan", width=20)
-        commands.add_column("Description", style="white")
-        
-        commands.add_row("chat", "Start an interactive chat session (default)")
-        commands.add_row("config", "Manage Codentis configuration")
-        commands.add_row("doctor", "Run system diagnostics")
-        commands.add_row("version", "Show version information")
-        commands.add_row("repo", "Analyze and interact with a code repository")
-        commands.add_row("trust", "Manage trusted workspaces")
-        
-        console.print(commands)
-        console.print()
-        
-        # Options table
-        options = Table(title="Options", show_header=True, header_style="bold cyan")
-        options.add_column("Option", style="cyan", width=20)
-        options.add_column("Description", style="white")
-        
-        options.add_row("--version, -v", "Show version")
-        options.add_row("--help", "Show this help message")
-        
-        console.print(options)
-        console.print()
-        
-        console.print("[dim]For detailed help on a specific command, run:[/dim]")
-        console.print("[cyan]  codentis <command> --help[/cyan]")
-        console.print()
+        try:
+            # Show thinking indicator
+            self.tui.start_thinking("Thinking")
+            
+            async for event in self.agent.run(message):
+                # Handle tool call start
+                if event.type == AgentEventType.TOOL_CALL_START:
+                    # Stop any existing thinking indicator first
+                    self.tui.stop_thinking()
+                    
+                    # Show the tool call
+                    tool_name = event.data.get("name", "unknown")
+                    tool_kind = self.get_tool_kind(tool_name)
+                    self.tui.tool_call_start(
+                        event.data.get("call_id", ""),
+                        tool_name,
+                        tool_kind,
+                        event.data.get("arguments", {})
+                    )
+                    
+                    # Only start thinking for long-running tools
+                    if self._should_show_thinking(tool_name):
+                        thinking_msg = self._get_thinking_message(tool_name)
+                        self.tui.start_thinking(thinking_msg)
+                
+                # Stop thinking when tool completes
+                elif event.type == AgentEventType.TOOL_CALL_COMPLETE:
+                    self.tui.stop_thinking()
+                
+                # Stop thinking when text starts
+                elif event.type == AgentEventType.TEXT_DELTA:
+                    self.tui.stop_thinking()
+                
+                if event.type == AgentEventType.TEXT_DELTA:
+                    content = event.data.get("content")
+                    if content:
+                        if not assistant_streaming:
+                            self.tui.begin_assistant()
+                            assistant_streaming = True
+                        self.tui.stream_assistant_delta(content)
+                
+                elif event.type == AgentEventType.TEXT_COMPLETE:
+                    if assistant_streaming:
+                        self.tui.end_assistant()
+                        assistant_streaming = False
+                
+                elif event.type == AgentEventType.AGENT_ERROR:
+                    error = event.data.get("error") or "Unknown error occurred"
+                    print(f"\n{self.tui.RED}Error: {error}{self.tui.RESET}\n")
+                    if assistant_streaming:
+                        self.tui.end_assistant()
+                        assistant_streaming = False
+                
+                elif event.type == AgentEventType.TOOL_CALL_COMPLETE:
+                    tool_name = event.data.get("name", "unknown")
+                    tool_kind = self.get_tool_kind(tool_name)
+                    metadata = event.data.get("metadata", {})
+                    
+                    # Check if this tool requires user input
+                    if metadata.get("requires_user_input"):
+                        question = metadata.get("question", "Please provide input:")
+                        options = metadata.get("options", [])
+                        allow_freeform = metadata.get("allow_freeform", True)
+                        is_permission = metadata.get("permission_request", False)
+                        
+                        # Show the question to the user
+                        print(f"\n{self.tui.CYAN}{self.tui.BOLD}{'Permission Required' if is_permission else 'Question'}:{self.tui.RESET} {question}\n")
+                        
+                        if options:
+                            print(f"{self.tui.DIM}Options:{self.tui.RESET}")
+                            for i, option in enumerate(options, 1):
+                                print(f"  {self.tui.CYAN}{i}.{self.tui.RESET} {option}")
+                            print()
+                        
+                        # Get user response
+                        if options and not allow_freeform:
+                            # Multiple choice only
+                            while True:
+                                try:
+                                    choice = input(f"{self.tui.BOLD}Your choice (1-{len(options)}):{self.tui.RESET} ").strip()
+                                    choice_num = int(choice)
+                                    if 1 <= choice_num <= len(options):
+                                        user_response = options[choice_num - 1]
+                                        break
+                                    else:
+                                        print(f"{self.tui.RED}Please enter a number between 1 and {len(options)}{self.tui.RESET}")
+                                except ValueError:
+                                    print(f"{self.tui.RED}Please enter a valid number{self.tui.RESET}")
+                        else:
+                            # Freeform or mixed
+                            prompt = f"{self.tui.BOLD}Your answer:{self.tui.RESET} " if not options else f"{self.tui.BOLD}Your answer (or number):{self.tui.RESET} "
+                            user_response = input(prompt).strip()
+                            
+                            # If options provided and user entered a number, use that option
+                            if options:
+                                try:
+                                    choice_num = int(user_response)
+                                    if 1 <= choice_num <= len(options):
+                                        user_response = options[choice_num - 1]
+                                except ValueError:
+                                    pass  # Use the freeform response
+                        
+                        # Handle permission requests
+                        if is_permission:
+                            if "yes" in user_response.lower():
+                                # User approved - automatically re-execute the command with permission bypass
+                                command = metadata.get("command", "")
+                                print(f"\n{self.tui.GREEN}✓ Permission granted. Executing command...{self.tui.RESET}\n")
+                                
+                                # Re-execute the shell command with skip_permission_check=True
+                                if self.agent and self.agent.session and tool_name == "shell":
+                                    from codentis.tools.base import ToolInvocation
+                                    shell_tool = self.agent.session.tool_registry.get("shell")
+                                    
+                                    if shell_tool:
+                                        # Execute with permission bypass
+                                        invocation = ToolInvocation(
+                                            params={
+                                                "command": command,
+                                                "skip_permission_check": True
+                                            },
+                                            cwd=self.config.cwd
+                                        )
+                                        
+                                        # Execute the command
+                                        exec_result = await shell_tool.execute(invocation)
+                                        
+                                        # Update the event data with actual execution result
+                                        event.data["success"] = exec_result.success
+                                        event.data["output"] = exec_result.output
+                                        event.data["error"] = exec_result.error
+                                        event.data["metadata"] = exec_result.metadata or {}
+                                        event.data["metadata"]["user_approved"] = True
+                                        event.data["metadata"]["auto_executed"] = True
+                                    else:
+                                        event.data["output"] = f"Permission granted by user for: {command}"
+                                        event.data["metadata"]["user_approved"] = True
+                                else:
+                                    event.data["output"] = f"Permission granted by user for: {command}"
+                                    event.data["metadata"]["user_approved"] = True
+                            else:
+                                # User denied
+                                print(f"\n{self.tui.RED}✗ Permission denied. Command cancelled.{self.tui.RESET}\n")
+                                event.data["output"] = "User denied permission. Command was not executed."
+                                event.data["metadata"]["user_denied"] = True
+                        else:
+                            # Regular ask_user response
+                            event.data["output"] = user_response
+                            event.data["metadata"]["user_response"] = user_response
+                    
+                    self.tui.tool_call_complete(
+                        event.data.get("call_id", ""),
+                        tool_name,
+                        tool_kind,
+                        event.data.get("success", False),
+                        event.data.get("output", ""),
+                        event.data.get("error", None),
+                        event.data.get("metadata", {}),
+                        event.data.get("truncated", False),
+                        event.data.get("diff"),
+                        event.data.get("exit_code"),
+                    )
+        except Exception as e:
+            print(f"\n{self.tui.RED}Error processing message: {str(e)}{self.tui.RESET}\n")
+            import traceback
+            traceback.print_exc()
+            if assistant_streaming:
+                self.tui.end_assistant()

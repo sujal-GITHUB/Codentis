@@ -7,24 +7,24 @@ PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$PROJECT_ROOT"
 
 APP_NAME="Codentis"
-VERSION="0.1.0"
+VERSION="1.0.0"
 IDENTIFIER="com.codentis.app"
 INSTALL_LOCATION="/usr/local/bin"
 
 echo "Building macOS installer for $APP_NAME v$VERSION..."
 
-# Detect architecture
+# Detect architecture for package naming
 ARCH=$(uname -m)
 if [ "$ARCH" = "arm64" ]; then
-    BINARY_NAME="Codentis-macos-arm64"
     PKG_NAME="Codentis-${VERSION}-arm64.pkg"
 elif [ "$ARCH" = "x86_64" ]; then
-    BINARY_NAME="Codentis-macos-intel"
     PKG_NAME="Codentis-${VERSION}-intel.pkg"
 else
     echo "Unknown architecture: $ARCH"
     exit 1
 fi
+
+BINARY_NAME="codentis"
 
 # Check if binary exists
 if [ ! -f "dist/$BINARY_NAME" ]; then

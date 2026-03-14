@@ -17,12 +17,11 @@ echo "Current architecture: $ARCH"
 echo "Cleaning up previous builds..."
 rm -rf dist build *.spec
 
-# Determine output name based on architecture
+# Use consistent output name for all architectures
+OUTPUT_NAME="codentis"
 if [ "$ARCH" = "arm64" ]; then
-    OUTPUT_NAME="Codentis-macos-arm64"
     echo "Building for Apple Silicon (ARM64)..."
 elif [ "$ARCH" = "x86_64" ]; then
-    OUTPUT_NAME="Codentis-macos-intel"
     echo "Building for Intel (x86_64)..."
 else
     echo "Unknown architecture: $ARCH"
