@@ -12,7 +12,13 @@ export default function Navbar() {
         return () => window.removeEventListener("scroll", onScroll);
     }, []);
 
-    const navLinks = ["Features", "Architecture", "Demo", "Install"];
+    const navLinks = [
+        { name: "Features", href: "/#features" },
+        { name: "Architecture", href: "/#architecture" },
+        { name: "Demo", href: "/#demo" },
+        { name: "Docs", href: "/docs" },
+        { name: "Download", href: "/download" }
+    ];
 
     return (
         <div className="fixed inset-x-0 top-0 z-50 flex items-center justify-center pt-4 px-2 sm:px-4">
@@ -54,11 +60,11 @@ export default function Navbar() {
                 <div className="flex items-center gap-0 sm:gap-0.5">
                     {navLinks.map((item) => (
                         <a
-                            key={item}
-                            href={`#${item.toLowerCase()}`}
+                            key={item.name}
+                            href={item.href}
                             className="px-1.5 sm:px-3.5 py-1.5 rounded-full text-[10px] sm:text-[0.8rem] font-medium text-zinc-400 hover:text-white hover:bg-white/[0.06] transition-all duration-200"
                         >
-                            {item}
+                            {item.name}
                         </a>
                     ))}
                 </div>
