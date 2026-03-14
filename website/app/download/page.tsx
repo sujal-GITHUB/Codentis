@@ -37,8 +37,7 @@ export default function DownloadPage() {
                 </div>
                 <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
                   <a
-                    href="/Codentis-Setup-0.1.0.exe"
-                    download
+                    href="https://github.com/sujal-GITHUB/Codentis/releases/latest/download/Codentis-Setup-1.0.0.exe"
                     className="px-4 sm:px-5 py-2 sm:py-2.5 bg-cyan-500 hover:bg-cyan-600 text-black text-xs sm:text-sm font-semibold rounded-full transition-all active:scale-95 flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(34,211,238,0.2)]"
                   >
                     <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -74,8 +73,7 @@ export default function DownloadPage() {
                 </div>
                 <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
                   <a
-                    href="/Codentis-0.1.0-arm64.pkg"
-                    download
+                    href="https://github.com/sujal-GITHUB/Codentis/releases/latest/download/Codentis-1.0.0-arm64.pkg"
                     className="px-4 sm:px-5 py-2 sm:py-2.5 bg-cyan-500 hover:bg-cyan-600 text-black text-xs sm:text-sm font-semibold rounded-full transition-all active:scale-95 flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(34,211,238,0.2)]"
                   >
                     <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -86,8 +84,7 @@ export default function DownloadPage() {
                     <span>Apple Silicon</span>
                   </a>
                   <a
-                    href="/Codentis-0.1.0-intel.pkg"
-                    download
+                    href="https://github.com/sujal-GITHUB/Codentis/releases/latest/download/Codentis-1.0.0-intel.pkg"
                     className="px-4 sm:px-5 py-2 sm:py-2.5 bg-cyan-500/80 hover:bg-cyan-500 text-black text-xs sm:text-sm font-semibold rounded-full transition-all active:scale-95 flex items-center justify-center gap-2"
                   >
                     <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -120,8 +117,7 @@ export default function DownloadPage() {
                   </div>
                 </div>
                 <a
-                  href="/codentis_0.1.0_amd64.deb"
-                  download
+                  href="https://github.com/sujal-GITHUB/Codentis/releases/latest/download/codentis_1.0.0_amd64.deb"
                   className="px-4 sm:px-5 py-2 sm:py-2.5 bg-cyan-500 hover:bg-cyan-600 text-black text-xs sm:text-sm font-semibold rounded-full transition-all active:scale-95 flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(34,211,238,0.2)]"
                 >
                   <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -134,7 +130,7 @@ export default function DownloadPage() {
               </div>
               <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-3 sm:p-4 text-xs sm:text-sm">
                 <p className="text-zinc-500 text-[0.75rem] sm:text-[0.8rem]">
-                  💡 Install with <code className="text-cyan-300 bg-black/50 px-1.5 py-0.5 rounded font-mono text-[0.7rem]">sudo dpkg -i codentis_0.1.0_amd64.deb</code> then run <code className="text-cyan-300 bg-black/50 px-1.5 py-0.5 rounded font-mono text-[0.7rem]">codentis config</code> to set up your API key.
+                  💡 Install with <code className="text-cyan-300 bg-black/50 px-1.5 py-0.5 rounded font-mono text-[0.7rem]">sudo dpkg -i codentis_1.0.0_amd64.deb</code> then run <code className="text-cyan-300 bg-black/50 px-1.5 py-0.5 rounded font-mono text-[0.7rem]">codentis config</code> to set up your API key.
                 </p>
               </div>
             </div>

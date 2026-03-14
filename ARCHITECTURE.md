@@ -37,15 +37,20 @@ codentis/                      # Main package
 │       ├── grep.py
 │       ├── glob.py
 │       ├── shell.py
+│       ├── ask_user.py      # User input tool
+│       ├── todo.py          # TODO management
 │       ├── web_search.py
 │       └── web_fetch.py
 ├── ui/                       # Terminal UI
-│   └── renderer.py          # Rich-based rendering
+│   └── renderer.py          # Collapsible tool outputs, markdown rendering
 └── utils/                    # Utilities
     ├── paths.py             # Path utilities
     ├── text.py              # Text processing
     ├── errors.py            # Error definitions
-    └── logger.py            # Logging setup
+    ├── logger.py            # Logging setup
+    ├── platform_info.py     # Platform detection
+    ├── updater.py           # Auto-update system
+    └── workspace_trust.py   # Workspace trust management
 ```
 
 ## Architecture Diagram
@@ -196,7 +201,9 @@ A pluggable tool execution layer with validation, kind-based categorisation, and
   - **`write_file.py`** (`WriteFileTool`): Writes full content to files, supporting directory creation.
   - **`edit_file.py`** (`EditFileTool`): Performs precise search-and-replace line edits within existing files.
   - **`apply_patch.py`** (`ApplyPatchTool`): Similar to `EditFileTool` but supports multiple non-contiguous edits in a single call.
-  - **`shell.py`** (`ShellTool`): Executes shell commands, capturing STDOUT/STDERR separately and supporting timeout limits.
+  - **`shell.py`** (`ShellTool`): Executes shell commands with platform-specific handling, permission system for write operations, captures STDOUT/STDERR separately with timeout limits.
+  - **`ask_user.py`** (`AskUserTool`): Prompts user for input with support for multiple choice or freeform responses.
+  - **`todo.py`** (`TodoTool`): Manages TODO items for tracking tasks and progress.
   - **`web_search.py`** (`WebSearchTool`): Searches the web for information using DuckDuckGo, returning titles, links, and snippets.
   - **`web_fetch.py`** (`WebFetchTool`): Fetches the raw content of a specific web page.
 
@@ -217,16 +224,42 @@ Manages the conversation history passed to the LLM.
 ---
 
 ### 6. UI Layer (`ui/`)
-Terminal rendering using `rich`.
+Terminal rendering with advanced features.
 
-- **`TUI`** (`renderer.py`): Handles all terminal output.
-  - `print_welcome(title, lines)` — renders a styled welcome panel at startup showing model, cwd, and available commands.
-  - `begin_assistant()` / `end_assistant()` — framed streaming output.
-  - `stream_assistant_delta()` — live text streaming.
-  - `tool_call_start()` — renders a running panel with tool name, call ID, and arguments.
-  - `tool_call_complete()` — renders a success/failure panel. For `read_file`, parses the line-numbered output and renders it as a `Syntax`-highlighted code block (theme: `monokai`) with a relative-path header.
-  - `guess_language()` — maps file extensions to `rich`/Pygments language identifiers.
-  - `extract_read_file_code()` — parses `read_file` output into `(start_line, code)` for syntax display.
+- **`TUI`** (`renderer.py`): Handles all terminal output with collapsible tool outputs and markdown rendering.
+  
+  **Welcome Screen:**
+  - ASCII art robot mascot in bold cyan
+  - Two-column layout: mascot on left, tips on right
+  - Shows username, model, provider, working directory
+  - Lists available commands: `/e <id>`, `/e`, `/list`, `/exit`
+  
+  **Tool Output Management:**
+  - Each tool call gets unique numeric ID (1, 2, 3, etc.)
+  - Tool outputs completely hidden by default, only summary shown
+  - Format: `● tool_name #id` → `└ ✓/✗ summary (Type /e id to see output)`
+  - Commands: `/e <id>` to expand specific tool, `/e` for last tool, `/list` to list all tools
+  - Color-coded by tool type: web_search (purple), read_file (blue), write_file (orange), shell (magenta), etc.
+  - Metadata displayed in expanded view: exit_code, total_lines, results_count, permissions, etc.
+  
+  **Markdown Rendering:**
+  - Streaming markdown with inline ANSI styling
+  - Supports: headers (##), bold (**text**), lists (-), inline code (`code`)
+  - Text streams character by character with proper formatting
+  - Markdown syntax visible but styled with colors
+  
+  **Thinking Indicators:**
+  - Animated spinner (⠋ ⠙ ⠹ ⠸ ⠼ ⠴ ⠦ ⠧ ⠇ ⠏) for long-running operations
+  - Context-aware messages: "Thinking", "Writing", "Executing", "Searching", etc.
+  - Only shows for long-running tools (write_file, shell, web_search, web_fetch, grep, edit_file, apply_patch)
+  - Fast operations (read_file, list_dir) don't show indicator
+  - Clears when response starts, response appears on same line
+  
+  **Code Highlighting:**
+  - `guess_language()` — maps file extensions to rich/Pygments language identifiers
+  - `extract_read_file_code()` — parses read_file output for syntax display
+  - Syntax-highlighted code blocks with monokai theme
+  
 - **Theme**: Custom `AGENT_THEME` with roles for `info`, `warning`, `error`, `tool.*`, `code`, etc.
 
 ---
@@ -283,6 +316,25 @@ Manages configuration from multiple sources with a hierarchical loading strategy
   - `truncate_text()` — truncates text to fit token budget.
   - `truncate_by_lines()` — truncates by line count.
   - `truncate_by_characters()` — truncates by character count.
+
+- **`platform_info.py`**: Platform detection and information.
+  - `get_platform_name()` — returns standardized platform name (windows, macos, linux).
+  - `get_platform_info()` — returns detailed platform information dict.
+  - Stores platform in config for intelligent command adaptation.
+
+- **`updater.py`**: Auto-update system.
+  - `check_for_updates()` — checks GitHub Releases API for new versions.
+  - `get_latest_version()` — fetches latest version from GitHub.
+  - Caches check results for 24 hours in user cache directory.
+  - Shows notification on startup if new version available.
+  - Provides download link for new releases.
+
+- **`workspace_trust.py`**: Workspace trust management.
+  - `is_workspace_trusted()` — checks if workspace is in trusted list.
+  - `add_trusted_workspace()` — adds workspace to trusted list.
+  - `remove_trusted_workspace()` — removes workspace from trusted list.
+  - `list_trusted_workspaces()` — lists all trusted workspaces.
+  - Stores trusted workspaces in platform-specific data directory.
 
 - **`errors.py`**: Custom exception definitions.
   - `ConfigError` — configuration-related errors.
@@ -566,10 +618,24 @@ Core dependencies (from `requirements.txt`):
 - `platformdirs` — Cross-platform paths
 - `tomli` — TOML parsing
 
+## Implemented Features (v1.0.0)
+
+✅ **Multi-turn agentic loop** - Fully implemented in `agentic_loop()`
+✅ **Platform detection** - Automatic OS detection with platform-specific command handling
+✅ **Shell command permissions** - User approval required for write operations
+✅ **User input tool** - `ask_user` for interactive prompts
+✅ **Collapsible tool outputs** - Command-based expansion with unique IDs
+✅ **Markdown rendering** - Streaming markdown with inline ANSI styling
+✅ **Context-aware thinking** - Animated spinner with context-specific messages
+✅ **Loop detection** - Detects repeated failed tool calls and asks for guidance
+✅ **Auto-update system** - Daily update checks with GitHub Releases integration
+✅ **Workspace trust** - Security system for directory access
+✅ **Multi-platform builds** - Automated Windows, macOS, and Linux builds via GitHub Actions
+✅ **Date awareness** - System prompt includes current date for accurate searches
+
 ## Future Extensions
 
 - **PyPI Publication**: Publish to PyPI for easy installation.
-- **Multi-turn agentic loop**: ✓ Already implemented in `agentic_loop()`.
 - **Interactive commands**: Enhanced `/help`, `/config`, `/model`, `/approval` commands.
 - **Built-in tools**: Continued expansion (e.g., `search_file`, advanced web tools).
 - **Tool confirmation**: `ToolConfirmation` infrastructure exists for prompting the user before mutating operations.
@@ -580,5 +646,4 @@ Core dependencies (from `requirements.txt`):
 - **Conversation History**: Save and replay conversations.
 - **Multi-Session Management**: Handle multiple concurrent sessions.
 - **Docker Support**: Containerized deployment.
-- **CI/CD Pipeline**: Automated testing and deployment.
 - **Test Suite**: Comprehensive pytest-based testing.
