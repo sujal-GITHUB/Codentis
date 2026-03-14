@@ -13,7 +13,7 @@ echo "Project root: $PROJECT_ROOT"
 ARCH=$(uname -m)
 echo "Current architecture: $ARCH"
 
-OUTPUT_NAME="Codentis-linux"
+OUTPUT_NAME="codentis"
 
 # Clean up previous builds
 echo "Cleaning up previous builds..."

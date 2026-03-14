@@ -13,7 +13,7 @@ ARCH="amd64"
 echo "Building .deb package for $APP_NAME v$VERSION..."
 
 # Check if binary exists
-if [ ! -f "dist/Codentis-linux" ]; then
+if [ ! -f "dist/codentis" ]; then
     echo "Error: Binary not found. Build it first: ./scripts/build_linux.sh"
     exit 1
 fi
@@ -26,7 +26,7 @@ mkdir -p "$DEB_DIR/usr/share/applications"
 mkdir -p "$DEB_DIR/usr/share/doc/$APP_NAME"
 
 # Copy binary
-cp "dist/Codentis-linux" "$DEB_DIR/usr/local/bin/codentis"
+cp "dist/codentis" "$DEB_DIR/usr/local/bin/codentis"
 chmod +x "$DEB_DIR/usr/local/bin/codentis"
 
 # Create control file
