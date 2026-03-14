@@ -7,7 +7,6 @@ import Terminal from "./components/Terminal";
 import Install from "./components/Install";
 import CTA from "./components/CTA";
 import Footer from "./components/Footer";
-import { Analytics } from "@vercel/analytics/next"
 
 export default function Home() {
   return (
@@ -21,7 +20,6 @@ export default function Home() {
       <Install />
       <CTA />
       <Footer />
-      <Analytics/>
     </>
   );
 }
