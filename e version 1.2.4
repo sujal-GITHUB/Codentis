@@ -1,0 +1,202 @@
+[1mdiff --git a/.github/workflows/release.yml b/.github/workflows/release.yml[m
+[1mindex 52ed1dd..26f7757 100644[m
+[1m--- a/.github/workflows/release.yml[m
+[1m+++ b/.github/workflows/release.yml[m
+[36m@@ -35,8 +35,6 @@[m [mjobs:[m
+           choco install innosetup -y[m
+       [m
+       - name: Build Windows installer[m
+[31m-        env:[m
+[31m-          VERSION: ${{ steps.get_version.outputs.VERSION }}[m
+         run: |[m
+           python scripts/build_windows_installer.py[m
+       [m
+[36m@@ -72,8 +70,6 @@[m [mjobs:[m
+           ./scripts/build_macos.sh[m
+       [m
+       - name: Build macOS installer[m
+[31m-        env:[m
+[31m-          VERSION: ${{ steps.get_version.outputs.VERSION }}[m
+         run: |[m
+           chmod +x scripts/build_macos_installer.sh[m
+           ./scripts/build_macos_installer.sh[m
+[36m@@ -110,8 +106,6 @@[m [mjobs:[m
+           ./scripts/build_linux.sh[m
+       [m
+       - name: Build Debian package[m
+[31m-        env:[m
+[31m-          VERSION: ${{ steps.get_version.outputs.VERSION }}[m
+         run: |[m
+           chmod +x scripts/build_linux_deb.sh[m
+           ./scripts/build_linux_deb.sh[m
+[1mdiff --git a/CHANGELOG.md b/CHANGELOG.md[m
+[1mindex a74dc65..4154ed1 100644[m
+[1m--- a/CHANGELOG.md[m
+[1m+++ b/CHANGELOG.md[m
+[36m@@ -5,6 +5,18 @@[m [mAll notable changes to Codentis will be documented in this file.[m
+ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),[m
+ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).[m
+ [m
+[32m+[m[32m## [1.2.4] - 2026-03-15[m
+[32m+[m
+[32m+[m[32m### Added[m
+[32m+[m[32m- Version 1.2.4 release[m
+[32m+[m
+[32m+[m[32m### Changed[m
+[32m+[m[32m- Updated version numbers across all components[m
+[32m+[m
+[32m+[m[32m### Fixed[m
+[32m+[m[32m- Version consistency improvements[m
+[32m+[m
+[32m+[m
+ ## [1.2.3] - 2026-03-15[m
+ [m
+ ### Fixed[m
+[1mdiff --git a/pyproject.toml b/pyproject.toml[m
+[1mindex 7c974aa..4fee996 100644[m
+[1m--- a/pyproject.toml[m
+[1m+++ b/pyproject.toml[m
+[36m@@ -4,7 +4,7 @@[m [mbuild-backend = "setuptools.build_meta"[m
+ [m
+ [project][m
+ name = "codentis"[m
+[31m-version = "1.2.3"[m
+[32m+[m[32mversion = "1.2.4"[m
+ description = "An intelligent CLI AI agent for developers"[m
+ readme = "README.md"[m
+ requires-python = ">=3.10"[m
+[1mdiff --git a/scripts/build_linux_deb.sh b/scripts/build_linux_deb.sh[m
+[1mindex b10109b..150eb5f 100644[m
+[1m--- a/scripts/build_linux_deb.sh[m
+[1m+++ b/scripts/build_linux_deb.sh[m
+[36m@@ -7,7 +7,16 @@[m [mPROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"[m
+ cd "$PROJECT_ROOT"[m
+ [m
+ APP_NAME="codentis"[m
+[31m-VERSION="${VERSION:-1.1.0}"  # Use env var or default to 1.1.0[m
+[32m+[m
+[32m+[m[32m# Read version from .env file[m
+[32m+[m[32mif [ -f ".env" ]; then[m
+[32m+[m[32m    VERSION=$(grep "^VERSION=" .env | cut -d'=' -f2 | tr -d '"' | tr -d "'")[m
+[32m+[m[32m    echo "Found version in .env: $VERSION"[m
+[32m+[m[32melse[m
+[32m+[m[32m    VERSION="1.2.3"  # Fallback version[m
+[32m+[m[32m    echo "Warning: .env file not found, using fallback version: $VERSION"[m
+[32m+[m[32mfi[m
+[32m+[m
+ ARCH="amd64"[m
+ [m
+ echo "Building .deb package for $APP_NAME v$VERSION..."[m
+[1mdiff --git a/scripts/build_macos_installer.sh b/scripts/build_macos_installer.sh[m
+[1mindex 85e1cb7..35722df 100644[m
+[1m--- a/scripts/build_macos_installer.sh[m
+[1m+++ b/scripts/build_macos_installer.sh[m
+[36m@@ -7,7 +7,16 @@[m [mPROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"[m
+ cd "$PROJECT_ROOT"[m
+ [m
+ APP_NAME="Codentis"[m
+[31m-VERSION="${VERSION:-1.1.0}"  # Use env var or default to 1.1.0[m
+[32m+[m
+[32m+[m[32m# Read version from .env file[m
+[32m+[m[32mif [ -f ".env" ]; then[m
+[32m+[m[32m    VERSION=$(grep "^VERSION=" .env | cut -d'=' -f2 | tr -d '"' | tr -d "'")[m
+[32m+[m[32m    echo "Found version in .env: $VERSION"[m
+[32m+[m[32melse[m
+[32m+[m[32m    VERSION="1.2.3"  # Fallback version[m
+[32m+[m[32m    echo "Warning: .env file not found, using fallback version: $VERSION"[m
+[32m+[m[32mfi[m
+[32m+[m
+ IDENTIFIER="com.codentis.app"[m
+ INSTALL_LOCATION="/usr/local/bin"[m
+ [m
+[1mdiff --git a/scripts/build_windows_installer.py b/scripts/build_windows_installer.py[m
+[1mindex 2622678..4f0f4ee 100644[m
+[1m--- a/scripts/build_windows_installer.py[m
+[1m+++ b/scripts/build_windows_installer.py[m
+[36m@@ -1,77 +1,45 @@[m
+ #!/usr/bin/env python3[m
+ """[m
+[31m-Build Windows installer with version from environment variable.[m
+[32m+[m[32mBuild Windows installer with hardcoded version.[m
+[32m+[m[32mThis script reads the version directly from the Inno Setup script.[m
+ """[m
+ [m
+ import os[m
+ import subprocess[m
+ import sys[m
+[32m+[m[32mimport re[m
+ from pathlib import Path[m
+ [m
+[31m-def get_version():[m
+[31m-    """Get version from environment variable or .env file."""[m
+[31m-    # First try environment variable[m
+[31m-    version = os.getenv('VERSION')[m
+[31m-    if version:[m
+[31m-        return version.strip('v')  # Remove 'v' prefix if present[m
+[31m-    [m
+[31m-    # Try to read from .env file[m
+[31m-    env_file = Path(__file__).parent.parent / '.env'[m
+[31m-    if env_file.exists():[m
+[31m-        with open(env_file, 'r') as f:[m
+[31m-            for line in f:[m
+[31m-                if line.startswith('VERSION='):[m
+[31m-                    version = line.split('=', 1)[1].strip().strip("'\"")[m
+[31m-                    return version.strip('v')  # Remove 'v' prefix if present[m
+[31m-    [m
+[31m-    # Default fallback[m
+[31m-    return "1.1.0"[m
+[31m-[m
+[31m-def update_iss_file(version):[m
+[31m-    """Update the Inno Setup script with the current version."""[m
+[32m+[m[32mdef get_version_from_iss():[m
+[32m+[m[32m    """Get version from the Inno Setup script."""[m
+     iss_file = Path(__file__).parent / 'installer_windows.iss'[m
+     [m
+     if not iss_file.exists():[m
+         print(f"Error: {iss_file} not found")[m
+[31m-        return False[m
+[32m+[m[32m        return None[m
+     [m
+[31m-    # Read the file[m
+     with open(iss_file, 'r', encoding='utf-8') as f:[m
+         content = f.read()[m
+     [m
+[31m-    # Replace the version line - be more specific with the pattern[m
+[31m-    lines = content.split('\n')[m
+[31m-    updated = False[m
+[31m-    for i, line in enumerate(lines):[m
+[31m-        if line.strip().startswith('#define MyAppVersion'):[m
+[31m-            old_line = lines[i][m
+[31m-            lines[i] = f'#define MyAppVersion "{version}"'[m
+[31m-            print(f"Updated line {i+1}: '{old_line.strip()}' -> '{lines[i]}'")[m
+[31m-            updated = True[m
+[31m-            break[m
+[31m-    [m
+[31m-    if not updated:[m
+[31m-        print("Warning: Could not find #define MyAppVersion line to update")[m
+[31m-        return False[m
+[31m-    [m
+[31m-    # Write back with explicit encoding[m
+[31m-    with open(iss_file, 'w', encoding='utf-8') as f:[m
+[31m-        f.write('\n'.join(lines))[m
+[32m+[m[32m    # Find the version line[m
+[32m+[m[32m    match = re.search(r'#define MyAppVersion "([^"]*)"', content)[m
+[32m+[m[32m    if match:[m
+[32m+[m[32m        version = match.group(1)[m
+[32m+[m[32m        print(f"Found version in .iss file: {version}")[m
+[32m+[m[32m        return version[m
+     [m
+[31m-    print(f"Successfully updated {iss_file} with version {version}")[m
+[31m-    return True[m
+[32m+[m[32m    print("Error: Could not find version in .iss file")[m
+[32m+[m[32m    return None[m
+ [m
+ def build_installer():[m
+     """Build the Windows installer using Inno Setup."""[m
+[31m-    version = get_version()[m
+[31m-    print(f"Building Windows installer for version {version}")[m
+[31m-    print(f"VERSION environment variable: {os.getenv('VERSION')}")[m
+[31m-    [m
+[31m-    # Update the .iss file[m
+[31m-    if not update_iss_file(version):[m
+[31m-        print("Failed to update .iss fil

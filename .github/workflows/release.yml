@@ -35,8 +35,6 @@ jobs:
           choco install innosetup -y
       
       - name: Build Windows installer
-        env:
-          VERSION: ${{ steps.get_version.outputs.VERSION }}
         run: |
           python scripts/build_windows_installer.py
       
@@ -72,8 +70,6 @@ jobs:
           ./scripts/build_macos.sh
       
       - name: Build macOS installer
-        env:
-          VERSION: ${{ steps.get_version.outputs.VERSION }}
         run: |
           chmod +x scripts/build_macos_installer.sh
           ./scripts/build_macos_installer.sh
@@ -110,8 +106,6 @@ jobs:
           ./scripts/build_linux.sh
       
       - name: Build Debian package
-        env:
-          VERSION: ${{ steps.get_version.outputs.VERSION }}
         run: |
           chmod +x scripts/build_linux_deb.sh
           ./scripts/build_linux_deb.sh

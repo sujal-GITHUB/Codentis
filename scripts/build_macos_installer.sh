@@ -7,7 +7,16 @@ PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$PROJECT_ROOT"
 
 APP_NAME="Codentis"
-VERSION="${VERSION:-1.1.0}"  # Use env var or default to 1.1.0
+
+# Read version from .env file
+if [ -f ".env" ]; then
+    VERSION=$(grep "^VERSION=" .env | cut -d'=' -f2 | tr -d '"' | tr -d "'")
+    echo "Found version in .env: $VERSION"
+else
+    VERSION="1.2.3"  # Fallback version
+    echo "Warning: .env file not found, using fallback version: $VERSION"
+fi
+
 IDENTIFIER="com.codentis.app"
 INSTALL_LOCATION="/usr/local/bin"
 

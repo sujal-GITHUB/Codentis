@@ -2,7 +2,7 @@
 ; Download Inno Setup from: https://jrsoftware.org/isdl.php
 
 #define MyAppName "Codentis"
-#define MyAppVersion "1.2.3"
+#define MyAppVersion "1.2.4"
 #define MyAppPublisher "Codentis Team"
 #define MyAppURL "https://github.com/sujal-GITHUB/Codentis"
 #define MyAppExeName "Codentis.exe"

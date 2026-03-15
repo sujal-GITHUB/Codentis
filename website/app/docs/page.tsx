@@ -32,7 +32,7 @@ import {
   RiNotificationLine
 } from "react-icons/ri";
 
-const VERSION = process.env.NEXT_PUBLIC_VERSION || '1.2.0';
+const VERSION = '1.2.4';
 
 export default function DocsPage() {
   const [activeSection, setActiveSection] = useState("introduction");
