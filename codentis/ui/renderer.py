@@ -444,7 +444,16 @@ class TUI:
         print(f"\n{tool_color}● {self.RESET}{self.BOLD}{name} #{short_id}{self.RESET}")
         if summary:
             print(f"  {self.DIM}└ {summary}{self.RESET}")
-        print(f"  {self.DIM}└ Fetching...{self.RESET}")
+        
+        # Show appropriate status message based on tool type
+        if name == "shell":
+            print(f"  {self.DIM}└ Executing...{self.RESET}")
+        elif name == "ask_user":
+            print(f"  {self.DIM}└ Waiting for input...{self.RESET}")
+        elif name in ["web_search", "web_fetch"]:
+            print(f"  {self.DIM}└ Fetching...{self.RESET}")
+        else:
+            print(f"  {self.DIM}└ Processing...{self.RESET}")
         
         # Store the short_id temporarily (will be used in tool_call_complete)
         self._pending_tool_id = short_id
@@ -501,8 +510,11 @@ class TUI:
             return f"Searching for: {arguments['query']}"
         elif name == "read_file" and "path" in arguments:
             return f"Reading: {arguments['path']}"
-        elif name == "shell" and "command" in arguments:
-            return f"Running: {arguments['command']}"
+        elif name == "shell":
+            command = arguments.get("command", "")
+            if len(command) > 50:
+                command = command[:47] + "..."
+            return f"Running: {command}"
         elif name == "list_dir":
             path = arguments.get("path", ".")
             return f"Listing: {path}"
@@ -510,6 +522,19 @@ class TUI:
             return f"Fetching: {arguments['url']}"
         elif name == "grep" and "pattern" in arguments:
             return f"Searching for pattern: {arguments['pattern']}"
+        elif name == "todo":
+            action = arguments.get("action", "")
+            if action == "add":
+                content = arguments.get("content", "")
+                return f"Adding task: {content}"
+            elif action == "list":
+                return "Listing tasks"
+            elif action == "complete":
+                task_id = arguments.get("id", "")
+                return f"Completing task: {task_id}"
+            elif action == "clear":
+                return "Clearing all tasks"
+            return "Managing tasks"
         return "Processing..."
     
     def _generate_summary_from_metadata(self, name: str, metadata: Dict[str, Any], output: str, success: bool) -> str:
@@ -538,10 +563,47 @@ class TUI:
         
         elif name == "shell":
             exit_code = metadata.get('exit_code', 0)
-            if exit_code == 0:
+            user_approved = metadata.get('user_approved', False)
+            auto_executed = metadata.get('auto_executed', False)
+            
+            if user_approved and auto_executed:
+                if exit_code == 0:
+                    return "Command completed successfully"
+                else:
+                    return f"Command failed (exit code: {exit_code})"
+            elif metadata.get('requires_user_input'):
+                return "Permission Required"
+            elif exit_code == 0:
                 return "Command completed successfully"
             else:
                 return f"Command failed (exit code: {exit_code})"
+        
+        elif name == "todo":
+            action = metadata.get('action', '')
+            if action == "add":
+                content = metadata.get('content', '')
+                return f"Added: {content}"
+            elif action == "complete":
+                content = metadata.get('content', '')
+                return f"Completed: {content}"
+            elif action == "list":
+                count = metadata.get('count', 0)
+                if count == 0:
+                    return "No tasks found"
+                else:
+                    # Show the task list directly in the summary for list action
+                    if metadata.get('show_complete_list') and output:
+                        # Extract just the task lines from the output
+                        lines = output.split('\n')[1:]  # Skip "Task List:" header
+                        if len(lines) <= 3:
+                            return f"Tasks: {' | '.join(lines)}"
+                        else:
+                            return f"Found {count} tasks"
+                    return f"Found {count} tasks"
+            elif action == "clear":
+                count = metadata.get('count', 0)
+                return f"Cleared {count} tasks"
+            return "Task updated"
         
         return "Completed"
 

@@ -188,7 +188,10 @@ class Agent:
                     recent_tool_calls = []
                     
                     # If user wants to stop, return immediately
-                    if "stop" in user_response.lower() or "manual" in user_response.lower() or "3" in user_response:
+                    if ("stop" in user_response.lower() or 
+                        "manual" in user_response.lower() or 
+                        "3" in user_response or
+                        "Stop and let me handle it manually" in user_response):
                         # Add a clear message to the context
                         self.session.context_manager.add_assistant_message(
                             "Understood. I'll stop here so you can handle this manually.",

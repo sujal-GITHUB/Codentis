@@ -20,6 +20,7 @@ class TodoTool(Tool):
     def __init__(self, config: Config):
         super().__init__(config)
         self.todos: dict[str, str] = {}
+        self.completed: dict[str, str] = {}  # Track completed tasks
     
     async def execute(self, invocation: ToolInvocation) -> ToolResult:
         params = TodoParams(**invocation.params)
@@ -31,7 +32,7 @@ class TodoTool(Tool):
             todo_id = str(uuid.uuid4())[:8]
             self.todos[todo_id] = params.content
             return ToolResult.success_result(
-                f"Todo added successfully with ID: {todo_id} : {params.content}",
+                f"✓ Adding task: {params.content}",
                 metadata={"action": "add", "id": todo_id, "content": params.content}
             )
 
@@ -42,23 +43,31 @@ class TodoTool(Tool):
                 return ToolResult.error_result(f"Todo with ID: {params.id} not found")
 
             content = self.todos.pop(params.id)
+            self.completed[params.id] = content  # Move to completed
             return ToolResult.success_result(
-                f"Todo with ID: {params.id} completed successfully",
+                f"☑ Completed: {content}",
                 metadata={"action": "complete", "id": params.id, "content": content}
             )
         
         elif params.action == "list":
-            if not self.todos:
-                return ToolResult.success_result("No todos found", metadata={"action": "list", "count": 0})
+            if not self.todos and not self.completed:
+                return ToolResult.success_result("No tasks found", metadata={"action": "list", "count": 0})
             
             lines = ['Task List:']
+            # Show completed tasks first
+            for todo_id, content in self.completed.items():
+                lines.append(f"☑ {content} (ID: {todo_id})")
+            # Then show pending tasks
             for todo_id, content in self.todos.items():
-                lines.append(f"○ {content}")
-            return ToolResult.success_result("\n".join(lines), metadata={"action": "list", "count": len(self.todos), "show_complete_list": True})
+                lines.append(f"☐ {content} (ID: {todo_id})")
+            
+            total_count = len(self.todos) + len(self.completed)
+            return ToolResult.success_result("\n".join(lines), metadata={"action": "list", "count": total_count, "show_complete_list": True})
         
         elif params.action == "clear":
-            count = len(self.todos)
+            count = len(self.todos) + len(self.completed)
             self.todos.clear()
+            self.completed.clear()
             return ToolResult.success_result(f"{count} todos cleared", metadata={"action": "clear", "count": count})
         
         else:

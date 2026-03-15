@@ -132,18 +132,15 @@ class ShellTool(Tool):
         if not params.skip_permission_check:
             is_write, reason = is_write_command(params.command)
             if is_write:
-                # Use ask_user tool to get permission instead of returning error
-                return ToolResult(
-                    success=False,
-                    output="",
-                    error=f"This command {reason} and requires your approval.",
+                # Always return error for write commands to force ask_user tool usage
+                return ToolResult.error_result(
+                    f"Permission required: This command {reason}. Use ask_user tool to get approval first.",
                     metadata={
-                        'requires_user_input': True,
-                        'question': f"This command will {reason}:\n\n`{params.command}`\n\nDo you want to proceed?",
-                        'options': ["Yes, execute it", "No, cancel"],
-                        'allow_freeform': False,
-                        'permission_request': True,
-                        'command': params.command
+                        'requires_permission': True,
+                        'command': params.command,
+                        'reason': reason,
+                        'suggested_question': f"I need to run this command which {reason}:\n\n`{params.command}`\n\nDo you want to proceed?",
+                        'suggested_options': ["Yes", "No"]
                     }
                 )
 
@@ -164,9 +161,12 @@ class ShellTool(Tool):
         # Use platform from config instead of sys.platform
         platform_name = self.config.shell_environment.platform
         if platform_name == "Windows":
-            # On Windows, wrap the command in quotes to handle paths with spaces correctly
-            # This prevents issues with commands like: dir "C:\Program Files"
-            shell_command = ["cmd.exe", "/c", f'"{params.command}"']
+            # On Windows, use cmd.exe without extra quotes for simple commands
+            # Only add quotes if the command contains paths with spaces
+            if " " in params.command and ("/" in params.command or "\\" in params.command):
+                shell_command = ["cmd.exe", "/c", f'"{params.command}"']
+            else:
+                shell_command = ["cmd.exe", "/c", params.command]
         else:
             shell_command = ["/bin/sh", "-c", params.command]
 
