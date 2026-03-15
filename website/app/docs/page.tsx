@@ -32,6 +32,8 @@ import {
   RiNotificationLine
 } from "react-icons/ri";
 
+const VERSION = process.env.NEXT_PUBLIC_VERSION || '1.2.0';
+
 export default function DocsPage() {
   const [activeSection, setActiveSection] = useState("introduction");
 
@@ -377,7 +379,7 @@ export default function DocsPage() {
                     </div>
                     <p className="text-sm text-zinc-400 mb-4">Windows 10/11 (64-bit)</p>
                     <a
-                      href="https://github.com/sujal-GITHUB/Codentis/releases/latest/download/Codentis-Setup-1.0.0.exe"
+                      href={`https://github.com/sujal-GITHUB/Codentis/releases/latest/download/Codentis-Setup-${VERSION}.exe`}
                       className="inline-block px-3 py-1.5 text-sm bg-cyan-500 hover:bg-cyan-600 text-black font-semibold rounded-lg transition-all w-full text-center"
                     >
                       Download Installer (34 MB)
@@ -392,13 +394,13 @@ export default function DocsPage() {
                     <p className="text-sm text-zinc-400 mb-4">macOS 11+ (Big Sur or later)</p>
                     <div className="flex flex-col gap-2">
                       <a
-                        href="https://github.com/sujal-GITHUB/Codentis/releases/latest/download/Codentis-1.0.0-arm64.pkg"
+                        href={`https://github.com/sujal-GITHUB/Codentis/releases/latest/download/Codentis-${VERSION}-arm64.pkg`}
                         className="px-3 py-1.5 bg-cyan-500 hover:bg-cyan-600 text-black font-semibold rounded-lg transition-all text-sm text-center"
                       >
                         Apple Silicon (M series)
                       </a>
                       <a
-                        href="https://github.com/sujal-GITHUB/Codentis/releases/latest/download/Codentis-1.0.0-intel.pkg"
+                        href={`https://github.com/sujal-GITHUB/Codentis/releases/latest/download/Codentis-${VERSION}-intel.pkg`}
                         className="px-3 py-1.5 bg-cyan-500/80 hover:bg-cyan-500 text-black font-semibold rounded-lg transition-all text-sm text-center"
                       >
                         Intel
@@ -413,7 +415,7 @@ export default function DocsPage() {
                     </div>
                     <p className="text-sm text-zinc-400 mb-4">Debian/Ubuntu (64-bit)</p>
                     <a
-                      href="https://github.com/sujal-GITHUB/Codentis/releases/latest/download/codentis_1.0.0_amd64.deb"
+                      href={`https://github.com/sujal-GITHUB/Codentis/releases/latest/download/codentis_${VERSION}_amd64.deb`}
                       className="inline-block px-3 py-1.5 text-sm bg-cyan-500 hover:bg-cyan-600 text-black font-semibold rounded-lg transition-all w-full text-center"
                     >
                       Download .deb Package
@@ -530,9 +532,9 @@ export default function DocsPage() {
                         <p className="text-sm text-zinc-400 mb-2">Download and install the .deb package:</p>
                         <div className="bg-black/50 p-3 rounded-lg font-mono text-sm space-y-1">
                           <div className="text-zinc-500"># Download the package</div>
-                          <div className="text-white">wget https://github.com/sujal-GITHUB/Codentis/releases/latest/download/codentis_1.0.0_amd64.deb</div>
+                          <div className="text-white">wget https://github.com/sujal-GITHUB/Codentis/releases/latest/download/codentis_{VERSION}_amd64.deb</div>
                           <div className="text-zinc-500 mt-2"># Install</div>
-                          <div className="text-white">sudo dpkg -i codentis_1.0.0_amd64.deb</div>
+                          <div className="text-white">sudo dpkg -i codentis_{VERSION}_amd64.deb</div>
                           <div className="text-zinc-500 mt-2"># Fix dependencies if needed</div>
                           <div className="text-white">sudo apt-get install -f</div>
                         </div>

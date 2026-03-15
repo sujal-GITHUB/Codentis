@@ -28,7 +28,19 @@ def get_version():
             pass
     
     # Default fallback
-    return "1.1.0"
+    return "1.2.0"
+
+def update_website_env(version):
+    """Update website .env.local file."""
+    website_env = Path(__file__).parent.parent / 'website' / '.env.local'
+    
+    content = f"NEXT_PUBLIC_VERSION={version}\n"
+    
+    with open(website_env, 'w') as f:
+        f.write(content)
+    
+    print(f"Updated {website_env} with version {version}")
+    return True
 
 def main():
     version = get_version()
@@ -43,9 +55,16 @@ def main():
         print("Failed to update pyproject.toml")
         return False
     
+    # Update website environment
+    print("Updating website environment...")
+    if not update_website_env(version):
+        print("Failed to update website environment")
+        return False
+    
     print(f"✓ All version references updated to {version}")
     print("\nNote: setup.py and codentis/__init__.py now read version dynamically from environment")
     print("Note: Build scripts now use VERSION environment variable")
+    print("Note: Website now uses NEXT_PUBLIC_VERSION environment variable")
     
     return True
 
