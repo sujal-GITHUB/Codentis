@@ -240,9 +240,11 @@ class CLI:
                         thinking_msg = self._get_thinking_message(tool_name)
                         self.tui.start_thinking(thinking_msg)
                 
-                # Stop thinking when tool completes
+                # Stop thinking when tool completes and start thinking for next decision
                 elif event.type == AgentEventType.TOOL_CALL_COMPLETE:
                     self.tui.stop_thinking()
+                    # After tool completion, agent might be thinking about next steps
+                    tool_completed = True
                 
                 # Stop thinking when text starts
                 elif event.type == AgentEventType.TEXT_DELTA:
@@ -260,6 +262,8 @@ class CLI:
                     if assistant_streaming:
                         self.tui.end_assistant()
                         assistant_streaming = False
+                    # Stop thinking when agent finishes responding
+                    self.tui.stop_thinking()
                 
                 elif event.type == AgentEventType.AGENT_ERROR:
                     error = event.data.get("error") or "Unknown error occurred"
@@ -273,15 +277,14 @@ class CLI:
                     tool_kind = self.get_tool_kind(tool_name)
                     metadata = event.data.get("metadata", {})
                     
-                    # Check if this tool requires user input
+                    # Check if this tool requires user input (ask_user tool only)
                     if metadata.get("requires_user_input"):
                         question = metadata.get("question", "Please provide input:")
                         options = metadata.get("options", [])
                         allow_freeform = metadata.get("allow_freeform", True)
-                        is_permission = metadata.get("permission_request", False)
                         
                         # Show the question to the user
-                        print(f"\n{self.tui.CYAN}{self.tui.BOLD}{'Permission Required' if is_permission else 'Question'}:{self.tui.RESET} {question}\n")
+                        print(f"\n{self.tui.CYAN}{self.tui.BOLD}Question:{self.tui.RESET} {question}\n")
                         
                         if options:
                             print(f"{self.tui.DIM}Options:{self.tui.RESET}")
@@ -291,79 +294,62 @@ class CLI:
                         
                         # Get user response
                         if options and not allow_freeform:
-                            # Multiple choice only
+                            # Multiple choice only - be strict about valid options
                             while True:
                                 try:
                                     choice = input(f"{self.tui.BOLD}Your choice (1-{len(options)}):{self.tui.RESET} ").strip()
+                                    if not choice:
+                                        print(f"{self.tui.RED}Please enter a number between 1 and {len(options)}{self.tui.RESET}")
+                                        continue
                                     choice_num = int(choice)
                                     if 1 <= choice_num <= len(options):
                                         user_response = options[choice_num - 1]
                                         break
                                     else:
-                                        print(f"{self.tui.RED}Please enter a number between 1 and {len(options)}{self.tui.RESET}")
+                                        print(f"{self.tui.RED}Invalid choice. Please enter a number between 1 and {len(options)}{self.tui.RESET}")
                                 except ValueError:
-                                    print(f"{self.tui.RED}Please enter a valid number{self.tui.RESET}")
+                                    print(f"{self.tui.RED}Invalid input '{choice}'. Please enter a valid number between 1 and {len(options)}{self.tui.RESET}")
+                                except EOFError:
+                                    print(f"\n{self.tui.RED}Input interrupted. Defaulting to last option{self.tui.RESET}")
+                                    user_response = options[-1] if options else "No"
+                                    break
+                                except KeyboardInterrupt:
+                                    print(f"\n{self.tui.RED}Operation cancelled by user{self.tui.RESET}")
+                                    user_response = options[-1] if options else "No"
+                                    break
                         else:
-                            # Freeform or mixed
+                            # Freeform or mixed - allow numbers or text
                             prompt = f"{self.tui.BOLD}Your answer:{self.tui.RESET} " if not options else f"{self.tui.BOLD}Your answer (or number):{self.tui.RESET} "
-                            user_response = input(prompt).strip()
+                            try:
+                                user_response = input(prompt).strip()
+                                if not user_response:
+                                    if options:
+                                        print(f"{self.tui.RED}Please provide an answer or choose from the options above{self.tui.RESET}")
+                                        user_response = input(prompt).strip()
+                                    else:
+                                        print(f"{self.tui.RED}Please provide an answer{self.tui.RESET}")
+                                        user_response = input(prompt).strip()
+                            except EOFError:
+                                print(f"\n{self.tui.RED}Input interrupted. Defaulting to last option{self.tui.RESET}")
+                                user_response = options[-1] if options else "No"
+                            except KeyboardInterrupt:
+                                print(f"\n{self.tui.RED}Operation cancelled by user{self.tui.RESET}")
+                                user_response = options[-1] if options else "No"
                             
-                            # If options provided and user entered a number, use that option
-                            if options:
+                            # If options provided and user entered a number, validate it
+                            if options and user_response.isdigit():
                                 try:
                                     choice_num = int(user_response)
                                     if 1 <= choice_num <= len(options):
                                         user_response = options[choice_num - 1]
+                                    else:
+                                        print(f"{self.tui.YELLOW}Note: '{user_response}' is not a valid option number. Using as freeform response.{self.tui.RESET}")
                                 except ValueError:
                                     pass  # Use the freeform response
                         
-                        # Handle permission requests
-                        if is_permission:
-                            if "yes" in user_response.lower():
-                                # User approved - automatically re-execute the command with permission bypass
-                                command = metadata.get("command", "")
-                                print(f"\n{self.tui.GREEN}✓ Permission granted. Executing command...{self.tui.RESET}\n")
-                                
-                                # Re-execute the shell command with skip_permission_check=True
-                                if self.agent and self.agent.session and tool_name == "shell":
-                                    from codentis.tools.base import ToolInvocation
-                                    shell_tool = self.agent.session.tool_registry.get("shell")
-                                    
-                                    if shell_tool:
-                                        # Execute with permission bypass
-                                        invocation = ToolInvocation(
-                                            params={
-                                                "command": command,
-                                                "skip_permission_check": True
-                                            },
-                                            cwd=self.config.cwd
-                                        )
-                                        
-                                        # Execute the command
-                                        exec_result = await shell_tool.execute(invocation)
-                                        
-                                        # Update the event data with actual execution result
-                                        event.data["success"] = exec_result.success
-                                        event.data["output"] = exec_result.output
-                                        event.data["error"] = exec_result.error
-                                        event.data["metadata"] = exec_result.metadata or {}
-                                        event.data["metadata"]["user_approved"] = True
-                                        event.data["metadata"]["auto_executed"] = True
-                                    else:
-                                        event.data["output"] = f"Permission granted by user for: {command}"
-                                        event.data["metadata"]["user_approved"] = True
-                                else:
-                                    event.data["output"] = f"Permission granted by user for: {command}"
-                                    event.data["metadata"]["user_approved"] = True
-                            else:
-                                # User denied
-                                print(f"\n{self.tui.RED}✗ Permission denied. Command cancelled.{self.tui.RESET}\n")
-                                event.data["output"] = "User denied permission. Command was not executed."
-                                event.data["metadata"]["user_denied"] = True
-                        else:
-                            # Regular ask_user response
-                            event.data["output"] = user_response
-                            event.data["metadata"]["user_response"] = user_response
+                        # Store user response
+                        event.data["output"] = user_response
+                        event.data["metadata"]["user_response"] = user_response
                     
                     self.tui.tool_call_complete(
                         event.data.get("call_id", ""),
@@ -377,6 +363,13 @@ class CLI:
                         event.data.get("diff"),
                         event.data.get("exit_code"),
                     )
+                    
+                    # Start thinking indicator after tool completion - agent is deciding next steps
+                    self.tui.start_thinking("Thinking")
+            
+            # Stop thinking when agent processing is complete
+            self.tui.stop_thinking()
+            
         except Exception as e:
             print(f"\n{self.tui.RED}Error processing message: {str(e)}{self.tui.RESET}\n")
             import traceback
