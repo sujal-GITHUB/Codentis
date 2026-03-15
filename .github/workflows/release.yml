@@ -12,6 +12,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
+      - name: Extract version from tag
+        id: get_version
+        run: echo "VERSION=${env:GITHUB_REF -replace 'refs/tags/v',''}" >> $env:GITHUB_OUTPUT
+      
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -31,8 +35,10 @@ jobs:
           choco install innosetup -y
       
       - name: Build Windows installer
+        env:
+          VERSION: ${{ steps.get_version.outputs.VERSION }}
         run: |
-          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" scripts\installer_windows.iss
+          python scripts/build_windows_installer.py
       
       - name: Upload Windows installer
         uses: actions/upload-artifact@v4
@@ -44,6 +50,10 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
+      
+      - name: Extract version from tag
+        id: get_version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
       
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -62,6 +72,8 @@ jobs:
           ./scripts/build_macos.sh
       
       - name: Build macOS installer
+        env:
+          VERSION: ${{ steps.get_version.outputs.VERSION }}
         run: |
           chmod +x scripts/build_macos_installer.sh
           ./scripts/build_macos_installer.sh
@@ -76,6 +88,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      
+      - name: Extract version from tag
+        id: get_version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
       
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -94,6 +110,8 @@ jobs:
           ./scripts/build_linux.sh
       
       - name: Build Debian package
+        env:
+          VERSION: ${{ steps.get_version.outputs.VERSION }}
         run: |
           chmod +x scripts/build_linux_deb.sh
           ./scripts/build_linux_deb.sh

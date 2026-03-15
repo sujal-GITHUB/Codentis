@@ -5,6 +5,15 @@ All notable changes to Codentis will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.3] - 2026-03-15
+
+### Fixed
+- GitHub Actions workflow now properly uses environment variables for all build scripts
+- Windows installer now correctly reads version from environment in CI/CD
+- All build artifacts will now have consistent version numbers
+- Fixed Inno Setup script update logic with better error handling and debugging
+- Added explicit UTF-8 encoding for .iss file operations
+
 ## [1.2.2] - 2026-03-15
 
 ### Fixed

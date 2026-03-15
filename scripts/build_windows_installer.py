@@ -36,30 +36,40 @@ def update_iss_file(version):
         return False
     
     # Read the file
-    with open(iss_file, 'r') as f:
+    with open(iss_file, 'r', encoding='utf-8') as f:
         content = f.read()
     
-    # Replace the version line
+    # Replace the version line - be more specific with the pattern
     lines = content.split('\n')
+    updated = False
     for i, line in enumerate(lines):
-        if line.startswith('#define MyAppVersion'):
+        if line.strip().startswith('#define MyAppVersion'):
+            old_line = lines[i]
             lines[i] = f'#define MyAppVersion "{version}"'
+            print(f"Updated line {i+1}: '{old_line.strip()}' -> '{lines[i]}'")
+            updated = True
             break
     
-    # Write back
-    with open(iss_file, 'w') as f:
+    if not updated:
+        print("Warning: Could not find #define MyAppVersion line to update")
+        return False
+    
+    # Write back with explicit encoding
+    with open(iss_file, 'w', encoding='utf-8') as f:
         f.write('\n'.join(lines))
     
-    print(f"Updated {iss_file} with version {version}")
+    print(f"Successfully updated {iss_file} with version {version}")
     return True
 
 def build_installer():
     """Build the Windows installer using Inno Setup."""
     version = get_version()
     print(f"Building Windows installer for version {version}")
+    print(f"VERSION environment variable: {os.getenv('VERSION')}")
     
     # Update the .iss file
     if not update_iss_file(version):
+        print("Failed to update .iss file")
         return False
     
     # Check if Inno Setup is available
@@ -73,6 +83,7 @@ def build_installer():
     for path in iscc_paths:
         if Path(path).exists() or path == "iscc.exe":
             iscc_exe = path
+            print(f"Found Inno Setup at: {path}")
             break
     
     if not iscc_exe:
@@ -85,13 +96,18 @@ def build_installer():
     cmd = [iscc_exe, str(iss_file)]
     
     print(f"Running: {' '.join(cmd)}")
-    result = subprocess.run(cmd, check=False)
+    print(f"Working directory: {Path.cwd()}")
+    
+    result = subprocess.run(cmd, check=False, capture_output=True, text=True)
     
     if result.returncode == 0:
         print(f"✓ Windows installer built successfully: Codentis-Setup-{version}.exe")
+        print("STDOUT:", result.stdout)
         return True
     else:
         print(f"✗ Installer build failed with return code {result.returncode}")
+        print("STDOUT:", result.stdout)
+        print("STDERR:", result.stderr)
         return False
 
 if __name__ == "__main__":
