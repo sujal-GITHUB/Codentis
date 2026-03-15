@@ -1,4 +1,28 @@
 from setuptools import setup, find_packages
+import os
+from pathlib import Path
+
+def get_version():
+    """Get version from environment variable or .env file."""
+    # First try environment variable
+    version = os.getenv('VERSION')
+    if version:
+        return version.strip('v')  # Remove 'v' prefix if present
+    
+    # Try to read from .env file
+    env_file = Path(__file__).parent / '.env'
+    if env_file.exists():
+        try:
+            with open(env_file, 'r') as f:
+                for line in f:
+                    if line.startswith('VERSION='):
+                        version = line.split('=', 1)[1].strip().strip("'\"")
+                        return version.strip('v')  # Remove 'v' prefix if present
+        except Exception:
+            pass
+    
+    # Default fallback
+    return "1.1.0"
 
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
@@ -8,7 +32,7 @@ with open("requirements.txt", "r", encoding="utf-8") as fh:
 
 setup(
     name="codentis",
-    version="1.1.0",
+    version=get_version(),
     author="Codentis Team",
     description="An intelligent CLI AI agent for developers",
     long_description=long_description,

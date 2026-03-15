@@ -5,6 +5,29 @@ All notable changes to Codentis will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-03-15
+
+### Added
+- Centralized version management using VERSION environment variable
+- Dynamic version reading from .env file across all components
+- New build scripts for automated version handling:
+  - `scripts/build_windows_installer.py` - Windows installer with dynamic versioning
+  - `scripts/update_pyproject_version.py` - Updates pyproject.toml from environment
+  - `scripts/update_all_versions.py` - Master script for version updates
+- Environment variable support in build scripts for CI/CD integration
+
+### Changed
+- All build scripts now read VERSION from environment variable with fallback to .env file
+- `codentis/__init__.py` now dynamically reads version from environment
+- `setup.py` now dynamically reads version from environment
+- Build artifacts (installers, packages) now automatically use correct version numbers
+- Simplified version management - single source of truth in .env file
+
+### Fixed
+- Installer filenames now correctly reflect the actual version being released
+- No more version mismatches between code and build artifacts
+- Eliminated need for manual version updates across multiple files
+
 ## [1.1.0] - 2026-03-15
 
 ### Added
