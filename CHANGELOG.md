@@ -5,6 +5,27 @@ All notable changes to Codentis will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-03-15
+
+### Added
+- Thinking indicators between tool executions to show when AI is processing
+- Enhanced todo tool with better status messages and completed task tracking
+- Improved ask_user tool robustness with better input validation
+- Task list display shows completed tasks with checkmarks (☑) and pending tasks (☐)
+
+### Changed
+- Todo tool now shows "Adding task: [content]" instead of generic "Processing..."
+- Todo list displays directly in summary for small lists without needing expansion
+- Ask_user tool now handles invalid input more gracefully with clear error messages
+- Shell tool permission flow now uses ask_user tool exclusively
+- Removed duplicate checkmarks in todo tool display
+
+### Fixed
+- Shell tool permission system now properly integrates with ask_user workflow
+- Loop detection system properly stops when user selects "Stop and let me handle it manually"
+- Input validation prevents crashes from invalid user responses
+- Windows command execution improved for simple commands like mkdir
+
 ## [1.0.0] - 2026-03-15
 
 ### Added

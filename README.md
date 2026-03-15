@@ -2,7 +2,7 @@
 
 ![Python](https://img.shields.io/badge/python-3.10+-blue.svg)
 ![Rich](https://img.shields.io/badge/UI-Rich-purple.svg)
-![Version](https://img.shields.io/badge/version-1.0.0-green.svg)
+![Version](https://img.shields.io/badge/version-1.1.0-green.svg)
 ![Status](https://img.shields.io/badge/status-Production-brightgreen.svg)
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)
 
@@ -45,20 +45,20 @@ Download the latest installer for your platform from the [Releases page](https:/
 
 **Windows:**
 ```bash
-# Download and run Codentis-Setup-1.0.0.exe
+# Download and run Codentis-Setup-1.1.0.exe
 # The installer will add Codentis to your PATH
 ```
 
 **macOS:**
 ```bash
-# Download Codentis-1.0.0-arm64.pkg (Apple Silicon) or Codentis-1.0.0-intel.pkg (Intel)
-sudo installer -pkg Codentis-1.0.0-arm64.pkg -target /
+# Download Codentis-1.1.0-arm64.pkg (Apple Silicon) or Codentis-1.1.0-intel.pkg (Intel)
+sudo installer -pkg Codentis-1.1.0-arm64.pkg -target /
 ```
 
 **Linux (Debian/Ubuntu):**
 ```bash
-# Download codentis_1.0.0_amd64.deb
-sudo dpkg -i codentis_1.0.0_amd64.deb
+# Download codentis_1.1.0_amd64.deb
+sudo dpkg -i codentis_1.1.0_amd64.deb
 ```
 
 ### Install from PyPI
@@ -241,21 +241,21 @@ Codentis supports building native installers for all platforms:
 **Windows:**
 ```bash
 python scripts/build_exe.py 64
-# Creates: dist/Codentis.exe and dist/Codentis-Setup-1.0.0.exe
+# Creates: dist/Codentis.exe and dist/Codentis-Setup-1.1.0.exe
 ```
 
 **macOS:**
 ```bash
 ./scripts/build_macos.sh
 ./scripts/build_macos_installer.sh
-# Creates: dist/codentis and dist/Codentis-1.0.0-arm64.pkg (or -intel.pkg)
+# Creates: dist/codentis and dist/Codentis-1.1.0-arm64.pkg (or -intel.pkg)
 ```
 
 **Linux:**
 ```bash
 ./scripts/build_linux.sh
 ./scripts/build_linux_deb.sh
-# Creates: dist/codentis and dist/codentis_1.0.0_amd64.deb
+# Creates: dist/codentis and dist/codentis_1.1.0_amd64.deb
 ```
 
 See [BUILD_INSTALLERS.md](BUILD_INSTALLERS.md) for detailed build instructions.
@@ -264,7 +264,7 @@ See [BUILD_INSTALLERS.md](BUILD_INSTALLERS.md) for detailed build instructions.
 
 Automated builds are configured via GitHub Actions:
 - **Build Test**: Runs on every push to test builds on all platforms
-- **Release**: Triggered by version tags (e.g., `v1.0.0`) to create releases with installers
+- **Release**: Triggered by version tags (e.g., `v1.1.0`) to create releases with installers
 
 See [GITHUB_ACTIONS_SETUP.md](GITHUB_ACTIONS_SETUP.md) for setup instructions.
 
@@ -291,6 +291,6 @@ Inspired by Claude Code and other AI-powered developer tools.
 
 ---
 
-**Version**: 1.0.0  
+**Version**: 1.1.0  
 **Status**: Production Ready  
 **Platform**: Windows, macOS, Linux
