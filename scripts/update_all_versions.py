@@ -31,15 +31,21 @@ def get_version():
     return "1.2.0"
 
 def update_website_env(version):
-    """Update website .env.local file."""
-    website_env = Path(__file__).parent.parent / 'website' / '.env.local'
+    """Update website environment files."""
+    website_dir = Path(__file__).parent.parent / 'website'
     
-    content = f"NEXT_PUBLIC_VERSION={version}\n"
+    # Update .env.local (for local development)
+    env_local = website_dir / '.env.local'
+    with open(env_local, 'w') as f:
+        f.write(f"NEXT_PUBLIC_VERSION={version}\n")
+    print(f"Updated {env_local} with version {version}")
     
-    with open(website_env, 'w') as f:
-        f.write(content)
+    # Update .env.production (for production deployment)
+    env_production = website_dir / '.env.production'
+    with open(env_production, 'w') as f:
+        f.write(f"NEXT_PUBLIC_VERSION={version}\n")
+    print(f"Updated {env_production} with version {version}")
     
-    print(f"Updated {website_env} with version {version}")
     return True
 
 def main():
