@@ -2,12 +2,12 @@
 
 import { useState } from "react";
 import Navbar from "../components/Navbar";
-import { 
-  RiSpeedLine, 
-  RiLockLine, 
-  RiToolsLine, 
-  RiGlobalLine, 
-  RiSparklingLine, 
+import {
+  RiSpeedLine,
+  RiLockLine,
+  RiToolsLine,
+  RiGlobalLine,
+  RiSparklingLine,
   RiRefreshLine,
   RiAppleFill,
   RiMicrosoftFill,
@@ -29,13 +29,16 @@ import {
   RiRocketLine,
   RiStarLine,
   RiEyeLine,
-  RiNotificationLine
+  RiNotificationLine,
+  RiMenuLine,
+  RiCloseLine
 } from "react-icons/ri";
 
 const VERSION = '1.2.4';
 
 export default function DocsPage() {
   const [activeSection, setActiveSection] = useState("introduction");
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const sections = [
     {
@@ -88,13 +91,58 @@ export default function DocsPage() {
     <div className="min-h-screen bg-black text-white">
       <Navbar />
 
-      <div className="flex pt-20">
+      {/* Mobile Header Blocker - Prevents content scroll visibility above menu */}
+      <div className="lg:hidden fixed top-0 left-0 right-0 h-[84px] bg-black z-40" />
+
+      {/* Mobile Top Nav */}
+      <div className="lg:hidden fixed top-[84px] left-0 right-0 z-40 bg-zinc-950/90 backdrop-blur-2xl px-4 py-2.5 flex items-center justify-between shadow-2xl">
+        <button
+          onClick={() => setIsMenuOpen(!isMenuOpen)}
+          className="flex items-center gap-1.5 text-[11px] font-semibold text-cyan-400 px-2 py-1 rounded-lg"
+        >
+          {isMenuOpen ? <RiCloseLine size={16} /> : <RiMenuLine size={16} />}
+          <span>Menu</span>
+        </button>
+        <span className="text-[9px] uppercase tracking-[0.2em] text-zinc-500 font-bold overflow-hidden text-ellipsis whitespace-nowrap max-w-[150px]">
+          {sections.flatMap(s => s.items).find(i => i.id === activeSection)?.label}
+        </span>
+      </div>
+
+      {/* Mobile Menu Overlay */}
+      <div className={`lg:hidden fixed inset-0 z-30 bg-black pt-36 px-6 overflow-y-auto pb-20 transition-transform duration-300 ease-in-out ${isMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+        {sections.map((section) => (
+          <div key={section.title} className="mb-6">
+            <h3 className="text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-600 mb-3">
+              {section.title}
+            </h3>
+            <ul className="space-y-1">
+              {section.items.map((item) => (
+                <li key={item.id}>
+                  <button
+                    onClick={() => {
+                      setActiveSection(item.id);
+                      setIsMenuOpen(false);
+                      window.scrollTo(0, 0);
+                    }}
+                    className={`w-full text-left py-2 text-[15px] font-medium transition-colors ${activeSection === item.id ? "text-cyan-400" : "text-zinc-400 hover:text-white"
+                      }`}
+                  >
+                    {item.label}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+
+      <div className="flex pt-36 lg:pt-20">
         {/* Sidebar */}
-        <aside className="hidden lg:block w-64 fixed left-0 top-20 bottom-0 border-r border-white/[0.05] bg-black overflow-y-auto">
+        <aside className="hidden lg:block w-64 fixed left-0 top-20 bottom-0 border-r border-white/[0.05] bg-black overflow-y-auto font-sans">
           <div className="p-6">
             {sections.map((section) => (
               <div key={section.title} className="mb-6">
-                <h3 className="text-sm font-semibold uppercase tracking-wider text-zinc-500 mb-2">
+                <h3 className="text-[10px] sm:text-xs font-bold uppercase tracking-[0.15em] text-zinc-500 mb-2">
                   {section.title}
                 </h3>
                 <ul className="space-y-1">
@@ -102,11 +150,10 @@ export default function DocsPage() {
                     <li key={item.id}>
                       <button
                         onClick={() => setActiveSection(item.id)}
-                        className={`w-full text-left px-3 py-1.5 rounded-md text-sm transition-colors ${
-                          activeSection === item.id
-                            ? "bg-cyan-500/10 text-cyan-400"
-                            : "text-zinc-400 hover:text-white hover:bg-white/[0.05]"
-                        }`}
+                        className={`w-full text-left px-3 py-1.5 rounded-md text-sm transition-colors ${activeSection === item.id
+                          ? "bg-cyan-500/10 text-cyan-400"
+                          : "text-zinc-400 hover:text-white hover:bg-white/[0.05]"
+                          }`}
                       >
                         {item.label}
                       </button>
@@ -119,32 +166,32 @@ export default function DocsPage() {
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 lg:ml-64">
-          <div className="max-w-full mx-auto px-8 sm:px-12 lg:px-16 py-12 pb-24">
+        <main className="flex-1 lg:ml-64 w-full min-w-0">
+          <div className="max-w-full mx-auto px-5 sm:px-12 lg:px-16 py-4 sm:py-8 lg:py-12 pb-24">
             {/* Introduction */}
             {activeSection === "introduction" && (
-              <div className="space-y-8">
+              <div className="space-y-6 mt-6 lg:mt-0">
                 <div>
-                  <span className="text-sm font-semibold uppercase tracking-wider text-cyan-400/80">Get Started</span>
-                  <h1 className="text-3xl font-semibold mt-3 mb-4">Introduction to Codentis</h1>
-                  <p className="text-sm text-zinc-400 mb-4">
+                  <span className="text-[9px] sm:text-xs font-bold uppercase tracking-[0.25em] text-cyan-400/70">Get Started</span>
+                  <h1 className="text-xl sm:text-3xl font-semibold mt-2.5 mb-4 text-white tracking-tight">Introduction to Codentis</h1>
+                  <p className="text-[13px] sm:text-sm text-zinc-400 mb-4 leading-relaxed">
                     Codentis is an intelligent CLI AI agent that brings the power of Large Language Models directly to your terminal. It's designed to be your coding companion, helping you write, debug, and understand code faster than ever before.
                   </p>
-                  <p className="text-sm text-zinc-400">
+                  <p className="text-[13px] sm:text-sm text-zinc-400 leading-relaxed">
                     Whether you're building a new project, debugging an issue, or learning a new technology, Codentis provides instant, context-aware assistance right where you work.
                   </p>
                 </div>
 
                 {/* Key Features Grid */}
                 <div>
-                  <h2 className="text-xl font-semibold mb-4">Key Features</h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="p-6 border border-white/[0.05] bg-bg-2 rounded-xl">
-                      <div className="flex items-center gap-3 mb-3">
-                        <RiSpeedLine className="text-cyan-400 text-2xl" />
-                        <h3 className="text-base font-semibold">Fast & Efficient</h3>
+                  <h2 className="text-base sm:text-lg font-semibold mb-4 text-zinc-200">Key Features</h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+                    <div className="p-5 border border-white/[0.05] bg-bg-2 rounded-xl">
+                      <div className="flex items-center gap-3 mb-2.5">
+                        <RiSpeedLine className="text-cyan-400 text-lg sm:text-2xl" />
+                        <h3 className="text-sm sm:text-base font-semibold">Fast & Efficient</h3>
                       </div>
-                      <p className="text-sm text-zinc-400">
+                      <p className="text-[12px] sm:text-sm text-zinc-400 leading-relaxed">
                         Built with async Python for high performance. Streaming responses show results as they're generated, and collapsible tool outputs keep your terminal clean.
                       </p>
                     </div>
@@ -203,11 +250,11 @@ export default function DocsPage() {
 
                 {/* What You Can Do */}
                 <div className="p-6 border border-cyan-500/20 bg-cyan-500/5 rounded-xl">
-                  <h2 className="text-xl font-semibold mb-4 text-cyan-400">What You Can Do with Codentis</h2>
+                  <h2 className="text-lg sm:text-xl font-semibold mb-4 text-cyan-400">What You Can Do with Codentis</h2>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                       <h3 className="text-base font-semibold mb-2 text-zinc-300">Code Generation</h3>
-                      <ul className="text-sm text-zinc-400 space-y-1">
+                      <ul className="text-[13px] sm:text-sm text-zinc-400 space-y-1">
                         <li>• Create complete files from descriptions</li>
                         <li>• Generate boilerplate and scaffolding</li>
                         <li>• Write functions, classes, and modules</li>
@@ -216,7 +263,7 @@ export default function DocsPage() {
                     </div>
                     <div>
                       <h3 className="text-base font-semibold mb-2 text-zinc-300">Code Editing</h3>
-                      <ul className="text-sm text-zinc-400 space-y-1">
+                      <ul className="text-[13px] sm:text-sm text-zinc-400 space-y-1">
                         <li>• Refactor existing code</li>
                         <li>• Fix bugs and errors</li>
                         <li>• Add new features to files</li>
@@ -225,7 +272,7 @@ export default function DocsPage() {
                     </div>
                     <div>
                       <h3 className="text-base font-semibold mb-2 text-zinc-300">Code Understanding</h3>
-                      <ul className="text-sm text-zinc-400 space-y-1">
+                      <ul className="text-[13px] sm:text-sm text-zinc-400 space-y-1">
                         <li>• Explain complex code sections</li>
                         <li>• Summarize file contents</li>
                         <li>• Find patterns and issues</li>
@@ -234,7 +281,7 @@ export default function DocsPage() {
                     </div>
                     <div>
                       <h3 className="text-base font-semibold mb-2 text-zinc-300">Project Management</h3>
-                      <ul className="text-sm text-zinc-400 space-y-1">
+                      <ul className="text-[13px] sm:text-sm text-zinc-400 space-y-1">
                         <li>• Search across your codebase</li>
                         <li>• Run build and test commands</li>
                         <li>• Manage dependencies</li>
@@ -246,7 +293,7 @@ export default function DocsPage() {
 
                 {/* How It Works */}
                 <div>
-                  <h2 className="text-xl font-semibold mb-4">How It Works</h2>
+                  <h2 className="text-lg sm:text-xl font-semibold mb-4">How It Works</h2>
                   <div className="space-y-4">
                     <div className="flex gap-4">
                       <div className="flex-shrink-0 w-8 h-8 rounded-full bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 font-semibold">
@@ -292,23 +339,23 @@ export default function DocsPage() {
 
                 {/* Use Cases */}
                 <div>
-                  <h2 className="text-xl font-semibold mb-4">Perfect For</h2>
+                  <h2 className="text-lg sm:text-xl font-semibold mb-4">Perfect For</h2>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="p-6 border border-white/[0.05] bg-bg-2 rounded-xl">
-                      <h3 className="text-base font-semibold mb-2">Developers</h3>
-                      <p className="text-sm text-zinc-400">
+                      <h3 className="text-sm sm:text-base font-semibold mb-2">Developers</h3>
+                      <p className="text-[13px] sm:text-sm text-zinc-400">
                         Speed up your workflow with instant code generation, refactoring, and debugging assistance.
                       </p>
                     </div>
                     <div className="p-6 border border-white/[0.05] bg-bg-2 rounded-xl">
-                      <h3 className="text-base font-semibold mb-2">Students</h3>
-                      <p className="text-sm text-zinc-400">
+                      <h3 className="text-sm sm:text-base font-semibold mb-2">Students</h3>
+                      <p className="text-[13px] sm:text-sm text-zinc-400">
                         Learn programming concepts, understand code examples, and get help with assignments.
                       </p>
                     </div>
                     <div className="p-6 border border-white/[0.05] bg-bg-2 rounded-xl">
-                      <h3 className="text-base font-semibold mb-2">Teams</h3>
-                      <p className="text-sm text-zinc-400">
+                      <h3 className="text-sm sm:text-base font-semibold mb-2">Teams</h3>
+                      <p className="text-[13px] sm:text-sm text-zinc-400">
                         Maintain consistent code quality, document projects, and onboard new team members faster.
                       </p>
                     </div>
@@ -317,8 +364,8 @@ export default function DocsPage() {
 
                 {/* Why Choose Codentis */}
                 <div className="p-6 border border-white/[0.05] bg-bg-2 rounded-xl">
-                  <h2 className="text-xl font-semibold mb-4">Why Choose Codentis?</h2>
-                  <div className="space-y-3 text-sm text-zinc-400">
+                  <h2 className="text-lg sm:text-xl font-semibold mb-4">Why Choose Codentis?</h2>
+                  <div className="space-y-3 text-[13px] sm:text-sm text-zinc-400">
                     <div className="flex gap-3">
                       <span className="text-cyan-400 flex-shrink-0">✓</span>
                       <p><strong className="text-zinc-300">Terminal-Native:</strong> Works directly in your terminal, no browser tabs or context switching required.</p>
@@ -345,13 +392,13 @@ export default function DocsPage() {
                 <div className="flex gap-4">
                   <button
                     onClick={() => setActiveSection("installation")}
-                    className="px-6 py-3 text-sm bg-cyan-500 hover:bg-cyan-600 text-black font-semibold rounded-lg transition-all flex items-center gap-2"
+                    className="px-4 py-2 sm:px-6 sm:py-3 text-xs sm:text-sm bg-cyan-500 hover:bg-cyan-600 text-black font-semibold rounded-lg transition-all flex items-center gap-2"
                   >
                     Get Started <RiArrowRightLine />
                   </button>
                   <button
                     onClick={() => setActiveSection("quickstart")}
-                    className="px-6 py-3 text-sm border border-white/[0.1] hover:border-cyan-500/50 text-zinc-300 hover:text-white font-semibold rounded-lg transition-all"
+                    className="px-4 py-2 sm:px-6 sm:py-3 text-xs sm:text-sm border border-white/[0.1] hover:border-cyan-500/50 text-zinc-300 hover:text-white font-semibold rounded-lg transition-all"
                   >
                     Quick Start Guide
                   </button>
@@ -363,9 +410,9 @@ export default function DocsPage() {
             {activeSection === "installation" && (
               <div className="space-y-8">
                 <div>
-                  <span className="text-sm font-semibold uppercase tracking-wider text-cyan-400/80">Getting Started</span>
-                  <h1 className="text-3xl font-semibold mt-3 mb-4">Installation</h1>
-                  <p className="text-sm text-zinc-400">
+                  <span className="text-[10px] sm:text-sm font-semibold uppercase tracking-wider text-cyan-400/80">Getting Started</span>
+                  <h1 className="text-xl sm:text-3xl font-semibold mt-3 mb-4">Installation</h1>
+                  <p className="text-[13px] sm:text-sm text-zinc-400">
                     Install Codentis on Windows, macOS, or Linux using our native installers. Choose your platform below for detailed installation instructions.
                   </p>
                 </div>
@@ -375,7 +422,7 @@ export default function DocsPage() {
                   <div className="p-6 border border-white/[0.05] bg-bg-2 rounded-xl hover:border-cyan-500/30 transition-colors">
                     <div className="flex items-center gap-3 mb-3">
                       <RiMicrosoftFill className="text-cyan-400 text-3xl" />
-                      <h3 className="text-base font-semibold">Windows</h3>
+                      <h3 className="text-sm sm:text-base font-semibold">Windows</h3>
                     </div>
                     <p className="text-sm text-zinc-400 mb-4">Windows 10/11 (64-bit)</p>
                     <a
@@ -389,7 +436,7 @@ export default function DocsPage() {
                   <div className="p-6 border border-white/[0.05] bg-bg-2 rounded-xl hover:border-cyan-500/30 transition-colors">
                     <div className="flex items-center gap-3 mb-3">
                       <RiAppleFill className="text-cyan-400 text-3xl" />
-                      <h3 className="text-base font-semibold">macOS</h3>
+                      <h3 className="text-sm sm:text-base font-semibold">macOS</h3>
                     </div>
                     <p className="text-sm text-zinc-400 mb-4">macOS 11+ (Big Sur or later)</p>
                     <div className="flex flex-col gap-2">
@@ -411,7 +458,7 @@ export default function DocsPage() {
                   <div className="p-6 border border-white/[0.05] bg-bg-2 rounded-xl hover:border-cyan-500/30 transition-colors">
                     <div className="flex items-center gap-3 mb-3">
                       <RiUbuntuLine className="text-cyan-400 text-3xl" />
-                      <h3 className="text-base font-semibold">Linux</h3>
+                      <h3 className="text-sm sm:text-base font-semibold">Linux</h3>
                     </div>
                     <p className="text-sm text-zinc-400 mb-4">Debian/Ubuntu (64-bit)</p>
                     <a
@@ -431,11 +478,11 @@ export default function DocsPage() {
                       <RiMicrosoftFill className="text-cyan-400 text-lg" />
                       Windows Installation
                     </h3>
-                    
+
                     <div className="space-y-4">
                       <div>
                         <p className="text-sm font-semibold text-cyan-400 mb-2">Step 1: Download the Installer</p>
-                        <p className="text-sm text-zinc-400">Download the Codentis-Setup-1.0.0.exe file from the link above.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Download the Codentis-Setup-1.0.0.exe file from the link above.</p>
                       </div>
 
                       <div>
@@ -463,7 +510,7 @@ export default function DocsPage() {
 
                       <div className="bg-yellow-500/5 border border-yellow-500/20 p-3 rounded">
                         <p className="text-sm font-semibold text-yellow-400 mb-1">⚠ Important</p>
-                        <p className="text-sm text-zinc-400">If the command isn't found, restart your terminal or log out and back in to refresh your PATH.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">If the command isn't found, restart your terminal or log out and back in to refresh your PATH.</p>
                       </div>
                     </div>
                   </div>
@@ -474,7 +521,7 @@ export default function DocsPage() {
                       <RiAppleFill className="text-cyan-400 text-lg" />
                       macOS Installation
                     </h3>
-                    
+
                     <div className="space-y-4">
                       <div>
                         <p className="text-sm font-semibold text-cyan-400 mb-2">Step 1: Choose Your Architecture</p>
@@ -525,7 +572,7 @@ export default function DocsPage() {
                       <RiUbuntuLine className="text-cyan-400 text-lg" />
                       Linux Installation
                     </h3>
-                    
+
                     <div className="space-y-4">
                       <div>
                         <p className="text-sm font-semibold text-cyan-400 mb-2">Debian/Ubuntu Installation</p>
@@ -565,10 +612,10 @@ export default function DocsPage() {
                   {/* Post-Installation Setup */}
                   <div className="p-6 border border-cyan-500/20 bg-cyan-500/5 rounded-xl">
                     <h3 className="text-base font-semibold mb-4 text-cyan-400">Post-Installation: Configure Your AI Provider</h3>
-                    
+
                     <div className="space-y-4">
-                      <p className="text-sm text-zinc-400">After installation, you need to configure Codentis with an AI provider. Run the setup wizard:</p>
-                      
+                      <p className="text-[13px] sm:text-sm text-zinc-400">After installation, you need to configure Codentis with an AI provider. Run the setup wizard:</p>
+
                       <div className="bg-black/50 p-3 rounded-lg font-mono text-sm space-y-1">
                         <div className="text-white">codentis config</div>
                         <div className="text-zinc-400 mt-2"># Or just run codentis for the first time</div>
@@ -631,11 +678,11 @@ export default function DocsPage() {
                   {/* System Requirements */}
                   <div className="p-6 border border-white/[0.05] bg-bg-2 rounded-xl">
                     <h3 className="text-base font-semibold mb-4">System Requirements</h3>
-                    
+
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                       <div>
                         <p className="text-sm font-semibold text-cyan-400 mb-2">Windows</p>
-                        <ul className="text-sm text-zinc-400 space-y-1">
+                        <ul className="text-[13px] sm:text-sm text-zinc-400 space-y-1">
                           <li>• Windows 10/11 (64-bit)</li>
                           <li>• 4 GB RAM minimum (8 GB recommended)</li>
                           <li>• 100 MB disk space</li>
@@ -645,7 +692,7 @@ export default function DocsPage() {
                       </div>
                       <div>
                         <p className="text-sm font-semibold text-cyan-400 mb-2">macOS</p>
-                        <ul className="text-sm text-zinc-400 space-y-1">
+                        <ul className="text-[13px] sm:text-sm text-zinc-400 space-y-1">
                           <li>• macOS 11+ (Big Sur or later)</li>
                           <li>• Apple Silicon (M1/M2/M3) or Intel</li>
                           <li>• 4 GB RAM minimum (8 GB recommended)</li>
@@ -655,7 +702,7 @@ export default function DocsPage() {
                       </div>
                       <div>
                         <p className="text-sm font-semibold text-cyan-400 mb-2">Linux</p>
-                        <ul className="text-sm text-zinc-400 space-y-1">
+                        <ul className="text-[13px] sm:text-sm text-zinc-400 space-y-1">
                           <li>• Ubuntu 20.04+, Debian 11+, or similar</li>
                           <li>• 4 GB RAM minimum (8 GB recommended)</li>
                           <li>• 100 MB disk space</li>
@@ -669,23 +716,23 @@ export default function DocsPage() {
                   {/* Troubleshooting Installation */}
                   <div className="p-6 border border-white/[0.05] bg-bg-2 rounded-xl">
                     <h3 className="text-base font-semibold mb-4">Installation Troubleshooting</h3>
-                    
+
                     <div className="space-y-3">
                       <div>
                         <p className="text-sm font-semibold text-red-400 mb-1">Command not found after installation</p>
-                        <p className="text-sm text-zinc-400">Restart your terminal or log out and back in. The PATH may not be updated in your current session.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Restart your terminal or log out and back in. The PATH may not be updated in your current session.</p>
                       </div>
                       <div>
                         <p className="text-sm font-semibold text-red-400 mb-1">Windows security warning</p>
-                        <p className="text-sm text-zinc-400">Click "More info" then "Run anyway". Codentis is safe - Windows shows this for new applications.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Click "More info" then "Run anyway". Codentis is safe - Windows shows this for new applications.</p>
                       </div>
                       <div>
                         <p className="text-sm font-semibold text-red-400 mb-1">macOS "cannot be opened" error</p>
-                        <p className="text-sm text-zinc-400">Go to System Settings → Privacy & Security and click "Allow Anyway" next to the Codentis warning.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Go to System Settings → Privacy & Security and click "Allow Anyway" next to the Codentis warning.</p>
                       </div>
                       <div>
                         <p className="text-sm font-semibold text-red-400 mb-1">Linux dependency errors</p>
-                        <p className="text-sm text-zinc-400">Run <code className="text-cyan-300 bg-black/50 px-1 rounded">sudo apt-get install -f</code> to fix missing dependencies.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Run <code className="text-cyan-300 bg-black/50 px-1 rounded">sudo apt-get install -f</code> to fix missing dependencies.</p>
                       </div>
                     </div>
                   </div>
@@ -704,9 +751,9 @@ export default function DocsPage() {
             {activeSection === "quickstart" && (
               <div className="space-y-8">
                 <div>
-                  <span className="text-sm font-semibold uppercase tracking-wider text-cyan-400/80">Getting Started</span>
-                  <h1 className="text-3xl font-semibold mt-3 mb-4">Quick Start</h1>
-                  <p className="text-sm text-zinc-400">
+                  <span className="text-[10px] sm:text-sm font-semibold uppercase tracking-wider text-cyan-400/80">Getting Started</span>
+                  <h1 className="text-xl sm:text-3xl font-semibold mt-3 mb-4">Quick Start</h1>
+                  <p className="text-[13px] sm:text-sm text-zinc-400">
                     Get up and running with Codentis in just a few minutes. This guide walks you through your first session from installation to writing your first code.
                   </p>
                 </div>
@@ -740,7 +787,7 @@ export default function DocsPage() {
                   <div className="p-6 border border-white/[0.05] bg-bg-2 rounded-xl">
                     <h3 className="text-base font-semibold mb-3">3. Configure Your AI Provider</h3>
                     <p className="text-sm text-zinc-400 mb-3">If this is your first time, the setup wizard will guide you through configuration:</p>
-                    
+
                     <div className="bg-black/50 p-4 rounded-lg font-mono text-sm space-y-1 mb-4">
                       <div className="text-cyan-400">Welcome to Codentis Setup!</div>
                       <div className="text-white mt-2">Select your AI provider:</div>
@@ -781,7 +828,7 @@ export default function DocsPage() {
                   <div className="p-6 border border-white/[0.05] bg-bg-2 rounded-xl">
                     <h3 className="text-base font-semibold mb-3">4. Make Your First Request</h3>
                     <p className="text-sm text-zinc-400 mb-3">Now you're ready to start coding! Try these example requests:</p>
-                    
+
                     <div className="space-y-4">
                       <div>
                         <p className="text-sm font-semibold text-cyan-400 mb-2">Example 1: Create a File</p>
@@ -821,7 +868,7 @@ export default function DocsPage() {
                   <div className="p-6 border border-white/[0.05] bg-bg-2 rounded-xl">
                     <h3 className="text-base font-semibold mb-3">5. Understanding Tool Outputs</h3>
                     <p className="text-sm text-zinc-400 mb-3">Codentis shows tool executions in a collapsible format. Here's what you'll see:</p>
-                    
+
                     <div className="bg-black/50 p-3 rounded-lg text-sm space-y-2 mb-3">
                       <div className="text-zinc-400">● <span className="text-cyan-400">tool_name</span> <span className="text-zinc-500">#ID</span></div>
                       <div className="text-zinc-400 ml-2">└ ✓ Success message</div>
@@ -841,7 +888,7 @@ export default function DocsPage() {
                   <div className="p-6 border border-white/[0.05] bg-bg-2 rounded-xl">
                     <h3 className="text-base font-semibold mb-3">6. Interactive Commands</h3>
                     <p className="text-sm text-zinc-400 mb-3">While chatting with Codentis, you can use these special commands:</p>
-                    
+
                     <div className="space-y-3">
                       <div className="border-l-2 border-cyan-400/30 pl-3">
                         <code className="text-cyan-300 bg-black/50 px-2 py-1 rounded text-sm">/e &lt;id&gt;</code>
@@ -872,11 +919,11 @@ export default function DocsPage() {
                   <div className="p-6 border border-cyan-500/20 bg-cyan-500/5 rounded-xl">
                     <h3 className="text-base font-semibold mb-3 text-cyan-400">Common Use Cases to Try</h3>
                     <p className="text-sm text-zinc-400 mb-3">Here are some practical tasks to get familiar with Codentis:</p>
-                    
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <p className="text-sm font-semibold text-zinc-300 mb-2">File Operations</p>
-                        <ul className="text-sm text-zinc-400 space-y-1">
+                        <ul className="text-[13px] sm:text-sm text-zinc-400 space-y-1">
                           <li>• "Create a README.md for this project"</li>
                           <li>• "List all Python files in this directory"</li>
                           <li>• "Read and summarize config.json"</li>
@@ -885,7 +932,7 @@ export default function DocsPage() {
 
                       <div>
                         <p className="text-sm font-semibold text-zinc-300 mb-2">Code Generation</p>
-                        <ul className="text-sm text-zinc-400 space-y-1">
+                        <ul className="text-[13px] sm:text-sm text-zinc-400 space-y-1">
                           <li>• "Create a REST API with Flask"</li>
                           <li>• "Write unit tests for my functions"</li>
                           <li>• "Generate a .gitignore for Node.js"</li>
@@ -894,7 +941,7 @@ export default function DocsPage() {
 
                       <div>
                         <p className="text-sm font-semibold text-zinc-300 mb-2">Code Analysis</p>
-                        <ul className="text-sm text-zinc-400 space-y-1">
+                        <ul className="text-[13px] sm:text-sm text-zinc-400 space-y-1">
                           <li>• "Find all functions in main.py"</li>
                           <li>• "Search for security vulnerabilities"</li>
                           <li>• "Explain how this code works"</li>
@@ -903,7 +950,7 @@ export default function DocsPage() {
 
                       <div>
                         <p className="text-sm font-semibold text-zinc-300 mb-2">Project Tasks</p>
-                        <ul className="text-sm text-zinc-400 space-y-1">
+                        <ul className="text-[13px] sm:text-sm text-zinc-400 space-y-1">
                           <li>• "Run npm install"</li>
                           <li>• "Find all TODO comments"</li>
                           <li>• "Search for 'deprecated' in docs"</li>
@@ -915,26 +962,26 @@ export default function DocsPage() {
                   {/* Tips for Success */}
                   <div className="p-6 border border-white/[0.05] bg-bg-2 rounded-xl">
                     <h3 className="text-base font-semibold mb-3">Tips for Success</h3>
-                    
+
                     <div className="space-y-3">
                       <div className="bg-green-500/5 border border-green-500/20 p-3 rounded">
                         <p className="text-sm font-semibold text-green-400 mb-1">✓ Be Specific</p>
-                        <p className="text-sm text-zinc-400">Instead of "fix the code", say "fix the syntax error on line 15 in app.py"</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Instead of "fix the code", say "fix the syntax error on line 15 in app.py"</p>
                       </div>
 
                       <div className="bg-green-500/5 border border-green-500/20 p-3 rounded">
                         <p className="text-sm font-semibold text-green-400 mb-1">✓ Use Natural Language</p>
-                        <p className="text-sm text-zinc-400">Talk to Codentis like a colleague: "Can you add error handling to the login function?"</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Talk to Codentis like a colleague: "Can you add error handling to the login function?"</p>
                       </div>
 
                       <div className="bg-green-500/5 border border-green-500/20 p-3 rounded">
                         <p className="text-sm font-semibold text-green-400 mb-1">✓ Review Changes</p>
-                        <p className="text-sm text-zinc-400">Always review code changes before committing. Use <code className="text-cyan-300 bg-black/50 px-1 rounded">/e #ID</code> to see full diffs</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Always review code changes before committing. Use <code className="text-cyan-300 bg-black/50 px-1 rounded">/e #ID</code> to see full diffs</p>
                       </div>
 
                       <div className="bg-green-500/5 border border-green-500/20 p-3 rounded">
                         <p className="text-sm font-semibold text-green-400 mb-1">✓ Iterate and Refine</p>
-                        <p className="text-sm text-zinc-400">If the result isn't perfect, ask for adjustments: "Make it more concise" or "Add comments"</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">If the result isn't perfect, ask for adjustments: "Make it more concise" or "Add comments"</p>
                       </div>
                     </div>
                   </div>
@@ -943,7 +990,7 @@ export default function DocsPage() {
                   <div className="p-6 border border-cyan-500/20 bg-cyan-500/5 rounded-xl">
                     <h3 className="text-base font-semibold mb-3 text-cyan-400">Next Steps</h3>
                     <p className="text-sm text-zinc-400 mb-3">Now that you're up and running, explore more features:</p>
-                    
+
                     <div className="flex flex-wrap gap-3">
                       <button
                         onClick={() => setActiveSection("tools")}
@@ -973,9 +1020,9 @@ export default function DocsPage() {
             {activeSection === "configuration" && (
               <div className="space-y-8">
                 <div>
-                  <span className="text-sm font-semibold uppercase tracking-wider text-cyan-400/80">Core Concepts</span>
-                  <h1 className="text-3xl font-semibold mt-3 mb-4">Configuration</h1>
-                  <p className="text-sm text-zinc-400">
+                  <span className="text-[10px] sm:text-sm font-semibold uppercase tracking-wider text-cyan-400/80">Core Concepts</span>
+                  <h1 className="text-xl sm:text-3xl font-semibold mt-3 mb-4">Configuration</h1>
+                  <p className="text-[13px] sm:text-sm text-zinc-400">
                     Codentis uses a flexible configuration system that allows both user-level and project-level settings. Learn how to manage your configuration, switch providers, and customize your experience.
                   </p>
                 </div>
@@ -984,7 +1031,7 @@ export default function DocsPage() {
                   {/* Configuration Files */}
                   <div className="p-6 border border-white/[0.05] bg-bg-2 rounded-xl">
                     <h3 className="text-base font-semibold mb-4">Configuration Files</h3>
-                    
+
                     <div className="space-y-4">
                       <div className="p-4 border border-cyan-500/20 bg-cyan-500/5 rounded-lg">
                         <div className="flex items-start gap-3">
@@ -1025,7 +1072,7 @@ export default function DocsPage() {
                   <div className="p-6 border border-white/[0.05] bg-bg-2 rounded-xl">
                     <h3 className="text-base font-semibold mb-4">Configuration Hierarchy</h3>
                     <p className="text-sm text-zinc-400 mb-3">When both user and project configs exist, settings are merged with this priority:</p>
-                    
+
                     <div className="bg-black/50 p-4 rounded-lg space-y-2">
                       <div className="flex items-center gap-3">
                         <span className="text-cyan-400 font-mono text-sm">1.</span>
@@ -1043,14 +1090,14 @@ export default function DocsPage() {
 
                     <div className="bg-yellow-500/5 border border-yellow-500/20 p-3 rounded mt-4">
                       <p className="text-sm font-semibold text-yellow-400 mb-1">💡 Tip</p>
-                      <p className="text-sm text-zinc-400">Use user config for personal API keys, and project config for team-shared settings like model choice or custom instructions.</p>
+                      <p className="text-[13px] sm:text-sm text-zinc-400">Use user config for personal API keys, and project config for team-shared settings like model choice or custom instructions.</p>
                     </div>
                   </div>
 
                   {/* Configuration Commands */}
                   <div className="p-6 border border-white/[0.05] bg-bg-2 rounded-xl">
                     <h3 className="text-base font-semibold mb-4">Configuration Commands</h3>
-                    
+
                     <div className="space-y-4">
                       <div className="border-l-2 border-cyan-400/30 pl-4">
                         <h4 className="text-sm font-semibold text-cyan-400 mb-2">codentis config</h4>
@@ -1090,36 +1137,36 @@ export default function DocsPage() {
                   {/* Configuration Options */}
                   <div className="p-6 border border-white/[0.05] bg-bg-2 rounded-xl">
                     <h3 className="text-base font-semibold mb-4">Available Configuration Options</h3>
-                    
+
                     <div className="space-y-3">
                       <div className="bg-white/5 p-3 rounded">
                         <p className="text-sm font-semibold text-cyan-400 mb-1">provider</p>
-                        <p className="text-sm text-zinc-400">AI provider to use: <code className="text-cyan-300 bg-black/50 px-1 rounded">openai</code>, <code className="text-cyan-300 bg-black/50 px-1 rounded">anthropic</code>, <code className="text-cyan-300 bg-black/50 px-1 rounded">openrouter</code>, or <code className="text-cyan-300 bg-black/50 px-1 rounded">custom</code></p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">AI provider to use: <code className="text-cyan-300 bg-black/50 px-1 rounded">openai</code>, <code className="text-cyan-300 bg-black/50 px-1 rounded">anthropic</code>, <code className="text-cyan-300 bg-black/50 px-1 rounded">openrouter</code>, or <code className="text-cyan-300 bg-black/50 px-1 rounded">custom</code></p>
                       </div>
 
                       <div className="bg-white/5 p-3 rounded">
                         <p className="text-sm font-semibold text-cyan-400 mb-1">api_key</p>
-                        <p className="text-sm text-zinc-400">Your API key for the selected provider. Stored securely in your config file.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Your API key for the selected provider. Stored securely in your config file.</p>
                       </div>
 
                       <div className="bg-white/5 p-3 rounded">
                         <p className="text-sm font-semibold text-cyan-400 mb-1">model</p>
-                        <p className="text-sm text-zinc-400">Model to use: <code className="text-cyan-300 bg-black/50 px-1 rounded">gpt-4o</code>, <code className="text-cyan-300 bg-black/50 px-1 rounded">claude-3-5-sonnet</code>, etc.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Model to use: <code className="text-cyan-300 bg-black/50 px-1 rounded">gpt-4o</code>, <code className="text-cyan-300 bg-black/50 px-1 rounded">claude-3-5-sonnet</code>, etc.</p>
                       </div>
 
                       <div className="bg-white/5 p-3 rounded">
                         <p className="text-sm font-semibold text-cyan-400 mb-1">api_endpoint</p>
-                        <p className="text-sm text-zinc-400">API endpoint URL. Auto-set for standard providers, customizable for local LLMs.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">API endpoint URL. Auto-set for standard providers, customizable for local LLMs.</p>
                       </div>
 
                       <div className="bg-white/5 p-3 rounded">
                         <p className="text-sm font-semibold text-cyan-400 mb-1">temperature</p>
-                        <p className="text-sm text-zinc-400">Controls randomness (0.0-1.0). Lower = more focused, Higher = more creative. Default: 0.7</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Controls randomness (0.0-1.0). Lower = more focused, Higher = more creative. Default: 0.7</p>
                       </div>
 
                       <div className="bg-white/5 p-3 rounded">
                         <p className="text-sm font-semibold text-cyan-400 mb-1">max_tokens</p>
-                        <p className="text-sm text-zinc-400">Maximum response length. Default varies by model (typically 4096-8192).</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Maximum response length. Default varies by model (typically 4096-8192).</p>
                       </div>
                     </div>
                   </div>
@@ -1128,7 +1175,7 @@ export default function DocsPage() {
                   <div className="p-6 border border-white/[0.05] bg-bg-2 rounded-xl">
                     <h3 className="text-base font-semibold mb-4">Manual Configuration</h3>
                     <p className="text-sm text-zinc-400 mb-3">You can manually edit configuration files if needed. Here's an example:</p>
-                    
+
                     <div className="space-y-4">
                       <div>
                         <p className="text-sm font-semibold text-cyan-400 mb-2">User Config Example (~/.codentis/config.json)</p>
@@ -1160,14 +1207,14 @@ testing = "Always include unit tests"`}</pre>
 
                     <div className="bg-yellow-500/5 border border-yellow-500/20 p-3 rounded mt-4">
                       <p className="text-sm font-semibold text-yellow-400 mb-1">⚠ Warning</p>
-                      <p className="text-sm text-zinc-400">Manual edits must follow valid JSON/TOML syntax. Invalid files will cause errors. Use <code className="text-cyan-300 bg-black/50 px-1 rounded">codentis config</code> for safer configuration.</p>
+                      <p className="text-[13px] sm:text-sm text-zinc-400">Manual edits must follow valid JSON/TOML syntax. Invalid files will cause errors. Use <code className="text-cyan-300 bg-black/50 px-1 rounded">codentis config</code> for safer configuration.</p>
                     </div>
                   </div>
 
                   {/* Common Configuration Tasks */}
                   <div className="p-6 border border-cyan-500/20 bg-cyan-500/5 rounded-xl">
                     <h3 className="text-base font-semibold mb-4 text-cyan-400">Common Configuration Tasks</h3>
-                    
+
                     <div className="space-y-4">
                       <div className="border-l-2 border-cyan-400/30 pl-4">
                         <h4 className="text-sm font-semibold text-zinc-300 mb-2">Switching AI Providers</h4>
@@ -1214,7 +1261,7 @@ testing = "Always include unit tests"`}</pre>
                   <div className="p-6 border border-white/[0.05] bg-bg-2 rounded-xl">
                     <h3 className="text-base font-semibold mb-4">Environment Variables</h3>
                     <p className="text-sm text-zinc-400 mb-3">You can override config settings using environment variables:</p>
-                    
+
                     <div className="space-y-3">
                       <div className="bg-black/50 p-3 rounded-lg font-mono text-sm space-y-1">
                         <div className="text-zinc-500"># Override API key</div>
@@ -1225,33 +1272,33 @@ testing = "Always include unit tests"`}</pre>
                         <div className="text-white">export CODENTIS_API_ENDPOINT="https://custom.api.com/v1"</div>
                       </div>
 
-                      <p className="text-sm text-zinc-400"><strong className="text-zinc-300">Use case:</strong> Temporary overrides, CI/CD pipelines, or testing different configurations without modifying files.</p>
+                      <p className="text-[13px] sm:text-sm text-zinc-400"><strong className="text-zinc-300">Use case:</strong> Temporary overrides, CI/CD pipelines, or testing different configurations without modifying files.</p>
                     </div>
                   </div>
 
                   {/* Troubleshooting */}
                   <div className="p-6 border border-white/[0.05] bg-bg-2 rounded-xl">
                     <h3 className="text-base font-semibold mb-4">Configuration Troubleshooting</h3>
-                    
+
                     <div className="space-y-3">
                       <div>
                         <p className="text-sm font-semibold text-red-400 mb-1">Config file not found</p>
-                        <p className="text-sm text-zinc-400">Run <code className="text-cyan-300 bg-black/50 px-1 rounded">codentis config</code> to create a new configuration file.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Run <code className="text-cyan-300 bg-black/50 px-1 rounded">codentis config</code> to create a new configuration file.</p>
                       </div>
 
                       <div>
                         <p className="text-sm font-semibold text-red-400 mb-1">Invalid JSON/TOML syntax</p>
-                        <p className="text-sm text-zinc-400">Use <code className="text-cyan-300 bg-black/50 px-1 rounded">codentis config --reset</code> to recreate the file, or validate your manual edits with a JSON/TOML validator.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Use <code className="text-cyan-300 bg-black/50 px-1 rounded">codentis config --reset</code> to recreate the file, or validate your manual edits with a JSON/TOML validator.</p>
                       </div>
 
                       <div>
                         <p className="text-sm font-semibold text-red-400 mb-1">API key not working</p>
-                        <p className="text-sm text-zinc-400">Verify your API key is correct and has proper permissions. Run <code className="text-cyan-300 bg-black/50 px-1 rounded">codentis doctor</code> to test connectivity.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Verify your API key is correct and has proper permissions. Run <code className="text-cyan-300 bg-black/50 px-1 rounded">codentis doctor</code> to test connectivity.</p>
                       </div>
 
                       <div>
                         <p className="text-sm font-semibold text-red-400 mb-1">Project config not loading</p>
-                        <p className="text-sm text-zinc-400">Ensure <code className="text-cyan-300 bg-black/50 px-1 rounded">.agent/codentis.toml</code> is in your project root and has valid TOML syntax.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Ensure <code className="text-cyan-300 bg-black/50 px-1 rounded">.agent/codentis.toml</code> is in your project root and has valid TOML syntax.</p>
                       </div>
                     </div>
                   </div>
@@ -1260,7 +1307,7 @@ testing = "Always include unit tests"`}</pre>
                   <div className="p-6 border border-cyan-500/20 bg-cyan-500/5 rounded-xl">
                     <h3 className="text-base font-semibold mb-3 text-cyan-400">Next Steps</h3>
                     <p className="text-sm text-zinc-400 mb-4">Now that you understand configuration, explore related topics:</p>
-                    
+
                     <div className="flex flex-wrap gap-3">
                       <button
                         onClick={() => setActiveSection("ai-providers")}
@@ -1284,9 +1331,9 @@ testing = "Always include unit tests"`}</pre>
             {activeSection === "system-requirements" && (
               <div className="space-y-8">
                 <div>
-                  <span className="text-sm font-semibold uppercase tracking-wider text-cyan-400/80">Getting Started</span>
-                  <h1 className="text-3xl font-semibold mt-3 mb-4">System Requirements</h1>
-                  <p className="text-sm text-zinc-400">
+                  <span className="text-[10px] sm:text-sm font-semibold uppercase tracking-wider text-cyan-400/80">Getting Started</span>
+                  <h1 className="text-xl sm:text-3xl font-semibold mt-3 mb-4">System Requirements</h1>
+                  <p className="text-[13px] sm:text-sm text-zinc-400">
                     Codentis is designed to run on modern operating systems with minimal hardware requirements. Check the specifications below to ensure your system is compatible.
                   </p>
                 </div>
@@ -1295,7 +1342,7 @@ testing = "Always include unit tests"`}</pre>
                   {/* Operating Systems */}
                   <div className="p-6 border border-white/[0.05] bg-bg-2 rounded-xl">
                     <h3 className="text-base font-semibold mb-4">Supported Operating Systems</h3>
-                    
+
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                       <div className="p-4 border border-white/[0.05] rounded-lg">
                         <div className="flex items-center gap-2 mb-3">
@@ -1341,12 +1388,12 @@ testing = "Always include unit tests"`}</pre>
                   {/* Hardware Requirements */}
                   <div className="p-6 border border-white/[0.05] bg-bg-2 rounded-xl">
                     <h3 className="text-base font-semibold mb-4">Hardware Requirements</h3>
-                    
+
                     <div className="space-y-4">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="p-4 border border-white/[0.05] rounded-lg">
                           <h4 className="text-sm font-semibold text-cyan-400 mb-2">Minimum Requirements</h4>
-                          <ul className="text-sm text-zinc-400 space-y-1">
+                          <ul className="text-[13px] sm:text-sm text-zinc-400 space-y-1">
                             <li>• <strong>CPU:</strong> Any modern processor (2+ cores)</li>
                             <li>• <strong>RAM:</strong> 4 GB</li>
                             <li>• <strong>Storage:</strong> 100 MB free space</li>
@@ -1357,7 +1404,7 @@ testing = "Always include unit tests"`}</pre>
 
                         <div className="p-4 border border-cyan-500/20 bg-cyan-500/5 rounded-lg">
                           <h4 className="text-sm font-semibold text-cyan-400 mb-2">Recommended Requirements</h4>
-                          <ul className="text-sm text-zinc-400 space-y-1">
+                          <ul className="text-[13px] sm:text-sm text-zinc-400 space-y-1">
                             <li>• <strong>CPU:</strong> Multi-core processor (4+ cores)</li>
                             <li>• <strong>RAM:</strong> 8 GB or more</li>
                             <li>• <strong>Storage:</strong> 500 MB free space (for logs and cache)</li>
@@ -1372,13 +1419,13 @@ testing = "Always include unit tests"`}</pre>
                   {/* Network Requirements */}
                   <div className="p-6 border border-white/[0.05] bg-bg-2 rounded-xl">
                     <h3 className="text-base font-semibold mb-4">Network Requirements</h3>
-                    
+
                     <div className="space-y-3">
                       <div className="flex gap-3">
                         <span className="text-cyan-400 flex-shrink-0">✓</span>
                         <div>
                           <p className="text-sm font-semibold text-zinc-300">Internet Connection Required</p>
-                          <p className="text-sm text-zinc-400">Codentis requires an active internet connection to communicate with AI providers (OpenAI, Anthropic, etc.)</p>
+                          <p className="text-[13px] sm:text-sm text-zinc-400">Codentis requires an active internet connection to communicate with AI providers (OpenAI, Anthropic, etc.)</p>
                         </div>
                       </div>
 
@@ -1386,7 +1433,7 @@ testing = "Always include unit tests"`}</pre>
                         <span className="text-cyan-400 flex-shrink-0">✓</span>
                         <div>
                           <p className="text-sm font-semibold text-zinc-300">Bandwidth</p>
-                          <p className="text-sm text-zinc-400">Minimum 1 Mbps recommended. Faster connections provide better response times.</p>
+                          <p className="text-[13px] sm:text-sm text-zinc-400">Minimum 1 Mbps recommended. Faster connections provide better response times.</p>
                         </div>
                       </div>
 
@@ -1394,7 +1441,7 @@ testing = "Always include unit tests"`}</pre>
                         <span className="text-cyan-400 flex-shrink-0">✓</span>
                         <div>
                           <p className="text-sm font-semibold text-zinc-300">Firewall & Proxy</p>
-                          <p className="text-sm text-zinc-400">Ensure your firewall allows HTTPS connections to AI provider APIs. Proxy configuration may be needed in corporate environments.</p>
+                          <p className="text-[13px] sm:text-sm text-zinc-400">Ensure your firewall allows HTTPS connections to AI provider APIs. Proxy configuration may be needed in corporate environments.</p>
                         </div>
                       </div>
 
@@ -1402,7 +1449,7 @@ testing = "Always include unit tests"`}</pre>
                         <span className="text-cyan-400 flex-shrink-0">✓</span>
                         <div>
                           <p className="text-sm font-semibold text-zinc-300">Offline Mode</p>
-                          <p className="text-sm text-zinc-400">Local LLMs (via Ollama) can work offline, but initial setup requires internet for model downloads.</p>
+                          <p className="text-[13px] sm:text-sm text-zinc-400">Local LLMs (via Ollama) can work offline, but initial setup requires internet for model downloads.</p>
                         </div>
                       </div>
                     </div>
@@ -1411,7 +1458,7 @@ testing = "Always include unit tests"`}</pre>
                   {/* Software Dependencies */}
                   <div className="p-6 border border-white/[0.05] bg-bg-2 rounded-xl">
                     <h3 className="text-base font-semibold mb-4">Software Dependencies</h3>
-                    
+
                     <div className="space-y-4">
                       <div>
                         <h4 className="text-sm font-semibold text-cyan-400 mb-2">Included in Installers</h4>
@@ -1439,10 +1486,10 @@ testing = "Always include unit tests"`}</pre>
                   {/* AI Provider Requirements */}
                   <div className="p-6 border border-cyan-500/20 bg-cyan-500/5 rounded-xl">
                     <h3 className="text-base font-semibold mb-4 text-cyan-400">AI Provider Requirements</h3>
-                    
+
                     <div className="space-y-3">
-                      <p className="text-sm text-zinc-400">To use Codentis, you need an account with at least one AI provider:</p>
-                      
+                      <p className="text-[13px] sm:text-sm text-zinc-400">To use Codentis, you need an account with at least one AI provider:</p>
+
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                           <h4 className="text-sm font-semibold text-zinc-300 mb-2">Cloud Providers (Recommended)</h4>
@@ -1488,26 +1535,26 @@ testing = "Always include unit tests"`}</pre>
                   {/* Performance Considerations */}
                   <div className="p-6 border border-white/[0.05] bg-bg-2 rounded-xl">
                     <h3 className="text-base font-semibold mb-4">Performance Considerations</h3>
-                    
+
                     <div className="space-y-3">
                       <div className="bg-white/5 p-3 rounded">
                         <p className="text-sm font-semibold text-zinc-300 mb-1">Response Time</p>
-                        <p className="text-sm text-zinc-400">Depends on your internet speed and AI provider. Typically 2-10 seconds for most requests.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Depends on your internet speed and AI provider. Typically 2-10 seconds for most requests.</p>
                       </div>
 
                       <div className="bg-white/5 p-3 rounded">
                         <p className="text-sm font-semibold text-zinc-300 mb-1">Large Files</p>
-                        <p className="text-sm text-zinc-400">Files over 10,000 lines may take longer to process. Consider breaking them into smaller modules.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Files over 10,000 lines may take longer to process. Consider breaking them into smaller modules.</p>
                       </div>
 
                       <div className="bg-white/5 p-3 rounded">
                         <p className="text-sm font-semibold text-zinc-300 mb-1">Concurrent Operations</p>
-                        <p className="text-sm text-zinc-400">Codentis processes one request at a time. Multiple terminal windows can run independently.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Codentis processes one request at a time. Multiple terminal windows can run independently.</p>
                       </div>
 
                       <div className="bg-white/5 p-3 rounded">
                         <p className="text-sm font-semibold text-zinc-300 mb-1">Local LLMs</p>
-                        <p className="text-sm text-zinc-400">Running models locally requires significantly more RAM (8-16 GB) and is slower than cloud APIs.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Running models locally requires significantly more RAM (8-16 GB) and is slower than cloud APIs.</p>
                       </div>
                     </div>
                   </div>
@@ -1515,7 +1562,7 @@ testing = "Always include unit tests"`}</pre>
                   {/* Compatibility Notes */}
                   <div className="p-6 border border-white/[0.05] bg-bg-2 rounded-xl">
                     <h3 className="text-base font-semibold mb-4">Compatibility Notes</h3>
-                    
+
                     <div className="space-y-3">
                       <div>
                         <p className="text-sm font-semibold text-green-400 mb-1">✓ Works With</p>
@@ -1544,17 +1591,17 @@ testing = "Always include unit tests"`}</pre>
                   <div className="p-6 border border-cyan-500/20 bg-cyan-500/5 rounded-xl">
                     <h3 className="text-base font-semibold mb-3 text-cyan-400">Ready to Install?</h3>
                     <p className="text-sm text-zinc-400 mb-4">If your system meets the requirements above, you're ready to install Codentis!</p>
-                    
+
                     <div className="flex flex-wrap gap-3">
                       <button
                         onClick={() => setActiveSection("installation")}
-                        className="px-4 py-2 text-sm bg-cyan-500 hover:bg-cyan-600 text-black font-semibold rounded-lg transition-all"
+                        className="px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm bg-cyan-500 hover:bg-cyan-600 text-black font-semibold rounded-lg transition-all"
                       >
                         Install Codentis
                       </button>
                       <button
                         onClick={() => setActiveSection("ai-providers")}
-                        className="px-4 py-2 text-sm border border-white/[0.1] hover:border-cyan-500/50 text-zinc-300 hover:text-white font-semibold rounded-lg transition-all"
+                        className="px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm border border-white/[0.1] hover:border-cyan-500/50 text-zinc-300 hover:text-white font-semibold rounded-lg transition-all"
                       >
                         Choose AI Provider
                       </button>
@@ -1568,9 +1615,9 @@ testing = "Always include unit tests"`}</pre>
             {activeSection === "ai-providers" && (
               <div className="space-y-8">
                 <div>
-                  <span className="text-sm font-semibold uppercase tracking-wider text-cyan-400/80">Core Concepts</span>
-                  <h1 className="text-3xl font-semibold mt-3 mb-4">AI Providers</h1>
-                  <p className="text-sm text-zinc-400">
+                  <span className="text-[10px] sm:text-sm font-semibold uppercase tracking-wider text-cyan-400/80">Core Concepts</span>
+                  <h1 className="text-xl sm:text-3xl font-semibold mt-3 mb-4">AI Providers</h1>
+                  <p className="text-[13px] sm:text-sm text-zinc-400">
                     Codentis supports multiple AI providers. Choose the one that works best for your needs, budget, and use case.
                   </p>
                 </div>
@@ -1583,11 +1630,11 @@ testing = "Always include unit tests"`}</pre>
                       <h3 className="text-base font-semibold text-cyan-400">OpenAI</h3>
                     </div>
                     <p className="text-sm text-zinc-400 mb-3">Official OpenAI API with the latest GPT models. Best for cutting-edge performance and reliability.</p>
-                    
+
                     <div className="space-y-3">
                       <div>
                         <p className="text-sm font-semibold text-zinc-300 mb-1">Available Models</p>
-                        <ul className="text-sm text-zinc-400 space-y-1">
+                        <ul className="text-[13px] sm:text-sm text-zinc-400 space-y-1">
                           <li>• <code className="text-cyan-300 bg-black/50 px-1 rounded">gpt-5.2</code> - Flagship model for advanced reasoning, coding, and complex problem solving (recommended)</li>
                           <li>• <code className="text-cyan-300 bg-black/50 px-1 rounded">gpt-5.3-codex</code> - Developer-focused model optimized for code generation and debugging</li>
                           <li>• <code className="text-cyan-300 bg-black/50 px-1 rounded">o3</code> - Reasoning model for multi-step problems, math, and technical analysis</li>
@@ -1608,12 +1655,12 @@ testing = "Always include unit tests"`}</pre>
 
                       <div>
                         <p className="text-sm font-semibold text-zinc-300 mb-1">Pricing</p>
-                        <p className="text-sm text-zinc-400">Pay-as-you-go. GPT-5.2: ~$0.03/1K input tokens, $0.06/1K output tokens. Check <a href="https://openai.com/pricing" target="_blank" rel="noopener noreferrer" className="text-cyan-400 hover:text-cyan-300">openai.com/pricing</a> for current rates.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Pay-as-you-go. GPT-5.2: ~$0.03/1K input tokens, $0.06/1K output tokens. Check <a href="https://openai.com/pricing" target="_blank" rel="noopener noreferrer" className="text-cyan-400 hover:text-cyan-300">openai.com/pricing</a> for current rates.</p>
                       </div>
 
                       <div>
                         <p className="text-sm font-semibold text-zinc-300 mb-1">Best For</p>
-                        <p className="text-sm text-zinc-400">Advanced reasoning, complex coding tasks, research applications, and when you need cutting-edge capabilities.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Advanced reasoning, complex coding tasks, research applications, and when you need cutting-edge capabilities.</p>
                       </div>
                     </div>
                   </div>
@@ -1625,11 +1672,11 @@ testing = "Always include unit tests"`}</pre>
                       <h3 className="text-base font-semibold text-cyan-400">Anthropic (Claude)</h3>
                     </div>
                     <p className="text-sm text-zinc-400 mb-3">Official Anthropic API with Claude models. Known for safety, reasoning, and long context windows.</p>
-                    
+
                     <div className="space-y-3">
                       <div>
                         <p className="text-sm font-semibold text-zinc-300 mb-1">Available Models</p>
-                        <ul className="text-sm text-zinc-400 space-y-1">
+                        <ul className="text-[13px] sm:text-sm text-zinc-400 space-y-1">
                           <li>• <code className="text-cyan-300 bg-black/50 px-1 rounded">claude-opus-4.6</code> - Highest-capability model for deep reasoning and complex enterprise tasks</li>
                           <li>• <code className="text-cyan-300 bg-black/50 px-1 rounded">claude-sonnet-4.6</code> - Balanced model for coding assistants and production apps (recommended)</li>
                           <li>• <code className="text-cyan-300 bg-black/50 px-1 rounded">claude-4.5-agentic</code> - Designed for autonomous multi-step workflows and agent tasks</li>
@@ -1650,12 +1697,12 @@ testing = "Always include unit tests"`}</pre>
 
                       <div>
                         <p className="text-sm font-semibold text-zinc-300 mb-1">Pricing</p>
-                        <p className="text-sm text-zinc-400">Pay-as-you-go. Claude Sonnet 4.6: ~$0.003/1K input tokens, $0.015/1K output tokens. Very competitive pricing with strong reasoning.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Pay-as-you-go. Claude Sonnet 4.6: ~$0.003/1K input tokens, $0.015/1K output tokens. Very competitive pricing with strong reasoning.</p>
                       </div>
 
                       <div>
                         <p className="text-sm font-semibold text-zinc-300 mb-1">Best For</p>
-                        <p className="text-sm text-zinc-400">Production applications, coding assistants, long documents, detailed analysis, and autonomous agent workflows. Excellent balance of performance and cost.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Production applications, coding assistants, long documents, detailed analysis, and autonomous agent workflows. Excellent balance of performance and cost.</p>
                       </div>
                     </div>
                   </div>
@@ -1667,11 +1714,11 @@ testing = "Always include unit tests"`}</pre>
                       <h3 className="text-base font-semibold text-cyan-400">OpenRouter</h3>
                     </div>
                     <p className="text-sm text-zinc-400 mb-3">Multi-model API gateway that lets you access 100+ models through one API. Route requests between GPT, Claude, Gemini, DeepSeek, and more.</p>
-                    
+
                     <div className="space-y-3">
                       <div>
                         <p className="text-sm font-semibold text-zinc-300 mb-1">Popular Models Available</p>
-                        <ul className="text-sm text-zinc-400 space-y-1">
+                        <ul className="text-[13px] sm:text-sm text-zinc-400 space-y-1">
                           <li>• <code className="text-cyan-300 bg-black/50 px-1 rounded">openai/gpt-5.2</code> - OpenAI's latest flagship model</li>
                           <li>• <code className="text-cyan-300 bg-black/50 px-1 rounded">anthropic/claude-sonnet-4.6</code> - Anthropic's balanced model</li>
                           <li>• <code className="text-cyan-300 bg-black/50 px-1 rounded">google/gemini-3.1-pro</code> - Google's advanced model</li>
@@ -1696,12 +1743,12 @@ testing = "Always include unit tests"`}</pre>
 
                       <div>
                         <p className="text-sm font-semibold text-zinc-300 mb-1">Pricing</p>
-                        <p className="text-sm text-zinc-400">Varies by model. Often cheaper than direct APIs. Shows pricing for each model before you use it. Free tier available for testing. DeepSeek models offer particularly cheap inference.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Varies by model. Often cheaper than direct APIs. Shows pricing for each model before you use it. Free tier available for testing. DeepSeek models offer particularly cheap inference.</p>
                       </div>
 
                       <div>
                         <p className="text-sm font-semibold text-zinc-300 mb-1">Best For</p>
-                        <p className="text-sm text-zinc-400">Experimenting with different models, finding the best price-to-performance ratio, accessing niche models, and routing between providers.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Experimenting with different models, finding the best price-to-performance ratio, accessing niche models, and routing between providers.</p>
                       </div>
                     </div>
                   </div>
@@ -1713,11 +1760,11 @@ testing = "Always include unit tests"`}</pre>
                       <h3 className="text-base font-semibold text-cyan-400">Google Gemini</h3>
                     </div>
                     <p className="text-sm text-zinc-400 mb-3">Google's advanced AI models with multimodal capabilities. Great for complex reasoning and long context understanding.</p>
-                    
+
                     <div className="space-y-3">
                       <div>
                         <p className="text-sm font-semibold text-zinc-300 mb-1">Available Models</p>
-                        <ul className="text-sm text-zinc-400 space-y-1">
+                        <ul className="text-[13px] sm:text-sm text-zinc-400 space-y-1">
                           <li>• <code className="text-cyan-300 bg-black/50 px-1 rounded">gemini-3.1-pro</code> - Most advanced model for reasoning, coding, and large-context analysis (recommended)</li>
                           <li>• <code className="text-cyan-300 bg-black/50 px-1 rounded">gemini-3-flash</code> - Faster and cheaper, optimized for real-time chat and high-volume inference</li>
                           <li>• <code className="text-cyan-300 bg-black/50 px-1 rounded">gemini-2.5-pro</code> - Reasoning-focused model that dynamically allocates compute for complex problems</li>
@@ -1738,12 +1785,12 @@ testing = "Always include unit tests"`}</pre>
 
                       <div>
                         <p className="text-sm font-semibold text-zinc-300 mb-1">Pricing</p>
-                        <p className="text-sm text-zinc-400">Free tier available with generous limits. Gemini 3.1 Pro: ~$0.00125/1K input tokens, $0.005/1K output tokens. Very cost-effective for high-quality responses.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Free tier available with generous limits. Gemini 3.1 Pro: ~$0.00125/1K input tokens, $0.005/1K output tokens. Very cost-effective for high-quality responses.</p>
                       </div>
 
                       <div>
                         <p className="text-sm font-semibold text-zinc-300 mb-1">Best For</p>
-                        <p className="text-sm text-zinc-400">Long context tasks, multimodal understanding, real-time applications, and cost-effective high-quality responses.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Long context tasks, multimodal understanding, real-time applications, and cost-effective high-quality responses.</p>
                       </div>
                     </div>
                   </div>
@@ -1755,11 +1802,11 @@ testing = "Always include unit tests"`}</pre>
                       <h3 className="text-base font-semibold text-cyan-400">Ollama (Local LLMs)</h3>
                     </div>
                     <p className="text-sm text-zinc-400 mb-3">Run open-source models locally on your machine. Perfect for privacy, offline usage, and custom deployments.</p>
-                    
+
                     <div className="space-y-3">
                       <div>
                         <p className="text-sm font-semibold text-zinc-300 mb-1">Popular Models</p>
-                        <ul className="text-sm text-zinc-400 space-y-1">
+                        <ul className="text-[13px] sm:text-sm text-zinc-400 space-y-1">
                           <li>• <strong>Llama 3</strong> - Meta's latest open model (8B, 70B variants)</li>
                           <li>• <strong>Mistral</strong> - High-performance 7B model</li>
                           <li>• <strong>CodeLlama</strong> - Specialized for coding tasks</li>
@@ -1786,7 +1833,7 @@ testing = "Always include unit tests"`}</pre>
 
                       <div>
                         <p className="text-sm font-semibold text-zinc-300 mb-1">Other Compatible Platforms</p>
-                        <ul className="text-sm text-zinc-400 space-y-1">
+                        <ul className="text-[13px] sm:text-sm text-zinc-400 space-y-1">
                           <li>• <strong>LM Studio</strong> - User-friendly GUI for local models</li>
                           <li>• <strong>vLLM</strong> - High-performance inference server</li>
                           <li>• <strong>Text Generation WebUI</strong> - Feature-rich interface</li>
@@ -1796,12 +1843,12 @@ testing = "Always include unit tests"`}</pre>
 
                       <div>
                         <p className="text-sm font-semibold text-zinc-300 mb-1">Pricing</p>
-                        <p className="text-sm text-zinc-400">Completely free. No API costs, no usage limits. Only requires local compute resources.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Completely free. No API costs, no usage limits. Only requires local compute resources.</p>
                       </div>
 
                       <div>
                         <p className="text-sm font-semibold text-zinc-300 mb-1">System Requirements</p>
-                        <ul className="text-sm text-zinc-400 space-y-1">
+                        <ul className="text-[13px] sm:text-sm text-zinc-400 space-y-1">
                           <li>• <strong>RAM:</strong> 8 GB minimum (16 GB recommended for larger models)</li>
                           <li>• <strong>Storage:</strong> 4-40 GB per model depending on size</li>
                           <li>• <strong>GPU:</strong> Optional but significantly faster (NVIDIA/AMD/Apple Silicon)</li>
@@ -1810,12 +1857,12 @@ testing = "Always include unit tests"`}</pre>
 
                       <div>
                         <p className="text-sm font-semibold text-zinc-300 mb-1">Best For</p>
-                        <p className="text-sm text-zinc-400">Privacy-sensitive work, offline development, learning AI, and avoiding API costs.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Privacy-sensitive work, offline development, learning AI, and avoiding API costs.</p>
                       </div>
 
                       <div className="bg-yellow-500/5 border border-yellow-500/20 p-3 rounded">
                         <p className="text-sm font-semibold text-yellow-400 mb-1">⚠ Performance Note</p>
-                        <p className="text-sm text-zinc-400">Local models are slower than cloud APIs and may produce lower quality responses. Best for non-critical tasks or when privacy is paramount.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Local models are slower than cloud APIs and may produce lower quality responses. Best for non-critical tasks or when privacy is paramount.</p>
                       </div>
                     </div>
                   </div>
@@ -1889,9 +1936,9 @@ testing = "Always include unit tests"`}</pre>
             {activeSection === "workspace-trust" && (
               <div className="space-y-8">
                 <div>
-                  <span className="text-sm font-semibold uppercase tracking-wider text-cyan-400/80">Core Concepts</span>
-                  <h1 className="text-3xl font-semibold mt-3 mb-4">Workspace Trust</h1>
-                  <p className="text-sm text-zinc-400">
+                  <span className="text-[10px] sm:text-sm font-semibold uppercase tracking-wider text-cyan-400/80">Core Concepts</span>
+                  <h1 className="text-xl sm:text-3xl font-semibold mt-3 mb-4">Workspace Trust</h1>
+                  <p className="text-[13px] sm:text-sm text-zinc-400">
                     Codentis requires explicit trust before accessing files in a directory. This security feature prevents accidental modifications to important files.
                   </p>
                 </div>
@@ -1963,7 +2010,7 @@ testing = "Always include unit tests"`}</pre>
                       <div className="text-white mt-2">yes</div>
                       <div className="text-cyan-400 mt-2">✓ Workspace trusted. You can now use Codentis here.</div>
                     </div>
-                    <p className="text-sm text-zinc-400">
+                    <p className="text-[13px] sm:text-sm text-zinc-400">
                       You can also trust a workspace without starting Codentis using the trust command.
                     </p>
                   </div>
@@ -1971,7 +2018,7 @@ testing = "Always include unit tests"`}</pre>
                   {/* Trust Commands */}
                   <div className="p-6 border border-white/[0.05] bg-bg-2 rounded-xl">
                     <h3 className="text-base font-semibold mb-3">Trust Commands Reference</h3>
-                    
+
                     <div className="space-y-4">
                       {/* trust add */}
                       <div className="border-l-2 border-cyan-400/30 pl-4">
@@ -2025,7 +2072,7 @@ testing = "Always include unit tests"`}</pre>
                   {/* Best Practices */}
                   <div className="p-6 border border-white/[0.05] bg-bg-2 rounded-xl">
                     <h3 className="text-base font-semibold mb-3">Best Practices</h3>
-                    
+
                     <div className="space-y-3">
                       <div className="bg-green-500/5 border border-green-500/20 p-3 rounded">
                         <p className="text-sm font-semibold text-green-400 mb-1">✓ Do</p>
@@ -2053,7 +2100,7 @@ testing = "Always include unit tests"`}</pre>
                   <div className="p-6 border border-white/[0.05] bg-bg-2 rounded-xl">
                     <h3 className="text-base font-semibold mb-3">Where Trust Data is Stored</h3>
                     <p className="text-sm text-zinc-400 mb-3">Your trusted workspaces list is stored in a local file on your computer:</p>
-                    
+
                     <div className="space-y-3">
                       <div>
                         <p className="text-sm font-semibold text-cyan-400 mb-1">Windows</p>
@@ -2085,7 +2132,7 @@ testing = "Always include unit tests"`}</pre>
                   {/* Common Scenarios */}
                   <div className="p-6 border border-white/[0.05] bg-bg-2 rounded-xl">
                     <h3 className="text-base font-semibold mb-3">Common Scenarios</h3>
-                    
+
                     <div className="space-y-4">
                       <div className="border-l-2 border-cyan-400/30 pl-4">
                         <h4 className="text-sm font-semibold text-cyan-400 mb-2">Scenario 1: Starting a New Project</h4>
@@ -2142,9 +2189,9 @@ testing = "Always include unit tests"`}</pre>
             {activeSection === "tools" && (
               <div className="space-y-8">
                 <div>
-                  <span className="text-sm font-semibold uppercase tracking-wider text-cyan-400/80">Features</span>
-                  <h1 className="text-3xl font-semibold mt-3 mb-4">Built-in Tools</h1>
-                  <p className="text-sm text-zinc-400">
+                  <span className="text-[10px] sm:text-sm font-semibold uppercase tracking-wider text-cyan-400/80">Features</span>
+                  <h1 className="text-xl sm:text-3xl font-semibold mt-3 mb-4">Built-in Tools</h1>
+                  <p className="text-[13px] sm:text-sm text-zinc-400">
                     Codentis has 12 powerful built-in tools to help you code efficiently.
                   </p>
                 </div>
@@ -2161,7 +2208,7 @@ testing = "Always include unit tests"`}</pre>
                       <div className="text-zinc-400">└ ✓ Read 1 lines</div>
                       <div className="text-zinc-400 mt-2"># Shows file content with syntax highlighting and line numbers</div>
                     </div>
-                    <p className="text-sm text-zinc-400"><strong>Use when:</strong> Viewing file contents, understanding code structure, reviewing existing files, or analyzing configuration files.</p>
+                    <p className="text-[13px] sm:text-sm text-zinc-400"><strong>Use when:</strong> Viewing file contents, understanding code structure, reviewing existing files, or analyzing configuration files.</p>
                   </div>
 
                   {/* write_file */}
@@ -2175,7 +2222,7 @@ testing = "Always include unit tests"`}</pre>
                       <div className="text-zinc-400">└ ✓ Created hello.py (45 bytes)</div>
                       <div className="text-zinc-400 mt-2"># File is created with complete code ready to use</div>
                     </div>
-                    <p className="text-sm text-zinc-400"><strong>Use when:</strong> Creating new files, generating boilerplate code, scaffolding projects, or writing complete file contents from scratch.</p>
+                    <p className="text-[13px] sm:text-sm text-zinc-400"><strong>Use when:</strong> Creating new files, generating boilerplate code, scaffolding projects, or writing complete file contents from scratch.</p>
                   </div>
 
                   {/* edit_file */}
@@ -2189,7 +2236,7 @@ testing = "Always include unit tests"`}</pre>
                       <div className="text-zinc-400">└ ✓ Modified app.py (1 replacement)</div>
                       <div className="text-zinc-400 mt-2"># Only the specific occurrence is changed, rest of file untouched</div>
                     </div>
-                    <p className="text-sm text-zinc-400"><strong>Use when:</strong> Making targeted changes, fixing bugs, refactoring specific sections, or updating variable names.</p>
+                    <p className="text-[13px] sm:text-sm text-zinc-400"><strong>Use when:</strong> Making targeted changes, fixing bugs, refactoring specific sections, or updating variable names.</p>
                   </div>
 
                   {/* apply_patch */}
@@ -2203,7 +2250,7 @@ testing = "Always include unit tests"`}</pre>
                       <div className="text-zinc-400">└ ✓ Applied 5 changes to utils.py</div>
                       <div className="text-zinc-400 mt-2"># Multiple edits applied atomically - all succeed or all fail</div>
                     </div>
-                    <p className="text-sm text-zinc-400"><strong>Use when:</strong> Making multiple related changes to the same file efficiently, refactoring multiple sections, or applying coordinated fixes.</p>
+                    <p className="text-[13px] sm:text-sm text-zinc-400"><strong>Use when:</strong> Making multiple related changes to the same file efficiently, refactoring multiple sections, or applying coordinated fixes.</p>
                   </div>
 
                   {/* list_dir */}
@@ -2217,7 +2264,7 @@ testing = "Always include unit tests"`}</pre>
                       <div className="text-zinc-400">└ ✓ Found 24 entries</div>
                       <div className="text-zinc-400 mt-2"># Shows: Directories (bin/, resources/), Files (Kiro.exe, config.json, etc.)</div>
                     </div>
-                    <p className="text-sm text-zinc-400"><strong>Use when:</strong> Exploring project structure, finding files, understanding directory layout, or checking what files exist.</p>
+                    <p className="text-[13px] sm:text-sm text-zinc-400"><strong>Use when:</strong> Exploring project structure, finding files, understanding directory layout, or checking what files exist.</p>
                   </div>
 
                   {/* grep */}
@@ -2231,7 +2278,7 @@ testing = "Always include unit tests"`}</pre>
                       <div className="text-zinc-400">└ ✓ Found 12 matches in 5 files</div>
                       <div className="text-zinc-400 mt-2"># Shows: file paths, line numbers, and matching lines with context</div>
                     </div>
-                    <p className="text-sm text-zinc-400"><strong>Use when:</strong> Finding specific code patterns, debugging issues, code analysis, or locating all instances of a function.</p>
+                    <p className="text-[13px] sm:text-sm text-zinc-400"><strong>Use when:</strong> Finding specific code patterns, debugging issues, code analysis, or locating all instances of a function.</p>
                   </div>
 
                   {/* glob */}
@@ -2245,7 +2292,7 @@ testing = "Always include unit tests"`}</pre>
                       <div className="text-zinc-400">└ ✓ Found 47 files matching *.py</div>
                       <div className="text-zinc-400 mt-2"># Returns: src/main.py, src/utils.py, tests/test_main.py, etc.</div>
                     </div>
-                    <p className="text-sm text-zinc-400"><strong>Use when:</strong> Finding files by type, locating specific file patterns, bulk operations on multiple files, or discovering all files matching criteria.</p>
+                    <p className="text-[13px] sm:text-sm text-zinc-400"><strong>Use when:</strong> Finding files by type, locating specific file patterns, bulk operations on multiple files, or discovering all files matching criteria.</p>
                   </div>
 
                   {/* shell */}
@@ -2259,7 +2306,7 @@ testing = "Always include unit tests"`}</pre>
                       <div className="text-zinc-400">└ ✓ Command completed successfully</div>
                       <div className="text-zinc-400 mt-2"># For write operations, Codentis asks for permission first</div>
                     </div>
-                    <p className="text-sm text-zinc-400"><strong>Use when:</strong> Running build commands, installing packages, executing tests, or running system commands. Codentis will ask permission for write operations.</p>
+                    <p className="text-[13px] sm:text-sm text-zinc-400"><strong>Use when:</strong> Running build commands, installing packages, executing tests, or running system commands. Codentis will ask permission for write operations.</p>
                   </div>
 
                   {/* web_search */}
@@ -2273,7 +2320,7 @@ testing = "Always include unit tests"`}</pre>
                       <div className="text-zinc-400">└ ✓ Found 8 results</div>
                       <div className="text-zinc-400 mt-2"># Returns: titles, URLs, snippets from relevant sources</div>
                     </div>
-                    <p className="text-sm text-zinc-400"><strong>Use when:</strong> Learning new concepts, finding documentation, researching solutions, or getting current information.</p>
+                    <p className="text-[13px] sm:text-sm text-zinc-400"><strong>Use when:</strong> Learning new concepts, finding documentation, researching solutions, or getting current information.</p>
                   </div>
 
                   {/* web_fetch */}
@@ -2287,7 +2334,7 @@ testing = "Always include unit tests"`}</pre>
                       <div className="text-zinc-400">└ ✓ Fetched 12.5 KB</div>
                       <div className="text-zinc-400 mt-2"># Codentis analyzes and summarizes the page content</div>
                     </div>
-                    <p className="text-sm text-zinc-400"><strong>Use when:</strong> Reading specific documentation, analyzing web content, getting detailed information, or reviewing API docs.</p>
+                    <p className="text-[13px] sm:text-sm text-zinc-400"><strong>Use when:</strong> Reading specific documentation, analyzing web content, getting detailed information, or reviewing API docs.</p>
                   </div>
 
                   {/* ask_user */}
@@ -2303,7 +2350,7 @@ testing = "Always include unit tests"`}</pre>
                       <div className="text-zinc-400">Options: 1. TypeScript, 2. JavaScript, 3. Let me decide</div>
                       <div className="text-zinc-400 mt-2"># User selects option, Codentis uses response for decisions</div>
                     </div>
-                    <p className="text-sm text-zinc-400"><strong>Use when:</strong> Codentis needs clarification, making decisions, getting user preferences, or when multiple options exist.</p>
+                    <p className="text-[13px] sm:text-sm text-zinc-400"><strong>Use when:</strong> Codentis needs clarification, making decisions, getting user preferences, or when multiple options exist.</p>
                   </div>
 
                   {/* todo */}
@@ -2317,7 +2364,7 @@ testing = "Always include unit tests"`}</pre>
                       <div className="text-zinc-400">└ ✓ Added TODO #1: implement error handling for API calls</div>
                       <div className="text-zinc-400 mt-2"># Later: Mark as done or view all TODOs</div>
                     </div>
-                    <p className="text-sm text-zinc-400"><strong>Use when:</strong> Tracking tasks, managing project work, keeping notes during development, or remembering what needs to be done next.</p>
+                    <p className="text-[13px] sm:text-sm text-zinc-400"><strong>Use when:</strong> Tracking tasks, managing project work, keeping notes during development, or remembering what needs to be done next.</p>
                   </div>
                 </div>
               </div>
@@ -2327,9 +2374,9 @@ testing = "Always include unit tests"`}</pre>
             {activeSection === "commands" && (
               <div className="space-y-8">
                 <div>
-                  <span className="text-sm font-semibold uppercase tracking-wider text-cyan-400/80">Features</span>
-                  <h1 className="text-3xl font-semibold mt-3 mb-4">Commands</h1>
-                  <p className="text-sm text-zinc-400">
+                  <span className="text-[10px] sm:text-sm font-semibold uppercase tracking-wider text-cyan-400/80">Features</span>
+                  <h1 className="text-xl sm:text-3xl font-semibold mt-3 mb-4">Commands</h1>
+                  <p className="text-[13px] sm:text-sm text-zinc-400">
                     Complete reference for all CLI commands with examples.
                   </p>
                 </div>
@@ -2344,7 +2391,7 @@ testing = "Always include unit tests"`}</pre>
                       <div className="text-white">$ codentis</div>
                       <div className="text-zinc-400 mt-2"># Opens interactive chat where you can ask questions and get help</div>
                     </div>
-                    <p className="text-sm text-zinc-400"><strong>Features:</strong> Streaming responses, tool execution, markdown rendering, collapsible outputs.</p>
+                    <p className="text-[13px] sm:text-sm text-zinc-400"><strong>Features:</strong> Streaming responses, tool execution, markdown rendering, collapsible outputs.</p>
                   </div>
 
                   {/* codentis chat */}
@@ -2356,7 +2403,7 @@ testing = "Always include unit tests"`}</pre>
                       <div className="text-white">$ codentis chat "Create a Python script that sorts a list"</div>
                       <div className="text-zinc-400 mt-2"># Codentis will generate the code and exit</div>
                     </div>
-                    <p className="text-sm text-zinc-400"><strong>Use when:</strong> Quick one-off tasks, automation, or CI/CD pipelines.</p>
+                    <p className="text-[13px] sm:text-sm text-zinc-400"><strong>Use when:</strong> Quick one-off tasks, automation, or CI/CD pipelines.</p>
                   </div>
 
                   {/* codentis config */}
@@ -2368,7 +2415,7 @@ testing = "Always include unit tests"`}</pre>
                       <div className="text-white">$ codentis config</div>
                       <div className="text-zinc-400 mt-2"># Follow prompts to select provider, enter API key, and choose model</div>
                     </div>
-                    <p className="text-sm text-zinc-400"><strong>Use when:</strong> First-time setup or changing your AI provider.</p>
+                    <p className="text-[13px] sm:text-sm text-zinc-400"><strong>Use when:</strong> First-time setup or changing your AI provider.</p>
                   </div>
 
                   {/* codentis config --show */}
@@ -2380,7 +2427,7 @@ testing = "Always include unit tests"`}</pre>
                       <div className="text-white">$ codentis config --show</div>
                       <div className="text-zinc-400 mt-2"># Shows: provider, model, API endpoint, and other settings</div>
                     </div>
-                    <p className="text-sm text-zinc-400"><strong>Use when:</strong> Verifying your settings or troubleshooting configuration issues.</p>
+                    <p className="text-[13px] sm:text-sm text-zinc-400"><strong>Use when:</strong> Verifying your settings or troubleshooting configuration issues.</p>
                   </div>
 
                   {/* codentis config --reset */}
@@ -2392,7 +2439,7 @@ testing = "Always include unit tests"`}</pre>
                       <div className="text-white">$ codentis config --reset</div>
                       <div className="text-zinc-400 mt-2"># Clears config and starts setup wizard from scratch</div>
                     </div>
-                    <p className="text-sm text-zinc-400"><strong>Use when:</strong> Fixing authentication errors or switching to a different API provider.</p>
+                    <p className="text-[13px] sm:text-sm text-zinc-400"><strong>Use when:</strong> Fixing authentication errors or switching to a different API provider.</p>
                   </div>
 
                   {/* codentis doctor */}
@@ -2404,7 +2451,7 @@ testing = "Always include unit tests"`}</pre>
                       <div className="text-white">$ codentis doctor</div>
                       <div className="text-zinc-400 mt-2"># Checks: Python version, config file, API key, API connectivity</div>
                     </div>
-                    <p className="text-sm text-zinc-400"><strong>Use when:</strong> Troubleshooting connection issues or verifying your setup is correct.</p>
+                    <p className="text-[13px] sm:text-sm text-zinc-400"><strong>Use when:</strong> Troubleshooting connection issues or verifying your setup is correct.</p>
                   </div>
 
                   {/* codentis version */}
@@ -2426,7 +2473,7 @@ testing = "Always include unit tests"`}</pre>
                       <div className="text-white">$ codentis --version</div>
                       <div className="text-cyan-400 mt-1">Codentis v1.0.0</div>
                     </div>
-                    <p className="text-sm text-zinc-400"><strong>Use when:</strong> Checking if you have the latest version or reporting issues.</p>
+                    <p className="text-[13px] sm:text-sm text-zinc-400"><strong>Use when:</strong> Checking if you have the latest version or reporting issues.</p>
                   </div>
 
                   {/* codentis trust add */}
@@ -2439,7 +2486,7 @@ testing = "Always include unit tests"`}</pre>
                       <div className="text-white">$ codentis trust add /path/to/project</div>
                       <div className="text-zinc-400 mt-2"># Directory is now trusted and won't prompt again</div>
                     </div>
-                    <p className="text-sm text-zinc-400"><strong>Use when:</strong> Working on your own projects or trusted codebases.</p>
+                    <p className="text-[13px] sm:text-sm text-zinc-400"><strong>Use when:</strong> Working on your own projects or trusted codebases.</p>
                   </div>
 
                   {/* codentis trust list */}
@@ -2451,7 +2498,7 @@ testing = "Always include unit tests"`}</pre>
                       <div className="text-white">$ codentis trust list</div>
                       <div className="text-zinc-400 mt-2"># Shows all trusted workspace paths</div>
                     </div>
-                    <p className="text-sm text-zinc-400"><strong>Use when:</strong> Reviewing which directories are trusted.</p>
+                    <p className="text-[13px] sm:text-sm text-zinc-400"><strong>Use when:</strong> Reviewing which directories are trusted.</p>
                   </div>
 
                   {/* codentis trust remove */}
@@ -2463,7 +2510,7 @@ testing = "Always include unit tests"`}</pre>
                       <div className="text-white">$ codentis trust remove /path/to/project</div>
                       <div className="text-zinc-400 mt-2"># Directory will require trust confirmation again</div>
                     </div>
-                    <p className="text-sm text-zinc-400"><strong>Use when:</strong> Revoking access to a directory or cleaning up old projects.</p>
+                    <p className="text-[13px] sm:text-sm text-zinc-400"><strong>Use when:</strong> Revoking access to a directory or cleaning up old projects.</p>
                   </div>
 
                   {/* codentis trust clear */}
@@ -2475,7 +2522,7 @@ testing = "Always include unit tests"`}</pre>
                       <div className="text-white">$ codentis trust clear</div>
                       <div className="text-zinc-400 mt-2"># All directories will require trust confirmation again</div>
                     </div>
-                    <p className="text-sm text-zinc-400"><strong>Use when:</strong> Resetting your trust settings or for security reasons.</p>
+                    <p className="text-[13px] sm:text-sm text-zinc-400"><strong>Use when:</strong> Resetting your trust settings or for security reasons.</p>
                   </div>
                 </div>
               </div>
@@ -2485,9 +2532,9 @@ testing = "Always include unit tests"`}</pre>
             {activeSection === "shell-integration" && (
               <div className="space-y-8">
                 <div>
-                  <span className="text-sm font-semibold uppercase tracking-wider text-cyan-400/80">Features & Tools</span>
-                  <h1 className="text-3xl font-semibold mt-3 mb-4">Shell Integration</h1>
-                  <p className="text-sm text-zinc-400">
+                  <span className="text-[10px] sm:text-sm font-semibold uppercase tracking-wider text-cyan-400/80">Features & Tools</span>
+                  <h1 className="text-xl sm:text-3xl font-semibold mt-3 mb-4">Shell Integration</h1>
+                  <p className="text-[13px] sm:text-sm text-zinc-400">
                     Codentis can execute shell commands through its built-in shell tool, allowing the AI to run commands, install packages, run tests, and interact with your development environment.
                   </p>
                 </div>
@@ -2529,7 +2576,7 @@ testing = "Always include unit tests"`}</pre>
                     <p className="text-sm text-zinc-400 mb-3">
                       For security, Codentis categorizes shell commands and requests permission for potentially dangerous operations:
                     </p>
-                    
+
                     <div className="space-y-4">
                       <div className="p-4 border border-green-500/20 bg-green-500/5 rounded-lg">
                         <p className="text-sm font-semibold text-green-400 mb-2">✓ Auto-Approved (Read-Only Commands)</p>
@@ -2569,7 +2616,7 @@ testing = "Always include unit tests"`}</pre>
                   {/* Common Use Cases */}
                   <div className="p-6 border border-white/[0.05] bg-bg-2 rounded-xl">
                     <h3 className="text-base font-semibold mb-3">Common Shell Integration Use Cases</h3>
-                    
+
                     <div className="space-y-4">
                       <div>
                         <p className="text-sm font-semibold text-cyan-400 mb-2">Package Management</p>
@@ -2619,14 +2666,14 @@ testing = "Always include unit tests"`}</pre>
                     <p className="text-sm text-zinc-400 mb-3">
                       Codentis automatically detects your operating system and uses the appropriate shell:
                     </p>
-                    
+
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div className="p-4 border border-white/[0.05] bg-black/30 rounded-lg">
                         <div className="flex items-center gap-2 mb-2">
                           <RiMicrosoftFill className="text-cyan-400 text-xl" />
                           <h4 className="text-sm font-semibold text-zinc-300">Windows</h4>
                         </div>
-                        <ul className="text-sm text-zinc-400 space-y-1">
+                        <ul className="text-[13px] sm:text-sm text-zinc-400 space-y-1">
                           <li>• PowerShell (default)</li>
                           <li>• Command Prompt (cmd)</li>
                           <li>• Git Bash (if installed)</li>
@@ -2638,7 +2685,7 @@ testing = "Always include unit tests"`}</pre>
                           <RiAppleFill className="text-cyan-400 text-xl" />
                           <h4 className="text-sm font-semibold text-zinc-300">macOS</h4>
                         </div>
-                        <ul className="text-sm text-zinc-400 space-y-1">
+                        <ul className="text-[13px] sm:text-sm text-zinc-400 space-y-1">
                           <li>• zsh (default)</li>
                           <li>• bash</li>
                           <li>• fish (if configured)</li>
@@ -2650,7 +2697,7 @@ testing = "Always include unit tests"`}</pre>
                           <RiUbuntuLine className="text-cyan-400 text-xl" />
                           <h4 className="text-sm font-semibold text-zinc-300">Linux</h4>
                         </div>
-                        <ul className="text-sm text-zinc-400 space-y-1">
+                        <ul className="text-[13px] sm:text-sm text-zinc-400 space-y-1">
                           <li>• bash (default)</li>
                           <li>• zsh</li>
                           <li>• fish (if configured)</li>
@@ -2662,26 +2709,26 @@ testing = "Always include unit tests"`}</pre>
                   {/* Best Practices */}
                   <div className="p-6 border border-cyan-500/20 bg-cyan-500/5 rounded-xl">
                     <h3 className="text-base font-semibold mb-3 text-cyan-400">Best Practices</h3>
-                    
+
                     <div className="space-y-3">
                       <div className="bg-green-500/5 border border-green-500/20 p-3 rounded">
                         <p className="text-sm font-semibold text-green-400 mb-1">✓ Review Commands Before Approval</p>
-                        <p className="text-sm text-zinc-400">Always read the command carefully before approving. Make sure you understand what it will do.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Always read the command carefully before approving. Make sure you understand what it will do.</p>
                       </div>
 
                       <div className="bg-green-500/5 border border-green-500/20 p-3 rounded">
                         <p className="text-sm font-semibold text-green-400 mb-1">✓ Use Version Control</p>
-                        <p className="text-sm text-zinc-400">Keep your project in git so you can easily revert changes if a command has unexpected effects.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Keep your project in git so you can easily revert changes if a command has unexpected effects.</p>
                       </div>
 
                       <div className="bg-green-500/5 border border-green-500/20 p-3 rounded">
                         <p className="text-sm font-semibold text-green-400 mb-1">✓ Test in Development First</p>
-                        <p className="text-sm text-zinc-400">Try commands in a development environment before running them in production.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Try commands in a development environment before running them in production.</p>
                       </div>
 
                       <div className="bg-green-500/5 border border-green-500/20 p-3 rounded">
                         <p className="text-sm font-semibold text-green-400 mb-1">✓ Check Command Output</p>
-                        <p className="text-sm text-zinc-400">Use <code className="text-cyan-300 bg-black/50 px-1 rounded">/e #ID</code> to expand tool outputs and verify commands executed correctly.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Use <code className="text-cyan-300 bg-black/50 px-1 rounded">/e #ID</code> to expand tool outputs and verify commands executed correctly.</p>
                       </div>
                     </div>
                   </div>
@@ -2689,26 +2736,26 @@ testing = "Always include unit tests"`}</pre>
                   {/* Limitations */}
                   <div className="p-6 border border-white/[0.05] bg-bg-2 rounded-xl">
                     <h3 className="text-base font-semibold mb-3">Limitations & Considerations</h3>
-                    
+
                     <div className="space-y-3">
                       <div className="bg-yellow-500/5 border border-yellow-500/20 p-3 rounded">
                         <p className="text-sm font-semibold text-yellow-400 mb-1">⚠ Interactive Commands Not Supported</p>
-                        <p className="text-sm text-zinc-400">Commands that require user input (like interactive prompts) won't work. Use non-interactive flags when available (e.g., <code className="text-cyan-300 bg-black/50 px-1 rounded">npm install -y</code>).</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Commands that require user input (like interactive prompts) won't work. Use non-interactive flags when available (e.g., <code className="text-cyan-300 bg-black/50 px-1 rounded">npm install -y</code>).</p>
                       </div>
 
                       <div className="bg-yellow-500/5 border border-yellow-500/20 p-3 rounded">
                         <p className="text-sm font-semibold text-yellow-400 mb-1">⚠ Long-Running Commands</p>
-                        <p className="text-sm text-zinc-400">Commands that run indefinitely (like dev servers) will block Codentis. Run these manually in a separate terminal.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Commands that run indefinitely (like dev servers) will block Codentis. Run these manually in a separate terminal.</p>
                       </div>
 
                       <div className="bg-yellow-500/5 border border-yellow-500/20 p-3 rounded">
                         <p className="text-sm font-semibold text-yellow-400 mb-1">⚠ Environment Variables</p>
-                        <p className="text-sm text-zinc-400">Commands inherit your shell's environment variables. Make sure sensitive credentials are properly secured.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Commands inherit your shell's environment variables. Make sure sensitive credentials are properly secured.</p>
                       </div>
 
                       <div className="bg-yellow-500/5 border border-yellow-500/20 p-3 rounded">
                         <p className="text-sm font-semibold text-yellow-400 mb-1">⚠ Working Directory</p>
-                        <p className="text-sm text-zinc-400">All commands run in your project root. Use relative paths or <code className="text-cyan-300 bg-black/50 px-1 rounded">cd</code> within the command if needed.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">All commands run in your project root. Use relative paths or <code className="text-cyan-300 bg-black/50 px-1 rounded">cd</code> within the command if needed.</p>
                       </div>
                     </div>
                   </div>
@@ -2716,7 +2763,7 @@ testing = "Always include unit tests"`}</pre>
                   {/* Examples */}
                   <div className="p-6 border border-white/[0.05] bg-bg-2 rounded-xl">
                     <h3 className="text-base font-semibold mb-3">Example Requests Using Shell Integration</h3>
-                    
+
                     <div className="space-y-3 text-sm text-zinc-400">
                       <div className="border-l-2 border-cyan-400/30 pl-3">
                         <p className="text-zinc-300 mb-1">"Install the dependencies listed in package.json"</p>
@@ -2752,9 +2799,9 @@ testing = "Always include unit tests"`}</pre>
             {activeSection === "auto-update" && (
               <div className="space-y-8">
                 <div>
-                  <span className="text-sm font-semibold uppercase tracking-wider text-cyan-400/80">Features & Tools</span>
-                  <h1 className="text-3xl font-semibold mt-3 mb-4">Auto-Update System</h1>
-                  <p className="text-sm text-zinc-400">
+                  <span className="text-[10px] sm:text-sm font-semibold uppercase tracking-wider text-cyan-400/80">Features & Tools</span>
+                  <h1 className="text-xl sm:text-3xl font-semibold mt-3 mb-4">Auto-Update System</h1>
+                  <p className="text-[13px] sm:text-sm text-zinc-400">
                     Codentis includes a built-in auto-update system that keeps you on the latest version with new features, improvements, and bug fixes. Updates are checked automatically and installed with your permission.
                   </p>
                 </div>
@@ -2766,7 +2813,7 @@ testing = "Always include unit tests"`}</pre>
                     <p className="text-sm text-zinc-400 mb-3">
                       Codentis automatically checks for updates when you start the application:
                     </p>
-                    
+
                     <div className="space-y-3">
                       <div className="flex gap-4">
                         <div className="flex-shrink-0 w-8 h-8 rounded-full bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 font-semibold text-sm">
@@ -2774,7 +2821,7 @@ testing = "Always include unit tests"`}</pre>
                         </div>
                         <div>
                           <h4 className="text-sm font-semibold text-zinc-300 mb-1">Check for Updates</h4>
-                          <p className="text-sm text-zinc-400">On startup, Codentis checks GitHub releases for newer versions (once per day maximum).</p>
+                          <p className="text-[13px] sm:text-sm text-zinc-400">On startup, Codentis checks GitHub releases for newer versions (once per day maximum).</p>
                         </div>
                       </div>
 
@@ -2784,7 +2831,7 @@ testing = "Always include unit tests"`}</pre>
                         </div>
                         <div>
                           <h4 className="text-sm font-semibold text-zinc-300 mb-1">Notify You</h4>
-                          <p className="text-sm text-zinc-400">If a new version is available, you'll see a notification with the version number and release notes.</p>
+                          <p className="text-[13px] sm:text-sm text-zinc-400">If a new version is available, you'll see a notification with the version number and release notes.</p>
                         </div>
                       </div>
 
@@ -2794,7 +2841,7 @@ testing = "Always include unit tests"`}</pre>
                         </div>
                         <div>
                           <h4 className="text-sm font-semibold text-zinc-300 mb-1">Download & Install</h4>
-                          <p className="text-sm text-zinc-400">With your permission, Codentis downloads the update and guides you through installation.</p>
+                          <p className="text-[13px] sm:text-sm text-zinc-400">With your permission, Codentis downloads the update and guides you through installation.</p>
                         </div>
                       </div>
 
@@ -2804,7 +2851,7 @@ testing = "Always include unit tests"`}</pre>
                         </div>
                         <div>
                           <h4 className="text-sm font-semibold text-zinc-300 mb-1">Restart & Enjoy</h4>
-                          <p className="text-sm text-zinc-400">After installation, restart Codentis to use the new version with all the latest features.</p>
+                          <p className="text-[13px] sm:text-sm text-zinc-400">After installation, restart Codentis to use the new version with all the latest features.</p>
                         </div>
                       </div>
                     </div>
@@ -2814,7 +2861,7 @@ testing = "Always include unit tests"`}</pre>
                   <div className="p-6 border border-white/[0.05] bg-bg-2 rounded-xl">
                     <h3 className="text-base font-semibold mb-3">Update Notification Example</h3>
                     <p className="text-sm text-zinc-400 mb-3">When a new version is available, you'll see:</p>
-                    
+
                     <div className="bg-black/50 p-4 rounded-lg font-mono text-sm space-y-2">
                       <div className="text-cyan-400">🎉 New version available!</div>
                       <div className="text-white mt-2">Current version: v1.0.0</div>
@@ -2835,7 +2882,7 @@ testing = "Always include unit tests"`}</pre>
                   <div className="p-6 border border-white/[0.05] bg-bg-2 rounded-xl">
                     <h3 className="text-base font-semibold mb-3">Manual Update Check</h3>
                     <p className="text-sm text-zinc-400 mb-3">You can manually check for updates at any time:</p>
-                    
+
                     <div className="bg-black/50 p-3 rounded-lg font-mono text-sm space-y-1 mb-3">
                       <div className="text-zinc-500"># Check for updates</div>
                       <div className="text-white">$ codentis update</div>
@@ -2853,7 +2900,7 @@ testing = "Always include unit tests"`}</pre>
                   {/* Update Frequency */}
                   <div className="p-6 border border-white/[0.05] bg-bg-2 rounded-xl">
                     <h3 className="text-base font-semibold mb-3">Update Check Frequency</h3>
-                    
+
                     <div className="space-y-3 text-sm text-zinc-400">
                       <div className="flex gap-3">
                         <span className="text-cyan-400">•</span>
@@ -2884,7 +2931,7 @@ testing = "Always include unit tests"`}</pre>
                   {/* Platform-Specific Updates */}
                   <div className="p-6 border border-white/[0.05] bg-bg-2 rounded-xl">
                     <h3 className="text-base font-semibold mb-3">Platform-Specific Update Process</h3>
-                    
+
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div className="p-4 border border-white/[0.05] bg-black/30 rounded-lg">
                         <div className="flex items-center gap-2 mb-3">
@@ -2930,11 +2977,11 @@ testing = "Always include unit tests"`}</pre>
                   {/* What Gets Updated */}
                   <div className="p-6 border border-cyan-500/20 bg-cyan-500/5 rounded-xl">
                     <h3 className="text-base font-semibold mb-3 text-cyan-400">What Gets Updated</h3>
-                    
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <p className="text-sm font-semibold text-green-400 mb-2">✓ Updated</p>
-                        <ul className="text-sm text-zinc-400 space-y-1">
+                        <ul className="text-[13px] sm:text-sm text-zinc-400 space-y-1">
                           <li>• Core application binary</li>
                           <li>• Built-in tools and features</li>
                           <li>• Bug fixes and patches</li>
@@ -2946,7 +2993,7 @@ testing = "Always include unit tests"`}</pre>
 
                       <div>
                         <p className="text-sm font-semibold text-cyan-400 mb-2">✓ Preserved</p>
-                        <ul className="text-sm text-zinc-400 space-y-1">
+                        <ul className="text-[13px] sm:text-sm text-zinc-400 space-y-1">
                           <li>• Your configuration files</li>
                           <li>• API keys and credentials</li>
                           <li>• Trusted workspace list</li>
@@ -2964,7 +3011,7 @@ testing = "Always include unit tests"`}</pre>
                     <p className="text-sm text-zinc-400 mb-3">
                       If you prefer to manage updates manually, you can disable automatic update checks:
                     </p>
-                    
+
                     <div className="bg-black/50 p-3 rounded-lg font-mono text-sm space-y-1 mb-3">
                       <div className="text-zinc-500"># Edit your config file</div>
                       <div className="text-white">$ codentis config --edit</div>
@@ -2974,14 +3021,14 @@ testing = "Always include unit tests"`}</pre>
 
                     <div className="bg-yellow-500/5 border border-yellow-500/20 p-3 rounded">
                       <p className="text-sm font-semibold text-yellow-400 mb-1">⚠ Note</p>
-                      <p className="text-sm text-zinc-400">Disabling auto-updates means you'll need to manually check for updates using <code className="text-cyan-300 bg-black/50 px-1 rounded">codentis update</code>. You might miss important security fixes and new features.</p>
+                      <p className="text-[13px] sm:text-sm text-zinc-400">Disabling auto-updates means you'll need to manually check for updates using <code className="text-cyan-300 bg-black/50 px-1 rounded">codentis update</code>. You might miss important security fixes and new features.</p>
                     </div>
                   </div>
 
                   {/* Troubleshooting Updates */}
                   <div className="p-6 border border-white/[0.05] bg-bg-2 rounded-xl">
                     <h3 className="text-base font-semibold mb-3">Troubleshooting Update Issues</h3>
-                    
+
                     <div className="space-y-3">
                       <div className="bg-red-500/5 border border-red-500/20 p-3 rounded">
                         <p className="text-sm font-semibold text-red-400 mb-1">Update Download Failed</p>
@@ -3023,7 +3070,7 @@ testing = "Always include unit tests"`}</pre>
                     <p className="text-sm text-zinc-400 mb-3">
                       Stay informed about what's new in each version:
                     </p>
-                    
+
                     <div className="space-y-2 text-sm text-zinc-400">
                       <div className="flex gap-2">
                         <span className="text-cyan-400">•</span>
@@ -3047,9 +3094,9 @@ testing = "Always include unit tests"`}</pre>
             {activeSection === "troubleshooting" && (
               <div className="space-y-8">
                 <div>
-                  <span className="text-sm font-semibold uppercase tracking-wider text-cyan-400/80">Support</span>
-                  <h1 className="text-3xl font-semibold mt-3 mb-4">Troubleshooting</h1>
-                  <p className="text-sm text-zinc-400">
+                  <span className="text-[10px] sm:text-sm font-semibold uppercase tracking-wider text-cyan-400/80">Support</span>
+                  <h1 className="text-xl sm:text-3xl font-semibold mt-3 mb-4">Troubleshooting</h1>
+                  <p className="text-[13px] sm:text-sm text-zinc-400">
                     Solutions for common issues and how to resolve them.
                   </p>
                 </div>
@@ -3059,7 +3106,7 @@ testing = "Always include unit tests"`}</pre>
                   <div className="p-6 border border-white/[0.05] bg-bg-2 rounded-xl">
                     <h3 className="text-base font-semibold mb-3 text-red-400">API Key Issues</h3>
                     <p className="text-sm text-zinc-400 mb-3"><strong>Problem:</strong> Authentication errors like "Invalid API key" or "Unauthorized"</p>
-                    
+
                     <div className="bg-black/50 p-3 rounded-lg font-mono text-sm space-y-1 mb-3">
                       <div className="text-zinc-500"># Error message</div>
                       <div className="text-red-400">Error: Invalid API key provided</div>
@@ -3092,7 +3139,7 @@ testing = "Always include unit tests"`}</pre>
                   <div className="p-6 border border-white/[0.05] bg-bg-2 rounded-xl">
                     <h3 className="text-base font-semibold mb-3 text-red-400">Connection Errors</h3>
                     <p className="text-sm text-zinc-400 mb-3"><strong>Problem:</strong> Network errors like "Connection timeout" or "Failed to connect to API"</p>
-                    
+
                     <div className="bg-black/50 p-3 rounded-lg font-mono text-sm space-y-1 mb-3">
                       <div className="text-zinc-500"># Error message</div>
                       <div className="text-red-400">Error: Connection timeout</div>
@@ -3125,7 +3172,7 @@ testing = "Always include unit tests"`}</pre>
                   <div className="p-6 border border-white/[0.05] bg-bg-2 rounded-xl">
                     <h3 className="text-base font-semibold mb-3 text-red-400">Command Not Found</h3>
                     <p className="text-sm text-zinc-400 mb-3"><strong>Problem:</strong> "codentis: command not found" or similar error</p>
-                    
+
                     <div className="bg-black/50 p-3 rounded-lg font-mono text-sm space-y-1 mb-3">
                       <div className="text-zinc-500"># Error message</div>
                       <div className="text-red-400">$ codentis</div>
@@ -3158,7 +3205,7 @@ testing = "Always include unit tests"`}</pre>
                   <div className="p-6 border border-white/[0.05] bg-bg-2 rounded-xl">
                     <h3 className="text-base font-semibold mb-3 text-red-400">Permission Denied / Workspace Not Trusted</h3>
                     <p className="text-sm text-zinc-400 mb-3"><strong>Problem:</strong> "Workspace not trusted" or permission errors when accessing files</p>
-                    
+
                     <div className="bg-black/50 p-3 rounded-lg font-mono text-sm space-y-1 mb-3">
                       <div className="text-zinc-500"># Error message</div>
                       <div className="text-red-400">Error: This workspace is not trusted</div>
@@ -3183,7 +3230,7 @@ testing = "Always include unit tests"`}</pre>
                   <div className="p-6 border border-white/[0.05] bg-bg-2 rounded-xl">
                     <h3 className="text-base font-semibold mb-3 text-red-400">Slow Performance / Timeouts</h3>
                     <p className="text-sm text-zinc-400 mb-3"><strong>Problem:</strong> Codentis is slow or times out on large files/operations</p>
-                    
+
                     <p className="text-sm text-zinc-400 mb-3"><strong>Solutions:</strong></p>
                     <ul className="space-y-2 text-sm text-zinc-400 mb-3">
                       <li className="flex gap-2">
@@ -3209,7 +3256,7 @@ testing = "Always include unit tests"`}</pre>
                   <div className="p-6 border border-white/[0.05] bg-bg-2 rounded-xl">
                     <h3 className="text-base font-semibold mb-3 text-red-400">Loop Detection / Stuck in Loop</h3>
                     <p className="text-sm text-zinc-400 mb-3"><strong>Problem:</strong> Codentis keeps trying the same thing repeatedly</p>
-                    
+
                     <div className="bg-black/50 p-3 rounded-lg font-mono text-sm space-y-1 mb-3">
                       <div className="text-zinc-500"># Message</div>
                       <div className="text-yellow-400">I seem to be stuck trying the same approach repeatedly.</div>
@@ -3241,7 +3288,7 @@ testing = "Always include unit tests"`}</pre>
                   <div className="p-6 border border-white/[0.05] bg-bg-2 rounded-xl">
                     <h3 className="text-base font-semibold mb-3 text-red-400">File Not Found / Path Issues</h3>
                     <p className="text-sm text-zinc-400 mb-3"><strong>Problem:</strong> "File not found" or "Path does not exist" errors</p>
-                    
+
                     <p className="text-sm text-zinc-400 mb-3"><strong>Solutions:</strong></p>
                     <ul className="space-y-2 text-sm text-zinc-400 mb-3">
                       <li className="flex gap-2">
@@ -3296,9 +3343,9 @@ testing = "Always include unit tests"`}</pre>
             {activeSection === "project-config" && (
               <div className="space-y-8">
                 <div>
-                  <span className="text-sm font-semibold uppercase tracking-wider text-cyan-400/80">Advanced</span>
-                  <h1 className="text-3xl font-semibold mt-3 mb-4">Project Configuration</h1>
-                  <p className="text-sm text-zinc-400">
+                  <span className="text-[10px] sm:text-sm font-semibold uppercase tracking-wider text-cyan-400/80">Advanced</span>
+                  <h1 className="text-xl sm:text-3xl font-semibold mt-3 mb-4">Project Configuration</h1>
+                  <p className="text-[13px] sm:text-sm text-zinc-400">
                     Create project-specific configurations to customize Codentis behavior for individual projects. Project configs override user-level settings and enable team-wide consistency.
                   </p>
                 </div>
@@ -3310,7 +3357,7 @@ testing = "Always include unit tests"`}</pre>
                     <p className="text-sm text-zinc-400 mb-3">
                       Project configuration allows you to define Codentis settings at the project level, stored in your repository. This enables:
                     </p>
-                    
+
                     <ul className="space-y-2 text-sm text-zinc-400">
                       <li className="flex gap-2">
                         <span className="text-cyan-400">•</span>
@@ -3337,7 +3384,7 @@ testing = "Always include unit tests"`}</pre>
                     <p className="text-sm text-zinc-400 mb-3">
                       Codentis uses a layered configuration system where project settings override user settings:
                     </p>
-                    
+
                     <div className="space-y-3">
                       <div className="flex gap-4">
                         <div className="flex-shrink-0 w-8 h-8 rounded-full bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 font-semibold text-sm">
@@ -3345,7 +3392,7 @@ testing = "Always include unit tests"`}</pre>
                         </div>
                         <div>
                           <h4 className="text-sm font-semibold text-zinc-300 mb-1">User-Level Config (Base)</h4>
-                          <p className="text-sm text-zinc-400"><code className="text-cyan-300 bg-black/50 px-1 rounded">~/.codentis/config.json</code></p>
+                          <p className="text-[13px] sm:text-sm text-zinc-400"><code className="text-cyan-300 bg-black/50 px-1 rounded">~/.codentis/config.json</code></p>
                           <p className="text-sm text-zinc-400 mt-1">Your personal defaults - API keys, preferred model, global settings</p>
                         </div>
                       </div>
@@ -3356,7 +3403,7 @@ testing = "Always include unit tests"`}</pre>
                         </div>
                         <div>
                           <h4 className="text-sm font-semibold text-zinc-300 mb-1">Project Config (Override)</h4>
-                          <p className="text-sm text-zinc-400"><code className="text-cyan-300 bg-black/50 px-1 rounded">.codentis/config.json</code> or <code className="text-cyan-300 bg-black/50 px-1 rounded">.agent/codentis.toml</code></p>
+                          <p className="text-[13px] sm:text-sm text-zinc-400"><code className="text-cyan-300 bg-black/50 px-1 rounded">.codentis/config.json</code> or <code className="text-cyan-300 bg-black/50 px-1 rounded">.agent/codentis.toml</code></p>
                           <p className="text-sm text-zinc-400 mt-1">Project-specific settings that override user defaults</p>
                         </div>
                       </div>
@@ -3364,14 +3411,14 @@ testing = "Always include unit tests"`}</pre>
 
                     <div className="bg-cyan-500/5 border border-cyan-500/20 p-3 rounded mt-4">
                       <p className="text-sm text-cyan-400 font-semibold mb-1">Example</p>
-                      <p className="text-sm text-zinc-400">If your user config uses <code className="text-cyan-300 bg-black/50 px-1 rounded">gpt-4o</code> but the project config specifies <code className="text-cyan-300 bg-black/50 px-1 rounded">claude-sonnet-4.6</code>, Codentis will use Claude for that project.</p>
+                      <p className="text-[13px] sm:text-sm text-zinc-400">If your user config uses <code className="text-cyan-300 bg-black/50 px-1 rounded">gpt-4o</code> but the project config specifies <code className="text-cyan-300 bg-black/50 px-1 rounded">claude-sonnet-4.6</code>, Codentis will use Claude for that project.</p>
                     </div>
                   </div>
 
                   {/* Creating Project Config */}
                   <div className="p-6 border border-white/[0.05] bg-bg-2 rounded-xl">
                     <h3 className="text-base font-semibold mb-3">Creating a Project Configuration</h3>
-                    
+
                     <div className="space-y-4">
                       <div>
                         <p className="text-sm font-semibold text-cyan-400 mb-2">Option 1: JSON Format (.codentis/config.json)</p>
@@ -3422,7 +3469,7 @@ check_updates = false`}</pre>
                   {/* Available Settings */}
                   <div className="p-6 border border-white/[0.05] bg-bg-2 rounded-xl">
                     <h3 className="text-base font-semibold mb-3">Available Project Settings</h3>
-                    
+
                     <div className="space-y-4">
                       <div className="border-l-2 border-cyan-400/30 pl-4">
                         <h4 className="text-sm font-semibold text-zinc-300 mb-2">AI Provider Settings</h4>
@@ -3459,7 +3506,7 @@ check_updates = false`}</pre>
                   {/* Use Cases */}
                   <div className="p-6 border border-cyan-500/20 bg-cyan-500/5 rounded-xl">
                     <h3 className="text-base font-semibold mb-3 text-cyan-400">Common Use Cases</h3>
-                    
+
                     <div className="space-y-4">
                       <div>
                         <p className="text-sm font-semibold text-zinc-300 mb-2">1. Team Standardization</p>
@@ -3514,7 +3561,7 @@ check_updates = false`}</pre>
                   {/* Version Control */}
                   <div className="p-6 border border-white/[0.05] bg-bg-2 rounded-xl">
                     <h3 className="text-base font-semibold mb-3">Version Control Best Practices</h3>
-                    
+
                     <div className="space-y-3">
                       <div className="bg-green-500/5 border border-green-500/20 p-3 rounded">
                         <p className="text-sm font-semibold text-green-400 mb-1">✓ Do Commit</p>
@@ -3547,7 +3594,7 @@ check_updates = false`}</pre>
                   <div className="p-6 border border-white/[0.05] bg-bg-2 rounded-xl">
                     <h3 className="text-base font-semibold mb-3">Viewing Active Configuration</h3>
                     <p className="text-sm text-zinc-400 mb-3">See which settings are currently active (merged from user and project configs):</p>
-                    
+
                     <div className="bg-black/50 p-3 rounded-lg font-mono text-sm space-y-1 mb-3">
                       <div className="text-zinc-500"># Show current configuration</div>
                       <div className="text-white">$ codentis config --show</div>
@@ -3559,13 +3606,13 @@ check_updates = false`}</pre>
                       <div className="text-yellow-400 mt-2">⚠ Using project config from .codentis/config.json</div>
                     </div>
 
-                    <p className="text-sm text-zinc-400">The warning indicates that project settings are overriding your user defaults.</p>
+                    <p className="text-[13px] sm:text-sm text-zinc-400">The warning indicates that project settings are overriding your user defaults.</p>
                   </div>
 
                   {/* Troubleshooting */}
                   <div className="p-6 border border-white/[0.05] bg-bg-2 rounded-xl">
                     <h3 className="text-base font-semibold mb-3">Troubleshooting Project Config</h3>
-                    
+
                     <div className="space-y-3">
                       <div className="bg-red-500/5 border border-red-500/20 p-3 rounded">
                         <p className="text-sm font-semibold text-red-400 mb-1">Config Not Being Used</p>
@@ -3602,7 +3649,7 @@ check_updates = false`}</pre>
                   {/* Example Projects */}
                   <div className="p-6 border border-cyan-500/20 bg-cyan-500/5 rounded-xl">
                     <h3 className="text-base font-semibold mb-3 text-cyan-400">Example Project Configurations</h3>
-                    
+
                     <div className="space-y-4">
                       <div>
                         <p className="text-sm font-semibold text-zinc-300 mb-2">Frontend Project (React/Next.js)</p>
@@ -3652,9 +3699,9 @@ check_updates = false`}</pre>
             {activeSection === "custom-tools" && (
               <div className="space-y-8">
                 <div>
-                  <span className="text-sm font-semibold uppercase tracking-wider text-cyan-400/80">Advanced</span>
-                  <h1 className="text-3xl font-semibold mt-3 mb-4">Custom Tools</h1>
-                  <p className="text-sm text-zinc-400">
+                  <span className="text-[10px] sm:text-sm font-semibold uppercase tracking-wider text-cyan-400/80">Advanced</span>
+                  <h1 className="text-xl sm:text-3xl font-semibold mt-3 mb-4">Custom Tools</h1>
+                  <p className="text-[13px] sm:text-sm text-zinc-400">
                     Extend Codentis with custom tools tailored to your workflow. Create Python-based tools that the AI can use to interact with APIs, databases, or any external system.
                   </p>
                 </div>
@@ -3666,7 +3713,7 @@ check_updates = false`}</pre>
                     <p className="text-sm text-zinc-400 mb-3">
                       Custom tools are Python functions that extend Codentis's capabilities beyond the built-in tools. They allow you to:
                     </p>
-                    
+
                     <ul className="space-y-2 text-sm text-zinc-400">
                       <li className="flex gap-2">
                         <span className="text-cyan-400">•</span>
@@ -3693,7 +3740,7 @@ check_updates = false`}</pre>
                     <p className="text-sm text-zinc-400 mb-3">
                       Custom tools are Python classes that inherit from the <code className="text-cyan-300 bg-black/50 px-1 rounded">BaseTool</code> class:
                     </p>
-                    
+
                     <div className="bg-black/50 p-3 rounded-lg font-mono text-sm overflow-x-auto">
                       <pre className="text-zinc-300">{`from codentis.tools.base import BaseTool
 from typing import Dict, Any
@@ -3759,7 +3806,7 @@ class MyCustomTool(BaseTool):
                   {/* Creating a Custom Tool */}
                   <div className="p-6 border border-white/[0.05] bg-bg-2 rounded-xl">
                     <h3 className="text-base font-semibold mb-3">Creating Your First Custom Tool</h3>
-                    
+
                     <div className="space-y-4">
                       <div>
                         <p className="text-sm font-semibold text-cyan-400 mb-2">Step 1: Create Tools Directory</p>
@@ -3857,7 +3904,7 @@ __all__ = ['GitHubTool']`}</pre>
                   {/* Example Tools */}
                   <div className="p-6 border border-cyan-500/20 bg-cyan-500/5 rounded-xl">
                     <h3 className="text-base font-semibold mb-3 text-cyan-400">Example Custom Tools</h3>
-                    
+
                     <div className="space-y-4">
                       <div>
                         <p className="text-sm font-semibold text-zinc-300 mb-2">1. Database Query Tool</p>
@@ -4014,31 +4061,31 @@ __all__ = ['GitHubTool']`}</pre>
                   {/* Best Practices */}
                   <div className="p-6 border border-white/[0.05] bg-bg-2 rounded-xl">
                     <h3 className="text-base font-semibold mb-3">Best Practices</h3>
-                    
+
                     <div className="space-y-3">
                       <div className="bg-green-500/5 border border-green-500/20 p-3 rounded">
                         <p className="text-sm font-semibold text-green-400 mb-1">✓ Clear Descriptions</p>
-                        <p className="text-sm text-zinc-400">Write clear tool names and descriptions so the AI knows when to use them. Be specific about what the tool does.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Write clear tool names and descriptions so the AI knows when to use them. Be specific about what the tool does.</p>
                       </div>
 
                       <div className="bg-green-500/5 border border-green-500/20 p-3 rounded">
                         <p className="text-sm font-semibold text-green-400 mb-1">✓ Error Handling</p>
-                        <p className="text-sm text-zinc-400">Always wrap tool logic in try-except blocks. Return meaningful error messages that help debug issues.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Always wrap tool logic in try-except blocks. Return meaningful error messages that help debug issues.</p>
                       </div>
 
                       <div className="bg-green-500/5 border border-green-500/20 p-3 rounded">
                         <p className="text-sm font-semibold text-green-400 mb-1">✓ Parameter Validation</p>
-                        <p className="text-sm text-zinc-400">Define clear schemas with type information and descriptions. Validate inputs before processing.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Define clear schemas with type information and descriptions. Validate inputs before processing.</p>
                       </div>
 
                       <div className="bg-green-500/5 border border-green-500/20 p-3 rounded">
                         <p className="text-sm font-semibold text-green-400 mb-1">✓ Keep Tools Focused</p>
-                        <p className="text-sm text-zinc-400">Each tool should do one thing well. Create multiple tools instead of one complex tool with many modes.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Each tool should do one thing well. Create multiple tools instead of one complex tool with many modes.</p>
                       </div>
 
                       <div className="bg-green-500/5 border border-green-500/20 p-3 rounded">
                         <p className="text-sm font-semibold text-green-400 mb-1">✓ Use Environment Variables</p>
-                        <p className="text-sm text-zinc-400">Store API keys and secrets in environment variables, not in tool code. Use <code className="text-cyan-300 bg-black/50 px-1 rounded">os.getenv()</code>.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Store API keys and secrets in environment variables, not in tool code. Use <code className="text-cyan-300 bg-black/50 px-1 rounded">os.getenv()</code>.</p>
                       </div>
                     </div>
                   </div>
@@ -4049,7 +4096,7 @@ __all__ = ['GitHubTool']`}</pre>
                     <p className="text-sm text-zinc-400 mb-3">
                       Codentis automatically discovers custom tools from these locations:
                     </p>
-                    
+
                     <div className="space-y-2 text-sm text-zinc-400">
                       <div className="flex gap-2">
                         <span className="text-cyan-400">1.</span>
@@ -4086,7 +4133,7 @@ __all__ = ['GitHubTool']`}</pre>
                     <p className="text-sm text-zinc-400 mb-3">
                       Test your custom tools before using them with the AI:
                     </p>
-                    
+
                     <div className="bg-black/50 p-3 rounded-lg font-mono text-sm overflow-x-auto mb-3">
                       <pre className="text-zinc-300">{`# test_github_tool.py
 from codentis.tools.registry import ToolRegistry
@@ -4109,7 +4156,7 @@ print(result)
 # }`}</pre>
                     </div>
 
-                    <p className="text-sm text-zinc-400">Run the test:</p>
+                    <p className="text-[13px] sm:text-sm text-zinc-400">Run the test:</p>
                     <div className="bg-black/50 p-3 rounded-lg font-mono text-sm">
                       <div className="text-white">$ python test_github_tool.py</div>
                     </div>
@@ -4118,7 +4165,7 @@ print(result)
                   {/* Troubleshooting */}
                   <div className="p-6 border border-white/[0.05] bg-bg-2 rounded-xl">
                     <h3 className="text-base font-semibold mb-3">Troubleshooting Custom Tools</h3>
-                    
+
                     <div className="space-y-3">
                       <div className="bg-red-500/5 border border-red-500/20 p-3 rounded">
                         <p className="text-sm font-semibold text-red-400 mb-1">Tool Not Found</p>
@@ -4154,26 +4201,26 @@ print(result)
                   {/* Security Considerations */}
                   <div className="p-6 border border-yellow-500/20 bg-yellow-500/5 rounded-xl">
                     <h3 className="text-base font-semibold mb-3 text-yellow-400">Security Considerations</h3>
-                    
+
                     <div className="space-y-3">
                       <div className="bg-yellow-500/5 border border-yellow-500/20 p-3 rounded">
                         <p className="text-sm font-semibold text-yellow-400 mb-1">⚠ Validate Inputs</p>
-                        <p className="text-sm text-zinc-400">Always validate and sanitize inputs, especially for SQL queries or shell commands. Prevent injection attacks.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Always validate and sanitize inputs, especially for SQL queries or shell commands. Prevent injection attacks.</p>
                       </div>
 
                       <div className="bg-yellow-500/5 border border-yellow-500/20 p-3 rounded">
                         <p className="text-sm font-semibold text-yellow-400 mb-1">⚠ Limit Permissions</p>
-                        <p className="text-sm text-zinc-400">Use read-only database connections when possible. Avoid giving tools destructive capabilities unless necessary.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Use read-only database connections when possible. Avoid giving tools destructive capabilities unless necessary.</p>
                       </div>
 
                       <div className="bg-yellow-500/5 border border-yellow-500/20 p-3 rounded">
                         <p className="text-sm font-semibold text-yellow-400 mb-1">⚠ Protect Secrets</p>
-                        <p className="text-sm text-zinc-400">Never hardcode API keys or passwords. Use environment variables or secure credential stores.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Never hardcode API keys or passwords. Use environment variables or secure credential stores.</p>
                       </div>
 
                       <div className="bg-yellow-500/5 border border-yellow-500/20 p-3 rounded">
                         <p className="text-sm font-semibold text-yellow-400 mb-1">⚠ Rate Limiting</p>
-                        <p className="text-sm text-zinc-400">Implement rate limiting for API calls to avoid hitting quotas or causing service disruptions.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Implement rate limiting for API calls to avoid hitting quotas or causing service disruptions.</p>
                       </div>
                     </div>
                   </div>
@@ -4185,9 +4232,9 @@ print(result)
             {activeSection === "performance" && (
               <div className="space-y-8">
                 <div>
-                  <span className="text-sm font-semibold uppercase tracking-wider text-cyan-400/80">Advanced</span>
-                  <h1 className="text-3xl font-semibold mt-3 mb-4">Performance Tuning</h1>
-                  <p className="text-sm text-zinc-400">
+                  <span className="text-[10px] sm:text-sm font-semibold uppercase tracking-wider text-cyan-400/80">Advanced</span>
+                  <h1 className="text-xl sm:text-3xl font-semibold mt-3 mb-4">Performance Tuning</h1>
+                  <p className="text-[13px] sm:text-sm text-zinc-400">
                     Optimize Codentis for speed, cost, and efficiency. Learn how to configure settings, choose the right models, and manage resources for the best performance.
                   </p>
                 </div>
@@ -4199,7 +4246,7 @@ print(result)
                     <p className="text-sm text-zinc-400 mb-3">
                       Improve AI response times with these strategies:
                     </p>
-                    
+
                     <div className="space-y-4">
                       <div className="border-l-2 border-cyan-400/30 pl-4">
                         <h4 className="text-sm font-semibold text-zinc-300 mb-2">1. Choose Faster Models</h4>
@@ -4227,12 +4274,12 @@ print(result)
 
                       <div className="border-l-2 border-cyan-400/30 pl-4">
                         <h4 className="text-sm font-semibold text-zinc-300 mb-2">3. Use Streaming Responses</h4>
-                        <p className="text-sm text-zinc-400">Codentis streams responses by default, showing results as they're generated. This makes the experience feel faster even if total time is the same.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Codentis streams responses by default, showing results as they're generated. This makes the experience feel faster even if total time is the same.</p>
                       </div>
 
                       <div className="border-l-2 border-cyan-400/30 pl-4">
                         <h4 className="text-sm font-semibold text-zinc-300 mb-2">4. Optimize System Prompts</h4>
-                        <p className="text-sm text-zinc-400">Shorter system prompts = faster processing. Keep project context concise and relevant.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Shorter system prompts = faster processing. Keep project context concise and relevant.</p>
                       </div>
                     </div>
                   </div>
@@ -4243,7 +4290,7 @@ print(result)
                     <p className="text-sm text-zinc-400 mb-3">
                       Reduce API costs while maintaining quality:
                     </p>
-                    
+
                     <div className="space-y-4">
                       <div className="border-l-2 border-green-400/30 pl-4">
                         <h4 className="text-sm font-semibold text-zinc-300 mb-2">1. Choose Cost-Effective Models</h4>
@@ -4254,7 +4301,7 @@ print(result)
                           <div className="text-green-400">• Gemini Pro, DeepSeek (~$0.001-0.002/1K)</div>
                           <div className="text-cyan-400">• Ollama (Local) - Free</div>
                         </div>
-                        <p className="text-sm text-zinc-400">Use cheaper models for development, expensive ones for production.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Use cheaper models for development, expensive ones for production.</p>
                       </div>
 
                       <div className="border-l-2 border-green-400/30 pl-4">
@@ -4270,12 +4317,12 @@ print(result)
 
                       <div className="border-l-2 border-green-400/30 pl-4">
                         <h4 className="text-sm font-semibold text-zinc-300 mb-2">3. Use OpenRouter for Best Prices</h4>
-                        <p className="text-sm text-zinc-400">OpenRouter often offers lower prices than direct APIs and shows cost per request.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">OpenRouter often offers lower prices than direct APIs and shows cost per request.</p>
                       </div>
 
                       <div className="border-l-2 border-green-400/30 pl-4">
                         <h4 className="text-sm font-semibold text-zinc-300 mb-2">4. Monitor Usage</h4>
-                        <p className="text-sm text-zinc-400">Check your API provider dashboard regularly to track spending and set budget alerts.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Check your API provider dashboard regularly to track spending and set budget alerts.</p>
                       </div>
                     </div>
                   </div>
@@ -4283,7 +4330,7 @@ print(result)
                   {/* Memory & Resource Management */}
                   <div className="p-6 border border-white/[0.05] bg-bg-2 rounded-xl">
                     <h3 className="text-base font-semibold mb-3">Memory & Resource Management</h3>
-                    
+
                     <div className="space-y-4">
                       <div>
                         <h4 className="text-sm font-semibold text-cyan-400 mb-2">File Size Limits</h4>
@@ -4330,14 +4377,14 @@ print(result)
                   {/* Model-Specific Optimizations */}
                   <div className="p-6 border border-white/[0.05] bg-bg-2 rounded-xl">
                     <h3 className="text-base font-semibold mb-3">Model-Specific Optimizations</h3>
-                    
+
                     <div className="space-y-4">
                       <div className="p-4 border border-white/[0.05] bg-black/30 rounded-lg">
                         <div className="flex items-center gap-2 mb-2">
                           <RiClaudeLine className="text-cyan-400 text-xl" />
                           <h4 className="text-sm font-semibold text-zinc-300">Claude (Anthropic)</h4>
                         </div>
-                        <ul className="text-sm text-zinc-400 space-y-1">
+                        <ul className="text-[13px] sm:text-sm text-zinc-400 space-y-1">
                           <li>• Use Sonnet for best speed/quality balance</li>
                           <li>• Excellent at following instructions precisely</li>
                           <li>• Lower temperature (0.5-0.7) for consistent output</li>
@@ -4350,7 +4397,7 @@ print(result)
                           <RiOpenaiFill className="text-cyan-400 text-xl" />
                           <h4 className="text-sm font-semibold text-zinc-300">GPT (OpenAI)</h4>
                         </div>
-                        <ul className="text-sm text-zinc-400 space-y-1">
+                        <ul className="text-[13px] sm:text-sm text-zinc-400 space-y-1">
                           <li>• GPT-4o for fast, high-quality responses</li>
                           <li>• o3-mini for quick reasoning tasks</li>
                           <li>• Higher temperature (0.7-0.9) for creative tasks</li>
@@ -4363,7 +4410,7 @@ print(result)
                           <RiGeminiFill className="text-cyan-400 text-xl" />
                           <h4 className="text-sm font-semibold text-zinc-300">Gemini (Google)</h4>
                         </div>
-                        <ul className="text-sm text-zinc-400 space-y-1">
+                        <ul className="text-[13px] sm:text-sm text-zinc-400 space-y-1">
                           <li>• Flash model for fastest responses</li>
                           <li>• Pro for long context (up to 1M tokens)</li>
                           <li>• Very cost-effective</li>
@@ -4376,7 +4423,7 @@ print(result)
                           <RiGeminiLine className="text-cyan-400 text-xl" />
                           <h4 className="text-sm font-semibold text-zinc-300">Ollama (Local)</h4>
                         </div>
-                        <ul className="text-sm text-zinc-400 space-y-1">
+                        <ul className="text-[13px] sm:text-sm text-zinc-400 space-y-1">
                           <li>• Use GPU acceleration for 10x speed boost</li>
                           <li>• Smaller models (7B-13B) for faster inference</li>
                           <li>• Quantized models (Q4, Q5) for less memory</li>
@@ -4389,7 +4436,7 @@ print(result)
                   {/* Network Optimization */}
                   <div className="p-6 border border-white/[0.05] bg-bg-2 rounded-xl">
                     <h3 className="text-base font-semibold mb-3">Network Optimization</h3>
-                    
+
                     <div className="space-y-3 text-sm text-zinc-400">
                       <div className="flex gap-3">
                         <span className="text-cyan-400">•</span>
@@ -4431,7 +4478,7 @@ print(result)
                     <p className="text-sm text-zinc-400 mb-3">
                       Typical response times for common operations (with good internet):
                     </p>
-                    
+
                     <div className="overflow-x-auto">
                       <table className="w-full text-sm text-zinc-400">
                         <thead>
@@ -4476,7 +4523,7 @@ print(result)
                   {/* Recommended Configurations */}
                   <div className="p-6 border border-white/[0.05] bg-bg-2 rounded-xl">
                     <h3 className="text-base font-semibold mb-3">Recommended Configurations</h3>
-                    
+
                     <div className="space-y-4">
                       <div>
                         <p className="text-sm font-semibold text-cyan-400 mb-2">For Speed (Development)</p>
@@ -4535,7 +4582,7 @@ print(result)
                   {/* Troubleshooting Performance Issues */}
                   <div className="p-6 border border-white/[0.05] bg-bg-2 rounded-xl">
                     <h3 className="text-base font-semibold mb-3">Troubleshooting Performance Issues</h3>
-                    
+
                     <div className="space-y-3">
                       <div className="bg-red-500/5 border border-red-500/20 p-3 rounded">
                         <p className="text-sm font-semibold text-red-400 mb-1">Slow Responses</p>
@@ -4585,7 +4632,7 @@ print(result)
                     <p className="text-sm text-zinc-400 mb-3">
                       Track performance to identify bottlenecks:
                     </p>
-                    
+
                     <div className="space-y-2 text-sm text-zinc-400">
                       <div className="flex gap-2">
                         <span className="text-cyan-400">•</span>
@@ -4613,9 +4660,9 @@ print(result)
             {activeSection === "security" && (
               <div className="space-y-8">
                 <div>
-                  <span className="text-sm font-semibold uppercase tracking-wider text-cyan-400/80">Advanced</span>
-                  <h1 className="text-3xl font-semibold mt-3 mb-4">Security Best Practices</h1>
-                  <p className="text-sm text-zinc-400">
+                  <span className="text-[10px] sm:text-sm font-semibold uppercase tracking-wider text-cyan-400/80">Advanced</span>
+                  <h1 className="text-xl sm:text-3xl font-semibold mt-3 mb-4">Security Best Practices</h1>
+                  <p className="text-[13px] sm:text-sm text-zinc-400">
                     Keep your code, credentials, and development environment secure when using Codentis. Follow these best practices to protect sensitive information and maintain a secure workflow.
                   </p>
                 </div>
@@ -4627,7 +4674,7 @@ print(result)
                     <p className="text-sm text-zinc-400 mb-3">
                       Your API keys are sensitive credentials that must be protected:
                     </p>
-                    
+
                     <div className="space-y-3">
                       <div className="bg-green-500/5 border border-green-500/20 p-3 rounded">
                         <p className="text-sm font-semibold text-green-400 mb-1">✓ Store Keys Securely</p>
@@ -4650,12 +4697,12 @@ print(result)
 
                       <div className="bg-green-500/5 border border-green-500/20 p-3 rounded">
                         <p className="text-sm font-semibold text-green-400 mb-1">✓ Rotate Keys Regularly</p>
-                        <p className="text-sm text-zinc-400">Generate new API keys every 3-6 months and revoke old ones immediately if compromised.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Generate new API keys every 3-6 months and revoke old ones immediately if compromised.</p>
                       </div>
 
                       <div className="bg-green-500/5 border border-green-500/20 p-3 rounded">
                         <p className="text-sm font-semibold text-green-400 mb-1">✓ Use Key Restrictions</p>
-                        <p className="text-sm text-zinc-400">If your provider supports it, restrict API keys to specific IP addresses or usage limits.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">If your provider supports it, restrict API keys to specific IP addresses or usage limits.</p>
                       </div>
 
                       <div className="bg-red-500/5 border border-red-500/20 p-3 rounded">
@@ -4677,11 +4724,11 @@ print(result)
                     <p className="text-sm text-zinc-400 mb-3">
                       Use workspace trust to control which directories Codentis can access:
                     </p>
-                    
+
                     <div className="space-y-3">
                       <div className="bg-green-500/5 border border-green-500/20 p-3 rounded">
                         <p className="text-sm font-semibold text-green-400 mb-1">✓ Only Trust Your Own Projects</p>
-                        <p className="text-sm text-zinc-400">Don't trust directories with code from unknown sources or downloaded projects until you've reviewed them.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Don't trust directories with code from unknown sources or downloaded projects until you've reviewed them.</p>
                       </div>
 
                       <div className="bg-green-500/5 border border-green-500/20 p-3 rounded">
@@ -4694,12 +4741,12 @@ print(result)
 
                       <div className="bg-green-500/5 border border-green-500/20 p-3 rounded">
                         <p className="text-sm font-semibold text-green-400 mb-1">✓ Use Separate Workspaces</p>
-                        <p className="text-sm text-zinc-400">Keep personal projects, work projects, and experimental code in separate directories with different trust settings.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Keep personal projects, work projects, and experimental code in separate directories with different trust settings.</p>
                       </div>
 
                       <div className="bg-yellow-500/5 border border-yellow-500/20 p-3 rounded">
                         <p className="text-sm font-semibold text-yellow-400 mb-1">⚠ Be Cautious with Production Code</p>
-                        <p className="text-sm text-zinc-400">Consider using read-only access or manual review for production codebases. Test changes in development first.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Consider using read-only access or manual review for production codebases. Test changes in development first.</p>
                       </div>
                     </div>
                   </div>
@@ -4710,11 +4757,11 @@ print(result)
                     <p className="text-sm text-zinc-400 mb-3">
                       Always review shell commands before approving them:
                     </p>
-                    
+
                     <div className="space-y-3">
                       <div className="bg-green-500/5 border border-green-500/20 p-3 rounded">
                         <p className="text-sm font-semibold text-green-400 mb-1">✓ Read Commands Carefully</p>
-                        <p className="text-sm text-zinc-400">Understand what each command does before approving. If unsure, research it or ask for clarification.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Understand what each command does before approving. If unsure, research it or ask for clarification.</p>
                       </div>
 
                       <div className="bg-green-500/5 border border-green-500/20 p-3 rounded">
@@ -4740,7 +4787,7 @@ print(result)
 
                       <div className="bg-red-500/5 border border-red-500/20 p-3 rounded">
                         <p className="text-sm font-semibold text-red-400 mb-1">✗ Never Blindly Approve</p>
-                        <p className="text-sm text-zinc-400">Don't approve commands without reading them, even if they seem routine. Malicious code can hide in seemingly innocent commands.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Don't approve commands without reading them, even if they seem routine. Malicious code can hide in seemingly innocent commands.</p>
                       </div>
                     </div>
                   </div>
@@ -4751,16 +4798,16 @@ print(result)
                     <p className="text-sm text-zinc-400 mb-3">
                       Always review code generated by Codentis before using it:
                     </p>
-                    
+
                     <div className="space-y-3">
                       <div className="bg-green-500/5 border border-green-500/20 p-3 rounded">
                         <p className="text-sm font-semibold text-green-400 mb-1">✓ Review All Changes</p>
-                        <p className="text-sm text-zinc-400">Use <code className="text-cyan-300 bg-black/50 px-1 rounded">/e #ID</code> to expand tool outputs and review file changes before committing.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Use <code className="text-cyan-300 bg-black/50 px-1 rounded">/e #ID</code> to expand tool outputs and review file changes before committing.</p>
                       </div>
 
                       <div className="bg-green-500/5 border border-green-500/20 p-3 rounded">
                         <p className="text-sm font-semibold text-green-400 mb-1">✓ Test Generated Code</p>
-                        <p className="text-sm text-zinc-400">Run tests, check for errors, and verify functionality before deploying AI-generated code to production.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Run tests, check for errors, and verify functionality before deploying AI-generated code to production.</p>
                       </div>
 
                       <div className="bg-green-500/5 border border-green-500/20 p-3 rounded">
@@ -4777,7 +4824,7 @@ print(result)
 
                       <div className="bg-green-500/5 border border-green-500/20 p-3 rounded">
                         <p className="text-sm font-semibold text-green-400 mb-1">✓ Use Version Control</p>
-                        <p className="text-sm text-zinc-400">Commit changes incrementally so you can easily revert if something goes wrong. Use meaningful commit messages.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Commit changes incrementally so you can easily revert if something goes wrong. Use meaningful commit messages.</p>
                       </div>
                     </div>
                   </div>
@@ -4788,7 +4835,7 @@ print(result)
                     <p className="text-sm text-zinc-400 mb-3">
                       Understand what data is sent to AI providers:
                     </p>
-                    
+
                     <div className="space-y-3">
                       <div className="bg-yellow-500/5 border border-yellow-500/20 p-3 rounded">
                         <p className="text-sm font-semibold text-yellow-400 mb-1">⚠ What Gets Sent to AI</p>
@@ -4830,12 +4877,12 @@ print(result)
 
                       <div className="bg-green-500/5 border border-green-500/20 p-3 rounded">
                         <p className="text-sm font-semibold text-green-400 mb-1">✓ Review Provider Privacy Policies</p>
-                        <p className="text-sm text-zinc-400">Understand how your AI provider handles data. Some providers don't train on API data, others do.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Understand how your AI provider handles data. Some providers don't train on API data, others do.</p>
                       </div>
 
                       <div className="bg-red-500/5 border border-red-500/20 p-3 rounded">
                         <p className="text-sm font-semibold text-red-400 mb-1">✗ Don't Share Customer Data</p>
-                        <p className="text-sm text-zinc-400">Never include real customer data, PII, or confidential business information in prompts or code shared with AI.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Never include real customer data, PII, or confidential business information in prompts or code shared with AI.</p>
                       </div>
                     </div>
                   </div>
@@ -4843,26 +4890,26 @@ print(result)
                   {/* Network Security */}
                   <div className="p-6 border border-white/[0.05] bg-bg-2 rounded-xl">
                     <h3 className="text-base font-semibold mb-3">Network Security</h3>
-                    
+
                     <div className="space-y-3">
                       <div className="bg-green-500/5 border border-green-500/20 p-3 rounded">
                         <p className="text-sm font-semibold text-green-400 mb-1">✓ Use HTTPS Only</p>
-                        <p className="text-sm text-zinc-400">Codentis uses HTTPS for all API communications. Never configure custom endpoints with HTTP.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Codentis uses HTTPS for all API communications. Never configure custom endpoints with HTTP.</p>
                       </div>
 
                       <div className="bg-green-500/5 border border-green-500/20 p-3 rounded">
                         <p className="text-sm font-semibold text-green-400 mb-1">✓ Secure Your Network</p>
-                        <p className="text-sm text-zinc-400">Use secure Wi-Fi networks. Avoid public Wi-Fi when working with sensitive code or using API keys.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Use secure Wi-Fi networks. Avoid public Wi-Fi when working with sensitive code or using API keys.</p>
                       </div>
 
                       <div className="bg-green-500/5 border border-green-500/20 p-3 rounded">
                         <p className="text-sm font-semibold text-green-400 mb-1">✓ Use VPN for Public Networks</p>
-                        <p className="text-sm text-zinc-400">If you must use public Wi-Fi, connect through a trusted VPN to encrypt your traffic.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">If you must use public Wi-Fi, connect through a trusted VPN to encrypt your traffic.</p>
                       </div>
 
                       <div className="bg-green-500/5 border border-green-500/20 p-3 rounded">
                         <p className="text-sm font-semibold text-green-400 mb-1">✓ Keep Firewall Enabled</p>
-                        <p className="text-sm text-zinc-400">Ensure your system firewall is active to protect against unauthorized network access.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Ensure your system firewall is active to protect against unauthorized network access.</p>
                       </div>
                     </div>
                   </div>
@@ -4870,11 +4917,11 @@ print(result)
                   {/* Access Control */}
                   <div className="p-6 border border-white/[0.05] bg-bg-2 rounded-xl">
                     <h3 className="text-base font-semibold mb-3">Access Control & Permissions</h3>
-                    
+
                     <div className="space-y-3">
                       <div className="bg-green-500/5 border border-green-500/20 p-3 rounded">
                         <p className="text-sm font-semibold text-green-400 mb-1">✓ Use Separate API Keys per Environment</p>
-                        <p className="text-sm text-zinc-400">Different keys for development, staging, and production. Revoke compromised keys immediately.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Different keys for development, staging, and production. Revoke compromised keys immediately.</p>
                       </div>
 
                       <div className="bg-green-500/5 border border-green-500/20 p-3 rounded">
@@ -4887,12 +4934,12 @@ print(result)
 
                       <div className="bg-green-500/5 border border-green-500/20 p-3 rounded">
                         <p className="text-sm font-semibold text-green-400 mb-1">✓ Use Team Accounts</p>
-                        <p className="text-sm text-zinc-400">For team projects, use organization API keys with proper access controls rather than personal keys.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">For team projects, use organization API keys with proper access controls rather than personal keys.</p>
                       </div>
 
                       <div className="bg-green-500/5 border border-green-500/20 p-3 rounded">
                         <p className="text-sm font-semibold text-green-400 mb-1">✓ Monitor API Usage</p>
-                        <p className="text-sm text-zinc-400">Regularly check your API provider dashboard for unusual activity or unexpected usage spikes.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Regularly check your API provider dashboard for unusual activity or unexpected usage spikes.</p>
                       </div>
                     </div>
                   </div>
@@ -4903,13 +4950,13 @@ print(result)
                     <p className="text-sm text-zinc-400 mb-3">
                       Take immediate action if you suspect your API key has been exposed:
                     </p>
-                    
+
                     <div className="space-y-3">
                       <div className="flex gap-3">
                         <span className="text-red-400 font-semibold">1.</span>
                         <div>
                           <p className="text-sm font-semibold text-zinc-300 mb-1">Revoke the Key Immediately</p>
-                          <p className="text-sm text-zinc-400">Go to your provider dashboard and revoke the compromised key right away.</p>
+                          <p className="text-[13px] sm:text-sm text-zinc-400">Go to your provider dashboard and revoke the compromised key right away.</p>
                         </div>
                       </div>
 
@@ -4917,7 +4964,7 @@ print(result)
                         <span className="text-red-400 font-semibold">2.</span>
                         <div>
                           <p className="text-sm font-semibold text-zinc-300 mb-1">Generate a New Key</p>
-                          <p className="text-sm text-zinc-400">Create a new API key and update your Codentis configuration.</p>
+                          <p className="text-[13px] sm:text-sm text-zinc-400">Create a new API key and update your Codentis configuration.</p>
                         </div>
                       </div>
 
@@ -4925,7 +4972,7 @@ print(result)
                         <span className="text-red-400 font-semibold">3.</span>
                         <div>
                           <p className="text-sm font-semibold text-zinc-300 mb-1">Check for Unauthorized Usage</p>
-                          <p className="text-sm text-zinc-400">Review your API usage logs for any suspicious activity or unexpected charges.</p>
+                          <p className="text-[13px] sm:text-sm text-zinc-400">Review your API usage logs for any suspicious activity or unexpected charges.</p>
                         </div>
                       </div>
 
@@ -4933,7 +4980,7 @@ print(result)
                         <span className="text-red-400 font-semibold">4.</span>
                         <div>
                           <p className="text-sm font-semibold text-zinc-300 mb-1">Contact Provider Support</p>
-                          <p className="text-sm text-zinc-400">If you see unauthorized usage, contact your provider's support team immediately.</p>
+                          <p className="text-[13px] sm:text-sm text-zinc-400">If you see unauthorized usage, contact your provider's support team immediately.</p>
                         </div>
                       </div>
 
@@ -4941,7 +4988,7 @@ print(result)
                         <span className="text-red-400 font-semibold">5.</span>
                         <div>
                           <p className="text-sm font-semibold text-zinc-300 mb-1">Review Git History</p>
-                          <p className="text-sm text-zinc-400">Check if the key was committed to git. If so, consider the repository compromised and rotate all secrets.</p>
+                          <p className="text-[13px] sm:text-sm text-zinc-400">Check if the key was committed to git. If so, consider the repository compromised and rotate all secrets.</p>
                         </div>
                       </div>
                     </div>
@@ -4953,7 +5000,7 @@ print(result)
                     <p className="text-sm text-zinc-400 mb-3">
                       Use this checklist to ensure you're following security best practices:
                     </p>
-                    
+
                     <div className="space-y-2 text-sm text-zinc-400">
                       <div className="flex gap-2">
                         <span className="text-cyan-400">☐</span>
@@ -5005,9 +5052,9 @@ print(result)
             {activeSection === "faq" && (
               <div className="space-y-8">
                 <div>
-                  <span className="text-sm font-semibold uppercase tracking-wider text-cyan-400/80">Support & Resources</span>
-                  <h1 className="text-3xl font-semibold mt-3 mb-4">Frequently Asked Questions</h1>
-                  <p className="text-sm text-zinc-400">
+                  <span className="text-[10px] sm:text-sm font-semibold uppercase tracking-wider text-cyan-400/80">Support & Resources</span>
+                  <h1 className="text-xl sm:text-3xl font-semibold mt-3 mb-4">Frequently Asked Questions</h1>
+                  <p className="text-[13px] sm:text-sm text-zinc-400">
                     Quick answers to common questions about Codentis. Can't find what you're looking for? Check the Troubleshooting section or reach out to the community.
                   </p>
                 </div>
@@ -5016,31 +5063,31 @@ print(result)
                   {/* General Questions */}
                   <div className="p-6 border border-white/[0.05] bg-bg-2 rounded-xl">
                     <h3 className="text-base font-semibold mb-4 text-cyan-400">General Questions</h3>
-                    
+
                     <div className="space-y-4">
                       <div>
                         <p className="text-sm font-semibold text-zinc-300 mb-2">What is Codentis?</p>
-                        <p className="text-sm text-zinc-400">Codentis is an intelligent CLI AI agent that helps developers write, debug, and understand code directly from the terminal. It uses Large Language Models (LLMs) to provide context-aware assistance with file operations, code generation, and project management.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Codentis is an intelligent CLI AI agent that helps developers write, debug, and understand code directly from the terminal. It uses Large Language Models (LLMs) to provide context-aware assistance with file operations, code generation, and project management.</p>
                       </div>
 
                       <div>
                         <p className="text-sm font-semibold text-zinc-300 mb-2">Is Codentis free?</p>
-                        <p className="text-sm text-zinc-400">Codentis itself is free and open-source. However, you'll need an API key from an AI provider (OpenAI, Anthropic, etc.) which has its own pricing. Alternatively, you can use Ollama to run models locally for free.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Codentis itself is free and open-source. However, you'll need an API key from an AI provider (OpenAI, Anthropic, etc.) which has its own pricing. Alternatively, you can use Ollama to run models locally for free.</p>
                       </div>
 
                       <div>
                         <p className="text-sm font-semibold text-zinc-300 mb-2">What programming languages does Codentis support?</p>
-                        <p className="text-sm text-zinc-400">Codentis works with any programming language. The AI models it uses are trained on code from virtually all popular languages including Python, JavaScript, TypeScript, Java, C++, Go, Rust, and many more.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Codentis works with any programming language. The AI models it uses are trained on code from virtually all popular languages including Python, JavaScript, TypeScript, Java, C++, Go, Rust, and many more.</p>
                       </div>
 
                       <div>
                         <p className="text-sm font-semibold text-zinc-300 mb-2">Can I use Codentis offline?</p>
-                        <p className="text-sm text-zinc-400">Yes! Use Ollama to run AI models locally on your machine. This requires no internet connection and keeps all your code private. However, local models are generally slower and less capable than cloud-based options.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Yes! Use Ollama to run AI models locally on your machine. This requires no internet connection and keeps all your code private. However, local models are generally slower and less capable than cloud-based options.</p>
                       </div>
 
                       <div>
                         <p className="text-sm font-semibold text-zinc-300 mb-2">Is my code sent to the AI provider?</p>
-                        <p className="text-sm text-zinc-400">Yes, when you use cloud-based AI providers (OpenAI, Anthropic, etc.), the code you ask Codentis to read or analyze is sent to their APIs. For sensitive code, use local models with Ollama or exclude sensitive files from context.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Yes, when you use cloud-based AI providers (OpenAI, Anthropic, etc.), the code you ask Codentis to read or analyze is sent to their APIs. For sensitive code, use local models with Ollama or exclude sensitive files from context.</p>
                       </div>
                     </div>
                   </div>
@@ -5048,7 +5095,7 @@ print(result)
                   {/* Installation & Setup */}
                   <div className="p-6 border border-white/[0.05] bg-bg-2 rounded-xl">
                     <h3 className="text-base font-semibold mb-4 text-cyan-400">Installation & Setup</h3>
-                    
+
                     <div className="space-y-4">
                       <div>
                         <p className="text-sm font-semibold text-zinc-300 mb-2">Which AI provider should I choose?</p>
@@ -5073,12 +5120,12 @@ print(result)
 
                       <div>
                         <p className="text-sm font-semibold text-zinc-300 mb-2">Can I switch AI providers later?</p>
-                        <p className="text-sm text-zinc-400">Yes! Run <code className="text-cyan-300 bg-black/50 px-1 rounded">codentis config</code> anytime to change your provider, model, or other settings. Your conversation history and trusted workspaces are preserved.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Yes! Run <code className="text-cyan-300 bg-black/50 px-1 rounded">codentis config</code> anytime to change your provider, model, or other settings. Your conversation history and trusted workspaces are preserved.</p>
                       </div>
 
                       <div>
                         <p className="text-sm font-semibold text-zinc-300 mb-2">Do I need Python installed?</p>
-                        <p className="text-sm text-zinc-400">No. The standalone installers for Windows, macOS, and Linux include everything you need. Python is only required if you're installing from source with pip.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">No. The standalone installers for Windows, macOS, and Linux include everything you need. Python is only required if you're installing from source with pip.</p>
                       </div>
                     </div>
                   </div>
@@ -5086,36 +5133,36 @@ print(result)
                   {/* Usage & Features */}
                   <div className="p-6 border border-white/[0.05] bg-bg-2 rounded-xl">
                     <h3 className="text-base font-semibold mb-4 text-cyan-400">Usage & Features</h3>
-                    
+
                     <div className="space-y-4">
                       <div>
                         <p className="text-sm font-semibold text-zinc-300 mb-2">How do I see what tools are available?</p>
-                        <p className="text-sm text-zinc-400">Type <code className="text-cyan-300 bg-black/50 px-1 rounded">/list</code> in a Codentis session to see all available tools including built-in and custom tools.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Type <code className="text-cyan-300 bg-black/50 px-1 rounded">/list</code> in a Codentis session to see all available tools including built-in and custom tools.</p>
                       </div>
 
                       <div>
                         <p className="text-sm font-semibold text-zinc-300 mb-2">Can Codentis run tests or build my project?</p>
-                        <p className="text-sm text-zinc-400">Yes! Codentis can execute shell commands including running tests, building projects, installing dependencies, and more. You'll be asked to approve commands that modify your system.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Yes! Codentis can execute shell commands including running tests, building projects, installing dependencies, and more. You'll be asked to approve commands that modify your system.</p>
                       </div>
 
                       <div>
                         <p className="text-sm font-semibold text-zinc-300 mb-2">How do I clear the conversation history?</p>
-                        <p className="text-sm text-zinc-400">Type <code className="text-cyan-300 bg-black/50 px-1 rounded">/clear</code> to clear the conversation history. This can help improve performance and reduce token usage for long sessions.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Type <code className="text-cyan-300 bg-black/50 px-1 rounded">/clear</code> to clear the conversation history. This can help improve performance and reduce token usage for long sessions.</p>
                       </div>
 
                       <div>
                         <p className="text-sm font-semibold text-zinc-300 mb-2">Can I use Codentis with multiple projects?</p>
-                        <p className="text-sm text-zinc-400">Yes! Each project can have its own configuration in <code className="text-cyan-300 bg-black/50 px-1 rounded">.codentis/config.json</code>. You can use different models, settings, or even different AI providers for different projects.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Yes! Each project can have its own configuration in <code className="text-cyan-300 bg-black/50 px-1 rounded">.codentis/config.json</code>. You can use different models, settings, or even different AI providers for different projects.</p>
                       </div>
 
                       <div>
                         <p className="text-sm font-semibold text-zinc-300 mb-2">How do I expand collapsed tool outputs?</p>
-                        <p className="text-sm text-zinc-400">Use <code className="text-cyan-300 bg-black/50 px-1 rounded">/e #ID</code> where ID is the tool number shown in the output. For example, <code className="text-cyan-300 bg-black/50 px-1 rounded">/e 3</code> expands tool output #3.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Use <code className="text-cyan-300 bg-black/50 px-1 rounded">/e #ID</code> where ID is the tool number shown in the output. For example, <code className="text-cyan-300 bg-black/50 px-1 rounded">/e 3</code> expands tool output #3.</p>
                       </div>
 
                       <div>
                         <p className="text-sm font-semibold text-zinc-300 mb-2">Can Codentis work with Git?</p>
-                        <p className="text-sm text-zinc-400">Yes! Codentis can run git commands, check status, create branches, commit changes, and more. It's recommended to review all changes before committing.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Yes! Codentis can run git commands, check status, create branches, commit changes, and more. It's recommended to review all changes before committing.</p>
                       </div>
                     </div>
                   </div>
@@ -5123,7 +5170,7 @@ print(result)
                   {/* Performance & Cost */}
                   <div className="p-6 border border-white/[0.05] bg-bg-2 rounded-xl">
                     <h3 className="text-base font-semibold mb-4 text-cyan-400">Performance & Cost</h3>
-                    
+
                     <div className="space-y-4">
                       <div>
                         <p className="text-sm font-semibold text-zinc-300 mb-2">Why are responses slow?</p>
@@ -5163,7 +5210,7 @@ print(result)
 
                       <div>
                         <p className="text-sm font-semibold text-zinc-300 mb-2">Can I set a spending limit?</p>
-                        <p className="text-sm text-zinc-400">Yes, but this is configured in your AI provider's dashboard, not in Codentis. Most providers let you set monthly spending limits and usage alerts.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Yes, but this is configured in your AI provider's dashboard, not in Codentis. Most providers let you set monthly spending limits and usage alerts.</p>
                       </div>
                     </div>
                   </div>
@@ -5171,31 +5218,31 @@ print(result)
                   {/* Security & Privacy */}
                   <div className="p-6 border border-white/[0.05] bg-bg-2 rounded-xl">
                     <h3 className="text-base font-semibold mb-4 text-cyan-400">Security & Privacy</h3>
-                    
+
                     <div className="space-y-4">
                       <div>
                         <p className="text-sm font-semibold text-zinc-300 mb-2">Is Codentis safe to use?</p>
-                        <p className="text-sm text-zinc-400">Yes. Codentis includes security features like workspace trust and command approval. However, always review AI-generated code before using it in production and never share sensitive credentials with the AI.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Yes. Codentis includes security features like workspace trust and command approval. However, always review AI-generated code before using it in production and never share sensitive credentials with the AI.</p>
                       </div>
 
                       <div>
                         <p className="text-sm font-semibold text-zinc-300 mb-2">Where are my API keys stored?</p>
-                        <p className="text-sm text-zinc-400">API keys are stored in <code className="text-cyan-300 bg-black/50 px-1 rounded">~/.codentis/config.json</code> on your local machine. This file should never be committed to version control.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">API keys are stored in <code className="text-cyan-300 bg-black/50 px-1 rounded">~/.codentis/config.json</code> on your local machine. This file should never be committed to version control.</p>
                       </div>
 
                       <div>
                         <p className="text-sm font-semibold text-zinc-300 mb-2">Can I use Codentis for proprietary code?</p>
-                        <p className="text-sm text-zinc-400">Yes, but be aware that code sent to cloud AI providers may be subject to their data policies. For maximum privacy with proprietary code, use Ollama to run models locally.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Yes, but be aware that code sent to cloud AI providers may be subject to their data policies. For maximum privacy with proprietary code, use Ollama to run models locally.</p>
                       </div>
 
                       <div>
                         <p className="text-sm font-semibold text-zinc-300 mb-2">What is workspace trust?</p>
-                        <p className="text-sm text-zinc-400">Workspace trust is a security feature that requires you to explicitly approve directories before Codentis can access files. This prevents accidental modifications to important files.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Workspace trust is a security feature that requires you to explicitly approve directories before Codentis can access files. This prevents accidental modifications to important files.</p>
                       </div>
 
                       <div>
                         <p className="text-sm font-semibold text-zinc-300 mb-2">Does Codentis train on my code?</p>
-                        <p className="text-sm text-zinc-400">Codentis itself doesn't train on anything. However, your AI provider's policies determine if they use API data for training. Most providers (OpenAI, Anthropic) don't train on API data, but check their policies to be sure.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Codentis itself doesn't train on anything. However, your AI provider's policies determine if they use API data for training. Most providers (OpenAI, Anthropic) don't train on API data, but check their policies to be sure.</p>
                       </div>
                     </div>
                   </div>
@@ -5203,31 +5250,31 @@ print(result)
                   {/* Troubleshooting */}
                   <div className="p-6 border border-white/[0.05] bg-bg-2 rounded-xl">
                     <h3 className="text-base font-semibold mb-4 text-cyan-400">Troubleshooting</h3>
-                    
+
                     <div className="space-y-4">
                       <div>
                         <p className="text-sm font-semibold text-zinc-300 mb-2">Codentis command not found after installation</p>
-                        <p className="text-sm text-zinc-400">Restart your terminal or log out and back in. The PATH may not be updated in your current session. If the issue persists, check the Installation section for platform-specific troubleshooting.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Restart your terminal or log out and back in. The PATH may not be updated in your current session. If the issue persists, check the Installation section for platform-specific troubleshooting.</p>
                       </div>
 
                       <div>
                         <p className="text-sm font-semibold text-zinc-300 mb-2">API authentication errors</p>
-                        <p className="text-sm text-zinc-400">Check that your API key is correct and hasn't expired. Run <code className="text-cyan-300 bg-black/50 px-1 rounded">codentis config --show</code> to verify your configuration, then <code className="text-cyan-300 bg-black/50 px-1 rounded">codentis config</code> to update it.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Check that your API key is correct and hasn't expired. Run <code className="text-cyan-300 bg-black/50 px-1 rounded">codentis config --show</code> to verify your configuration, then <code className="text-cyan-300 bg-black/50 px-1 rounded">codentis config</code> to update it.</p>
                       </div>
 
                       <div>
                         <p className="text-sm font-semibold text-zinc-300 mb-2">Connection timeouts</p>
-                        <p className="text-sm text-zinc-400">Check your internet connection. If using a VPN, try disabling it. You can also try switching to a different AI provider or using a faster model.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Check your internet connection. If using a VPN, try disabling it. You can also try switching to a different AI provider or using a faster model.</p>
                       </div>
 
                       <div>
                         <p className="text-sm font-semibold text-zinc-300 mb-2">Tool not working as expected</p>
-                        <p className="text-sm text-zinc-400">Use <code className="text-cyan-300 bg-black/50 px-1 rounded">/e #ID</code> to expand the tool output and see detailed error messages. This often reveals what went wrong.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Use <code className="text-cyan-300 bg-black/50 px-1 rounded">/e #ID</code> to expand the tool output and see detailed error messages. This often reveals what went wrong.</p>
                       </div>
 
                       <div>
                         <p className="text-sm font-semibold text-zinc-300 mb-2">Where can I get more help?</p>
-                        <p className="text-sm text-zinc-400">Check the <button onClick={() => setActiveSection("troubleshooting")} className="text-cyan-400 hover:text-cyan-300 underline">Troubleshooting</button> section for detailed solutions, or visit the <a href="https://github.com/sujal-GITHUB/Codentis/issues" target="_blank" rel="noopener noreferrer" className="text-cyan-400 hover:text-cyan-300 underline">GitHub Issues</a> page to report bugs or ask questions.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Check the <button onClick={() => setActiveSection("troubleshooting")} className="text-cyan-400 hover:text-cyan-300 underline">Troubleshooting</button> section for detailed solutions, or visit the <a href="https://github.com/sujal-GITHUB/Codentis/issues" target="_blank" rel="noopener noreferrer" className="text-cyan-400 hover:text-cyan-300 underline">GitHub Issues</a> page to report bugs or ask questions.</p>
                       </div>
                     </div>
                   </div>
@@ -5235,31 +5282,31 @@ print(result)
                   {/* Advanced Topics */}
                   <div className="p-6 border border-white/[0.05] bg-bg-2 rounded-xl">
                     <h3 className="text-base font-semibold mb-4 text-cyan-400">Advanced Topics</h3>
-                    
+
                     <div className="space-y-4">
                       <div>
                         <p className="text-sm font-semibold text-zinc-300 mb-2">Can I create custom tools?</p>
-                        <p className="text-sm text-zinc-400">Yes! Create Python tools in <code className="text-cyan-300 bg-black/50 px-1 rounded">.codentis/tools/</code> that extend Codentis with custom functionality. See the <button onClick={() => setActiveSection("custom-tools")} className="text-cyan-400 hover:text-cyan-300 underline">Custom Tools</button> section for details.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Yes! Create Python tools in <code className="text-cyan-300 bg-black/50 px-1 rounded">.codentis/tools/</code> that extend Codentis with custom functionality. See the <button onClick={() => setActiveSection("custom-tools")} className="text-cyan-400 hover:text-cyan-300 underline">Custom Tools</button> section for details.</p>
                       </div>
 
                       <div>
                         <p className="text-sm font-semibold text-zinc-300 mb-2">How do I use different models for different projects?</p>
-                        <p className="text-sm text-zinc-400">Create a <code className="text-cyan-300 bg-black/50 px-1 rounded">.codentis/config.json</code> file in each project with project-specific settings. These override your user-level configuration. See <button onClick={() => setActiveSection("project-config")} className="text-cyan-400 hover:text-cyan-300 underline">Project Configuration</button>.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Create a <code className="text-cyan-300 bg-black/50 px-1 rounded">.codentis/config.json</code> file in each project with project-specific settings. These override your user-level configuration. See <button onClick={() => setActiveSection("project-config")} className="text-cyan-400 hover:text-cyan-300 underline">Project Configuration</button>.</p>
                       </div>
 
                       <div>
                         <p className="text-sm font-semibold text-zinc-300 mb-2">Can I use Codentis in CI/CD pipelines?</p>
-                        <p className="text-sm text-zinc-400">Yes, but be cautious. Set API keys via environment variables and use non-interactive mode. Consider the cost implications of running AI operations in CI/CD.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Yes, but be cautious. Set API keys via environment variables and use non-interactive mode. Consider the cost implications of running AI operations in CI/CD.</p>
                       </div>
 
                       <div>
                         <p className="text-sm font-semibold text-zinc-300 mb-2">Does Codentis support team collaboration?</p>
-                        <p className="text-sm text-zinc-400">Yes! Commit project-level configs to git so your team uses the same settings. Each team member needs their own API key in their user config.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Yes! Commit project-level configs to git so your team uses the same settings. Each team member needs their own API key in their user config.</p>
                       </div>
 
                       <div>
                         <p className="text-sm font-semibold text-zinc-300 mb-2">Can I contribute to Codentis?</p>
-                        <p className="text-sm text-zinc-400">Absolutely! Codentis is open-source. Visit the <a href="https://github.com/sujal-GITHUB/Codentis" target="_blank" rel="noopener noreferrer" className="text-cyan-400 hover:text-cyan-300 underline">GitHub repository</a> to report issues, suggest features, or submit pull requests.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Absolutely! Codentis is open-source. Visit the <a href="https://github.com/sujal-GITHUB/Codentis" target="_blank" rel="noopener noreferrer" className="text-cyan-400 hover:text-cyan-300 underline">GitHub repository</a> to report issues, suggest features, or submit pull requests.</p>
                       </div>
                     </div>
                   </div>
@@ -5270,7 +5317,7 @@ print(result)
                     <p className="text-sm text-zinc-400 mb-4">
                       Can't find the answer you're looking for? Here are some resources:
                     </p>
-                    
+
                     <div className="space-y-2 text-sm text-zinc-400">
                       <div className="flex gap-2">
                         <span className="text-cyan-400">•</span>
@@ -5298,9 +5345,9 @@ print(result)
             {activeSection === "examples" && (
               <div className="space-y-8">
                 <div>
-                  <span className="text-sm font-semibold uppercase tracking-wider text-cyan-400/80">Support & Resources</span>
-                  <h1 className="text-3xl font-semibold mt-3 mb-4">Examples & Recipes</h1>
-                  <p className="text-sm text-zinc-400">
+                  <span className="text-[10px] sm:text-sm font-semibold uppercase tracking-wider text-cyan-400/80">Support & Resources</span>
+                  <h1 className="text-xl sm:text-3xl font-semibold mt-3 mb-4">Examples & Recipes</h1>
+                  <p className="text-[13px] sm:text-sm text-zinc-400">
                     Practical examples and workflows for common development tasks. Copy these prompts and adapt them to your needs.
                   </p>
                 </div>
@@ -5312,26 +5359,26 @@ print(result)
                     <p className="text-sm text-zinc-400 mb-4">
                       Simple prompts to get started with Codentis:
                     </p>
-                    
+
                     <div className="space-y-3">
                       <div className="bg-black/50 p-3 rounded-lg">
                         <p className="text-sm text-zinc-500 mb-1">❯ Create a simple web server</p>
-                        <p className="text-sm text-zinc-400">"Create a Python Flask web server with a hello world endpoint"</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">"Create a Python Flask web server with a hello world endpoint"</p>
                       </div>
 
                       <div className="bg-black/50 p-3 rounded-lg">
                         <p className="text-sm text-zinc-500 mb-1">❯ Add error handling</p>
-                        <p className="text-sm text-zinc-400">"Add try-catch error handling to all functions in app.js"</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">"Add try-catch error handling to all functions in app.js"</p>
                       </div>
 
                       <div className="bg-black/50 p-3 rounded-lg">
                         <p className="text-sm text-zinc-500 mb-1">❯ Generate documentation</p>
-                        <p className="text-sm text-zinc-400">"Create a README.md with installation instructions and usage examples"</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">"Create a README.md with installation instructions and usage examples"</p>
                       </div>
 
                       <div className="bg-black/50 p-3 rounded-lg">
                         <p className="text-sm text-zinc-500 mb-1">❯ Find and fix bugs</p>
-                        <p className="text-sm text-zinc-400">"Find the bug causing the TypeError in utils.py and fix it"</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">"Find the bug causing the TypeError in utils.py and fix it"</p>
                       </div>
                     </div>
                   </div>
@@ -5339,7 +5386,7 @@ print(result)
                   {/* Web Development */}
                   <div className="p-6 border border-white/[0.05] bg-bg-2 rounded-xl">
                     <h3 className="text-base font-semibold mb-4">Web Development Recipes</h3>
-                    
+
                     <div className="space-y-4">
                       <div>
                         <p className="text-sm font-semibold text-cyan-400 mb-2">Create a REST API</p>
@@ -5378,7 +5425,7 @@ print(result)
                   {/* Python Development */}
                   <div className="p-6 border border-white/[0.05] bg-bg-2 rounded-xl">
                     <h3 className="text-base font-semibold mb-4">Python Development Recipes</h3>
-                    
+
                     <div className="space-y-4">
                       <div>
                         <p className="text-sm font-semibold text-cyan-400 mb-2">Data Processing Script</p>
@@ -5417,7 +5464,7 @@ print(result)
                   {/* DevOps & Automation */}
                   <div className="p-6 border border-white/[0.05] bg-bg-2 rounded-xl">
                     <h3 className="text-base font-semibold mb-4">DevOps & Automation Recipes</h3>
-                    
+
                     <div className="space-y-4">
                       <div>
                         <p className="text-sm font-semibold text-cyan-400 mb-2">Docker Setup</p>
@@ -5456,7 +5503,7 @@ print(result)
                   {/* Code Refactoring */}
                   <div className="p-6 border border-white/[0.05] bg-bg-2 rounded-xl">
                     <h3 className="text-base font-semibold mb-4">Code Refactoring Recipes</h3>
-                    
+
                     <div className="space-y-4">
                       <div>
                         <p className="text-sm font-semibold text-cyan-400 mb-2">Convert to TypeScript</p>
@@ -5495,7 +5542,7 @@ print(result)
                   {/* Documentation */}
                   <div className="p-6 border border-white/[0.05] bg-bg-2 rounded-xl">
                     <h3 className="text-base font-semibold mb-4">Documentation Recipes</h3>
-                    
+
                     <div className="space-y-4">
                       <div>
                         <p className="text-sm font-semibold text-cyan-400 mb-2">API Documentation</p>
@@ -5534,7 +5581,7 @@ print(result)
                   {/* Testing */}
                   <div className="p-6 border border-white/[0.05] bg-bg-2 rounded-xl">
                     <h3 className="text-base font-semibold mb-4">Testing Recipes</h3>
-                    
+
                     <div className="space-y-4">
                       <div>
                         <p className="text-sm font-semibold text-cyan-400 mb-2">Unit Tests</p>
@@ -5573,7 +5620,7 @@ print(result)
                   {/* Debugging */}
                   <div className="p-6 border border-white/[0.05] bg-bg-2 rounded-xl">
                     <h3 className="text-base font-semibold mb-4">Debugging Recipes</h3>
-                    
+
                     <div className="space-y-4">
                       <div>
                         <p className="text-sm font-semibold text-cyan-400 mb-2">Find Memory Leaks</p>
@@ -5612,7 +5659,7 @@ print(result)
                   {/* Project Setup */}
                   <div className="p-6 border border-white/[0.05] bg-bg-2 rounded-xl">
                     <h3 className="text-base font-semibold mb-4">Project Setup Recipes</h3>
-                    
+
                     <div className="space-y-4">
                       <div>
                         <p className="text-sm font-semibold text-cyan-400 mb-2">Initialize New Project</p>
@@ -5654,7 +5701,7 @@ print(result)
                     <p className="text-sm text-zinc-400 mb-4">
                       Complex multi-step workflows combining multiple operations:
                     </p>
-                    
+
                     <div className="space-y-4">
                       <div>
                         <p className="text-sm font-semibold text-zinc-300 mb-2">Full Feature Implementation</p>
@@ -5703,31 +5750,31 @@ print(result)
                   {/* Tips for Better Results */}
                   <div className="p-6 border border-white/[0.05] bg-bg-2 rounded-xl">
                     <h3 className="text-base font-semibold mb-3">Tips for Better Results</h3>
-                    
+
                     <div className="space-y-3">
                       <div className="bg-green-500/5 border border-green-500/20 p-3 rounded">
                         <p className="text-sm font-semibold text-green-400 mb-1">✓ Be Specific</p>
-                        <p className="text-sm text-zinc-400">Include technology stack, frameworks, and specific requirements. "Create a React component" vs "Create a React component with TypeScript, Tailwind, and form validation"</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Include technology stack, frameworks, and specific requirements. "Create a React component" vs "Create a React component with TypeScript, Tailwind, and form validation"</p>
                       </div>
 
                       <div className="bg-green-500/5 border border-green-500/20 p-3 rounded">
                         <p className="text-sm font-semibold text-green-400 mb-1">✓ Provide Context</p>
-                        <p className="text-sm text-zinc-400">Mention existing code structure, naming conventions, or patterns to follow. "Following our existing service pattern in services/"</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Mention existing code structure, naming conventions, or patterns to follow. "Following our existing service pattern in services/"</p>
                       </div>
 
                       <div className="bg-green-500/5 border border-green-500/20 p-3 rounded">
                         <p className="text-sm font-semibold text-green-400 mb-1">✓ Break Down Complex Tasks</p>
-                        <p className="text-sm text-zinc-400">For large features, work step-by-step. Complete and test each step before moving to the next.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">For large features, work step-by-step. Complete and test each step before moving to the next.</p>
                       </div>
 
                       <div className="bg-green-500/5 border border-green-500/20 p-3 rounded">
                         <p className="text-sm font-semibold text-green-400 mb-1">✓ Iterate and Refine</p>
-                        <p className="text-sm text-zinc-400">If the first result isn't perfect, ask for adjustments: "Make it more concise", "Add error handling", "Use async/await instead"</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">If the first result isn't perfect, ask for adjustments: "Make it more concise", "Add error handling", "Use async/await instead"</p>
                       </div>
 
                       <div className="bg-green-500/5 border border-green-500/20 p-3 rounded">
                         <p className="text-sm font-semibold text-green-400 mb-1">✓ Review and Test</p>
-                        <p className="text-sm text-zinc-400">Always review generated code, run tests, and verify it works as expected before committing.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Always review generated code, run tests, and verify it works as expected before committing.</p>
                       </div>
                     </div>
                   </div>
@@ -5739,9 +5786,9 @@ print(result)
             {activeSection === "community" && (
               <div className="space-y-8">
                 <div>
-                  <span className="text-sm font-semibold uppercase tracking-wider text-cyan-400/80">Support & Resources</span>
-                  <h1 className="text-3xl font-semibold mt-3 mb-4">Community & Support</h1>
-                  <p className="text-sm text-zinc-400">
+                  <span className="text-[10px] sm:text-sm font-semibold uppercase tracking-wider text-cyan-400/80">Support & Resources</span>
+                  <h1 className="text-xl sm:text-3xl font-semibold mt-3 mb-4">Community & Support</h1>
+                  <p className="text-[13px] sm:text-sm text-zinc-400">
                     Get help, share ideas, and connect with other Codentis users. We're here to support you on your development journey.
                   </p>
                 </div>
@@ -5753,7 +5800,7 @@ print(result)
                     <p className="text-sm text-zinc-400 mb-4">
                       Need assistance? Here's how to get support:
                     </p>
-                    
+
                     <div className="space-y-4">
                       <div className="p-4 border border-white/[0.05] bg-black/30 rounded-lg">
                         <div className="flex items-start gap-3">
@@ -5819,29 +5866,29 @@ print(result)
                     <p className="text-sm text-zinc-400 mb-4">
                       Codentis is open-source and welcomes contributions from the community:
                     </p>
-                    
+
                     <div className="space-y-4">
                       <div>
                         <h4 className="text-sm font-semibold text-cyan-400 mb-2">Ways to Contribute</h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                           <div className="p-3 border border-white/[0.05] bg-black/30 rounded">
                             <p className="text-sm font-semibold text-zinc-300 mb-1">Code Contributions</p>
-                            <p className="text-sm text-zinc-400">Fix bugs, add features, or improve performance. Submit pull requests on GitHub.</p>
+                            <p className="text-[13px] sm:text-sm text-zinc-400">Fix bugs, add features, or improve performance. Submit pull requests on GitHub.</p>
                           </div>
 
                           <div className="p-3 border border-white/[0.05] bg-black/30 rounded">
                             <p className="text-sm font-semibold text-zinc-300 mb-1">Documentation</p>
-                            <p className="text-sm text-zinc-400">Improve docs, write tutorials, or create examples to help others.</p>
+                            <p className="text-[13px] sm:text-sm text-zinc-400">Improve docs, write tutorials, or create examples to help others.</p>
                           </div>
 
                           <div className="p-3 border border-white/[0.05] bg-black/30 rounded">
                             <p className="text-sm font-semibold text-zinc-300 mb-1">Testing</p>
-                            <p className="text-sm text-zinc-400">Test new features, report bugs, and help verify fixes work correctly.</p>
+                            <p className="text-[13px] sm:text-sm text-zinc-400">Test new features, report bugs, and help verify fixes work correctly.</p>
                           </div>
 
                           <div className="p-3 border border-white/[0.05] bg-black/30 rounded">
                             <p className="text-sm font-semibold text-zinc-300 mb-1">Community Support</p>
-                            <p className="text-sm text-zinc-400">Answer questions, share knowledge, and help other users in discussions.</p>
+                            <p className="text-[13px] sm:text-sm text-zinc-400">Answer questions, share knowledge, and help other users in discussions.</p>
                           </div>
                         </div>
                       </div>
@@ -5859,7 +5906,7 @@ print(result)
 
                       <div className="bg-cyan-500/5 border border-cyan-500/20 p-3 rounded">
                         <p className="text-sm text-cyan-400 font-semibold mb-1">First-time contributors welcome!</p>
-                        <p className="text-sm text-zinc-400">Look for issues labeled "good first issue" to get started. We're happy to guide you through your first contribution.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Look for issues labeled "good first issue" to get started. We're happy to guide you through your first contribution.</p>
                       </div>
                     </div>
                   </div>
@@ -5867,7 +5914,7 @@ print(result)
                   {/* Resources */}
                   <div className="p-6 border border-white/[0.05] bg-bg-2 rounded-xl">
                     <h3 className="text-base font-semibold mb-3">Resources & Links</h3>
-                    
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="p-4 border border-white/[0.05] bg-black/30 rounded-lg">
                         <div className="flex items-center gap-2 mb-2">
@@ -5921,13 +5968,13 @@ print(result)
                     <p className="text-sm text-zinc-400 mb-4">
                       Keep up with the latest news, features, and updates:
                     </p>
-                    
+
                     <div className="space-y-3">
                       <div className="flex gap-3">
                         <RiStarLine className="text-cyan-400 text-xl" />
                         <div>
                           <p className="text-sm font-semibold text-zinc-300 mb-1">Star on GitHub</p>
-                          <p className="text-sm text-zinc-400">Show your support and get notified of new releases. <a href="https://github.com/sujal-GITHUB/Codentis" target="_blank" rel="noopener noreferrer" className="text-cyan-400 hover:text-cyan-300 underline">Star the repo</a></p>
+                          <p className="text-[13px] sm:text-sm text-zinc-400">Show your support and get notified of new releases. <a href="https://github.com/sujal-GITHUB/Codentis" target="_blank" rel="noopener noreferrer" className="text-cyan-400 hover:text-cyan-300 underline">Star the repo</a></p>
                         </div>
                       </div>
 
@@ -5935,7 +5982,7 @@ print(result)
                         <RiEyeLine className="text-cyan-400 text-xl" />
                         <div>
                           <p className="text-sm font-semibold text-zinc-300 mb-1">Watch Repository</p>
-                          <p className="text-sm text-zinc-400">Get notifications for new issues, PRs, and discussions on GitHub.</p>
+                          <p className="text-[13px] sm:text-sm text-zinc-400">Get notifications for new issues, PRs, and discussions on GitHub.</p>
                         </div>
                       </div>
 
@@ -5943,7 +5990,7 @@ print(result)
                         <RiNotificationLine className="text-cyan-400 text-xl" />
                         <div>
                           <p className="text-sm font-semibold text-zinc-300 mb-1">Release Notifications</p>
-                          <p className="text-sm text-zinc-400">Enable auto-update in Codentis to get notified of new versions automatically.</p>
+                          <p className="text-[13px] sm:text-sm text-zinc-400">Enable auto-update in Codentis to get notified of new versions automatically.</p>
                         </div>
                       </div>
                     </div>
@@ -5955,7 +6002,7 @@ print(result)
                     <p className="text-sm text-zinc-400 mb-3">
                       We're committed to providing a welcoming and inclusive community for everyone:
                     </p>
-                    
+
                     <div className="space-y-2 text-sm text-zinc-400">
                       <div className="flex gap-2">
                         <span className="text-green-400">✓</span>
@@ -5990,7 +6037,7 @@ print(result)
                     <p className="text-sm text-zinc-400 mb-4">
                       Codentis is made possible by amazing contributors from around the world. Thank you to everyone who has helped make Codentis better!
                     </p>
-                    
+
                     <div className="flex items-center gap-4">
                       <a href="https://github.com/sujal-GITHUB/Codentis/graphs/contributors" target="_blank" rel="noopener noreferrer" className="px-4 py-2 text-sm bg-cyan-500 hover:bg-cyan-600 text-black font-semibold rounded-lg transition-all">
                         View All Contributors
@@ -6007,7 +6054,7 @@ print(result)
                     <p className="text-sm text-zinc-400 mb-4">
                       We're excited to have you as part of our community. Whether you're building the next big thing or just learning to code, we're here to help you succeed.
                     </p>
-                    <p className="text-sm text-zinc-400">
+                    <p className="text-[13px] sm:text-sm text-zinc-400">
                       Happy coding! 🚀
                     </p>
                   </div>

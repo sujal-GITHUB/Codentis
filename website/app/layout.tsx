@@ -2,9 +2,12 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Codentis",
+  title: "Codentis - Intelligent CLI AI Agent",
   description:
     "Codentis is a powerful CLI AI agent that brings the intelligence of large language models directly to your terminal. Streaming TUI, agentic loops, and tool use — built for developers.",
+  icons: {
+    icon: "/codentis.svg",
+  },
 };
 
 export default function RootLayout({

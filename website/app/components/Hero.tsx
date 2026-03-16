@@ -70,7 +70,7 @@ export default function Hero() {
             </div>
 
             {/* ── Hero Content ── */}
-            <div className="relative z-10 w-full max-w-[900px] flex flex-col items-center text-center">
+            <div className="relative z-10 w-full max-w-[1100px] flex flex-col items-center text-center">
                 {/* Badge */}
                 <div className="inline-flex items-center gap-2.5 px-4 py-1.5 mb-6 sm:mb-8 border border-cyan-500/20 bg-cyan-500/10 rounded-full text-xs sm:text-sm font-medium text-cyan-300 shadow-[0_0_15px_rgba(34,211,238,0.15)] relative overflow-hidden transition-all duration-300 hover:bg-cyan-500/15">
                     <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
@@ -78,7 +78,7 @@ export default function Hero() {
                 </div>
 
                 {/* Heading */}
-                <h1 className="text-3xl xs:text-4xl sm:text-5xl md:text-6xl font-semibold tracking-tight leading-[1.1] mb-6 text-white">
+                <h1 className="text-3xl xs:text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-semibold tracking-tight leading-[1.1] mb-6 text-white text-balance">
                     Intelligence Meets <br className="hidden sm:block" />
                     <span className="bg-gradient-to-r from-cyan-400 to-cyan-200 bg-clip-text text-transparent drop-shadow-[0_0_20px_rgba(34,211,238,0.3)]">
                         The Terminal
@@ -86,16 +86,16 @@ export default function Hero() {
                 </h1>
 
                 {/* Subtitle */}
-                <p className="text-sm sm:text-base text-zinc-400 leading-relaxed max-w-[550px] mx-auto mb-10">
+                <p className="text-sm sm:text-base md:text-lg text-zinc-400 leading-relaxed max-w-[650px] mx-auto mb-10">
                     Run intelligent workflows directly in your terminal.
-                    <span className="text-zinc-300 block mt-2 font-normal text-xs sm:text-sm">Faster code generation, robust refactoring, and AI-powered system tools.</span>
+                    <span className="text-zinc-300 block mt-2 font-normal text-xs sm:text-sm md:text-base">Faster code generation, robust refactoring, and AI-powered system tools.</span>
                 </p>
 
                 {/* CTAs */}
                 <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 mb-16 sm:mb-20 px-4 sm:px-0">
                     <a
                         href="/download"
-                        className="inline-flex items-center justify-center gap-2 px-7 py-2.5 sm:px-8 sm:py-3 w-fit sm:w-auto bg-white text-black text-[13px] sm:text-sm font-bold rounded-full hover:bg-zinc-100 transition-all active:scale-95 shadow-[0_0_20px_rgba(255,255,255,0.2)]"
+                        className="inline-flex items-center justify-center gap-2 px-7 py-2.5 sm:px-9 sm:py-3.5 w-fit sm:w-auto bg-white text-black text-[13px] sm:text-sm font-bold rounded-full hover:bg-zinc-100 transition-all active:scale-95 shadow-[0_0_30px_rgba(255,255,255,0.25)]"
                     >
                         Download Codentis
                         <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
@@ -105,7 +105,7 @@ export default function Hero() {
                         href="https://github.com/sujal-GITHUB/Codentis"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center justify-center gap-2 px-7 py-2.5 sm:px-8 sm:py-3 w-fit sm:w-auto bg-zinc-900 border border-cyan-900/50 text-white text-[13px] sm:text-sm font-normal rounded-full hover:bg-zinc-800 transition-all active:scale-95"
+                        className="inline-flex items-center justify-center gap-2 px-7 py-2.5 sm:px-9 sm:py-3.5 w-fit sm:w-auto bg-zinc-900 border border-cyan-900/50 text-white text-[13px] sm:text-sm font-normal rounded-full hover:bg-zinc-800 transition-all active:scale-95"
                     >
                         <svg className="w-4 h-4 text-zinc-400" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-3.96-1.38-.09-.225-.48-1.38-.825-1.65-.285-.225-.69-.57-.015-.585.645-.015 1.11.585 1.275.855.75 1.26 1.95.885 2.43.675.075-.525.285-.885.51-1.08-2.37-.255-4.86-1.155-4.86-5.13 0-1.125.39-2.07 1.035-2.82-.105-.27-.45-1.35.105-2.805 0 0 .855-.27 2.79 1.05A9.73 9.73 0 0 1 12 6.84c.855.015 1.71.12 2.52.345 1.935-1.32 2.79-1.05 2.79-1.05.555 1.455.21 2.535.105 2.805.645.75 1.035 1.695 1.035 2.82 0 3.99-2.49 4.875-4.875 5.13.3.255.555.75.555 1.5 0 1.08-.015 1.95-.015 2.22 0 .315.225.69.84.57C20.58 21.78 24 17.295 24 12c0-6.63-5.37-12-12-12z" />
@@ -115,22 +115,22 @@ export default function Hero() {
                 </div>
 
                 {/* ── Terminal Mockup ── */}
-                <div className="w-full max-w-[800px] border border-cyan-500/10 rounded-xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5),0_0_40px_rgba(34,211,238,0.1)] text-left bg-[#0A0A0A]/90 backdrop-blur-xl relative transform transition-transform duration-700 hover:scale-[1.01]">
+                <div className="w-full max-w-[1000px] border border-cyan-500/15 rounded-xl overflow-hidden shadow-[0_25px_60px_rgba(0,0,0,0.6),0_0_50px_rgba(34,211,238,0.15)] text-left bg-[#080808]/95 backdrop-blur-2xl relative transform transition-transform duration-700 hover:scale-[1.005]">
 
                     {/* Terminal Header */}
-                    <div className="flex items-center px-4 py-2 sm:py-3 border-b border-cyan-500/10 bg-cyan-950/20">
-                        <div className="flex gap-1.5 sm:gap-2">
-                            <div className="w-2.5 h-2.5 sm:w-3 h-3 rounded-full bg-red-500/80"></div>
-                            <div className="w-2.5 h-2.5 sm:w-3 h-3 rounded-full bg-yellow-500/80"></div>
-                            <div className="w-2.5 h-2.5 sm:w-3 h-3 rounded-full bg-green-500/80"></div>
+                    <div className="flex items-center px-5 py-3 sm:py-4 border-b border-cyan-500/10 bg-cyan-950/20">
+                        <div className="flex gap-2 sm:gap-2.5">
+                            <div className="w-3 h-3 rounded-full bg-red-500/80 shadow-[0_0_8px_rgba(239,68,68,0.3)]"></div>
+                            <div className="w-3 h-3 rounded-full bg-yellow-500/80 shadow-[0_0_8px_rgba(245,158,11,0.3)]"></div>
+                            <div className="w-3 h-3 rounded-full bg-green-500/80 shadow-[0_0_8px_rgba(34,197,94,0.3)]"></div>
                         </div>
-                        <div className="w-full text-center text-[10px] sm:text-xs text-cyan-500/50 font-mono tracking-wider items-center justify-center pointer-events-none absolute left-0 pr-12">
-                            codentis — bash
+                        <div className="w-full text-center text-[10px] sm:text-xs text-cyan-500/40 font-mono tracking-widest items-center justify-center pointer-events-none absolute left-0 pr-12 uppercase">
+                            codentis — session — bash
                         </div>
                     </div>
 
                     {/* Terminal Body */}
-                    <div className="p-4 sm:p-6 font-mono text-[11px] xs:text-xs sm:text-sm leading-relaxed text-zinc-300 min-h-[250px] sm:min-h-[300px]">
+                    <div className="p-5 sm:p-8 md:p-10 font-mono text-[11px] xs:text-xs sm:text-sm md:text-base leading-relaxed text-zinc-300 min-h-[300px] sm:min-h-[400px]">
                         {/* Command 1 */}
                         <div className={`transition-all duration-500 ease-in-out overflow-hidden ${step >= 1 ? 'max-h-[100px] opacity-100' : 'max-h-0 opacity-0'}`}>
                             <span className="text-cyan-400">~/project</span>
