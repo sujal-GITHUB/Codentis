@@ -17,7 +17,7 @@ python scripts/build_exe.py 64
 
 3. Click "Compile" or press F9
 
-4. Output: `dist/Codentis-Setup-0.1.0.exe`
+4. Output: `dist/Codentis-Setup-1.3.3.exe`
 
 ### Features:
 ✅ Setup wizard with license agreement
@@ -47,7 +47,7 @@ chmod +x scripts/build_macos_installer.sh
 ./scripts/build_macos_installer.sh
 ```
 
-3. Output: `dist/Codentis-0.1.0-arm64.pkg` or `dist/Codentis-0.1.0-intel.pkg`
+3. Output: `dist/Codentis-1.3.3-arm64.pkg` or `dist/Codentis-1.3.3-intel.pkg`
 
 ### Features:
 ✅ Standard macOS installer
@@ -75,7 +75,7 @@ chmod +x scripts/build_linux_deb.sh
 ./scripts/build_linux_deb.sh
 ```
 
-3. Output: `dist/codentis_0.1.0_amd64.deb`
+3. Output: `dist/codentis_1.3.3_amd64.deb`
 
 ### Features:
 ✅ Standard Debian package
@@ -89,20 +89,20 @@ chmod +x scripts/build_linux_deb.sh
 
 ### Windows:
 ```bash
-# Download and run Codentis-Setup-0.1.0.exe
+# Download and run Codentis-Setup-1.3.3.exe
 # Follow the setup wizard
 ```
 
 ### macOS:
 ```bash
 # Download the .pkg file
-sudo installer -pkg Codentis-0.1.0-arm64.pkg -target /
+sudo installer -pkg Codentis-1.3.3-arm64.pkg -target /
 ```
 
 ### Linux (Debian/Ubuntu):
 ```bash
 # Download the .deb file
-sudo dpkg -i codentis_0.1.0_amd64.deb
+sudo dpkg -i codentis_1.3.3_amd64.deb
 ```
 
 ---
@@ -133,17 +133,17 @@ After building installers, update the download page to link to them:
 
 ```tsx
 // Windows
-<a href="/Codentis-Setup-0.1.0.exe" download>
+<a href="/Codentis-Setup-1.3.3.exe" download>
   Download Installer
 </a>
 
 // macOS
-<a href="/Codentis-0.1.0-arm64.pkg" download>
+<a href="/Codentis-1.3.3-arm64.pkg" download>
   Download Installer (Apple Silicon)
 </a>
 
 // Linux
-<a href="/codentis_0.1.0_amd64.deb" download>
+<a href="/codentis_1.3.3_amd64.deb" download>
   Download .deb Package
 </a>
 ```
