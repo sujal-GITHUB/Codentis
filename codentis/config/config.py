@@ -25,6 +25,7 @@ class Config(BaseModel):
     debug: bool = False
     api_key: str | None = None
     base_url: str | None = None
+    allowed_tools: list[str] | None = Field(None, description="List of tools allowed for agent or subagents to use. If None, all tools are allowed")
     shell_environment: ShellEnvironmentPolicy = Field(default_factory=ShellEnvironmentPolicy)
 
     @property
