@@ -71,11 +71,14 @@ class TUI:
         self.LIME = "\033[38;5;154m"
         self.BG_DARK = "\033[48;5;235m"
         self.BG_DARKER = "\033[48;5;233m"
+        self.WHITE = "\033[97m"
+        self.SKY = "\033[38;5;117m"
+        self.INDIGO = "\033[38;5;63m"
         
         # Tool color mapping
         self.tool_colors = {
             "web_search": self.PURPLE,
-            "web_fetch": self.TEAL,
+            "web_fetch": self.GRAY,
             "read_file": self.BLUE,
             "write_file": self.ORANGE,
             "edit_file": self.YELLOW,
@@ -83,8 +86,10 @@ class TUI:
             "shell": self.MAGENTA,
             "list_dir": self.CYAN,
             "grep": self.PINK,
-            "glob": self.CYAN,
+            "glob": self.TEAL,
             "ask_user": self.GREEN,
+            "todo": self.SKY,
+            "memory": self.INDIGO,
         }
     
     def toggle_tool(self, tool_id: str = None):
@@ -532,9 +537,28 @@ class TUI:
             elif action == "complete":
                 task_id = arguments.get("id", "")
                 return f"Completing task: {task_id}"
+            elif action == "remove":
+                task_id = arguments.get("id", "")
+                return f"Removing task: {task_id}"
             elif action == "clear":
                 return "Clearing all tasks"
             return "Managing tasks"
+        elif name == "memory":
+            action = arguments.get("action", "")
+            if action == "set":
+                key = arguments.get("key", "")
+                return f"Setting memory: {key}"
+            elif action == "get":
+                key = arguments.get("key", "")
+                return f"Retrieving memory: {key}"
+            elif action == "list":
+                return "Listing memory"
+            elif action == "clear":
+                return "Clearing all memory"
+            elif action == "delete":
+                key = arguments.get("key", "")
+                return f"Deleting memory: {key}"
+            return "Managing memory"
         return "Processing..."
     
     def _generate_summary_from_metadata(self, name: str, metadata: Dict[str, Any], output: str, success: bool) -> str:
@@ -586,6 +610,9 @@ class TUI:
             elif action == "complete":
                 content = metadata.get('content', '')
                 return f"Completed: {content}"
+            elif action == "remove":
+                content = metadata.get('content', '')
+                return f"Removed: {content}"
             elif action == "list":
                 count = metadata.get('count', 0)
                 if count == 0:
@@ -604,6 +631,25 @@ class TUI:
                 count = metadata.get('count', 0)
                 return f"Cleared {count} tasks"
             return "Task updated"
+        
+        elif name == "memory":
+            action = metadata.get('action', '')
+            if action == "set":
+                key = metadata.get('key', '')
+                return f"Remembered: {key}"
+            elif action == "get":
+                key = metadata.get('key', '')
+                return f"Recalled: {key}"
+            elif action == "list":
+                count = metadata.get('count', 0)
+                return f"Found {count} memory entries"
+            elif action == "clear":
+                count = metadata.get('count', 0)
+                return f"Cleared {count} memory entries"
+            elif action == "delete":
+                key = metadata.get('key', '')
+                return f"Forgot: {key}"
+            return "Memory updated"
         
         return "Completed"
 
