@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Release Version Script - Updates all version numbers across the project.
-Usage: python scripts/release_version.py 1.2.4
+Usage: python scripts/release_version.py 1.3.1
 """
 
 import os
@@ -13,14 +13,12 @@ from datetime import datetime
 def get_project_root():
     """Get the project root directory regardless of where the script is run from."""
     script_dir = Path(__file__).parent
-    # If we're in the scripts directory, go up one level
     if script_dir.name == 'scripts':
         return script_dir.parent
-    # Otherwise assume we're already in the project root
     return script_dir
 
 def update_env_file(version, project_root):
-    """Update .env file with new version."""
+    """Update root .env file with new version."""
     env_file = project_root / '.env'
     if not env_file.exists():
         print(f"Creating {env_file}")
@@ -31,7 +29,6 @@ def update_env_file(version, project_root):
     with open(env_file, 'r') as f:
         content = f.read()
     
-    # Update or add VERSION line
     if 'VERSION=' in content:
         content = re.sub(r'VERSION=.*', f'VERSION={version}', content)
     else:
@@ -61,26 +58,8 @@ def update_pyproject_toml(version, project_root):
     print(f"✓ Updated {file_path}")
     return True
 
-def update_setup_py(version, project_root):
-    """Update setup.py version."""
-    file_path = project_root / 'setup.py'
-    if not file_path.exists():
-        print(f"Warning: {file_path} not found")
-        return False
-    
-    with open(file_path, 'r') as f:
-        content = f.read()
-    
-    content = re.sub(r'version=["\'][^"\']*["\']', f'version="{version}"', content)
-    
-    with open(file_path, 'w') as f:
-        f.write(content)
-    
-    print(f"✓ Updated {file_path}")
-    return True
-
 def update_codentis_init(version, project_root):
-    """Update codentis/__init__.py version."""
+    """Update codentis/__init__.py version and fallback."""
     file_path = project_root / 'codentis' / '__init__.py'
     if not file_path.exists():
         print(f"Warning: {file_path} not found")
@@ -90,6 +69,26 @@ def update_codentis_init(version, project_root):
         content = f.read()
     
     content = re.sub(r'__version__ = ["\'][^"\']*["\']', f'__version__ = "{version}"', content)
+    content = re.sub(r'return "\d+\.\d+\.\d+"', f'return "{version}"', content)
+    
+    with open(file_path, 'w') as f:
+        f.write(content)
+    
+    print(f"✓ Updated {file_path}")
+    return True
+
+def update_setup_py(version, project_root):
+    """Update setup.py version and fallback."""
+    file_path = project_root / 'setup.py'
+    if not file_path.exists():
+        print(f"Warning: {file_path} not found")
+        return False
+    
+    with open(file_path, 'r') as f:
+        content = f.read()
+    
+    content = re.sub(r'version=["\'][^"\']*["\']', f'version="{version}"', content)
+    content = re.sub(r'return "\d+\.\d+\.\d+"', f'return "{version}"', content)
     
     with open(file_path, 'w') as f:
         f.write(content)
@@ -116,7 +115,7 @@ def update_inno_setup_script(version, project_root):
     return True
 
 def update_website_files(version, project_root):
-    """Update website files with hardcoded version numbers."""
+    """Update website files with version numbers and descriptive text."""
     files_to_update = [
         project_root / 'website' / 'app' / 'download' / 'page.tsx',
         project_root / 'website' / 'app' / 'docs' / 'page.tsx'
@@ -130,8 +129,21 @@ def update_website_files(version, project_root):
         with open(file_path, 'r', encoding='utf-8') as f:
             content = f.read()
         
-        # Update hardcoded VERSION constant
+        # 1. Update const VERSION = 'X.X.X';
         content = re.sub(r"const VERSION = '[^']*';", f"const VERSION = '{version}';", content)
+        
+        # 2. Update Codentis vX.X.X (plain text)
+        content = re.sub(r"Codentis v\d+\.\d+\.\d+", f"Codentis v{version}", content)
+        
+        # 3. Update Codentis-Setup-{'X.X.X'}.exe (React curly brace format)
+        content = re.sub(r"Codentis-Setup-\{'?\d+\.\d+\.\d+'?\}", f"Codentis-Setup-{{'{version}'}}", content)
+        
+        # 4. Update Codentis-Setup-X.X.X.exe (plain text)
+        content = re.sub(r"Codentis-Setup-\d+\.\d+\.\d+\.exe", f"Codentis-Setup-{version}.exe", content)
+        
+        # 5. Update generic version numbers in path-like strings (e.g. codentis_1.3.1_amd64.deb)
+        content = re.sub(r"codentis_\d+\.\d+\.\d+", f"codentis_{version}", content)
+        content = re.sub(r"Codentis-\d+\.\d+\.\d+", f"Codentis-{version}", content)
         
         with open(file_path, 'w', encoding='utf-8') as f:
             f.write(content)
@@ -140,11 +152,67 @@ def update_website_files(version, project_root):
     
     return True
 
+def update_documentation_files(version, project_root):
+    """Update version mentions in README and other documentation."""
+    docs = [
+        project_root / 'README.md',
+        project_root / 'ARCHITECTURE.md',
+        project_root / 'QUICKSTART.md',
+        project_root / 'BUILD_INSTALLERS.md',
+        project_root / 'USER_INSTALL_GUIDE.md',
+        project_root / 'RELEASE_PROCESS.md',
+        project_root / 'RELEASE_GUIDE.md',
+        project_root / 'GITHUB_ACTIONS_SETUP.md'
+    ]
+    
+    for doc in docs:
+        if not doc.exists():
+            print(f"Warning: {doc} not found")
+            continue
+            
+        with open(doc, 'r', encoding='utf-8') as f:
+            content = f.read()
+            
+        # Update badge versions (e.g. version-1.2.0-green.svg)
+        content = re.sub(r"version-\d+\.\d+\.\d+-green\.svg", f"version-{version}-green.svg", content)
+        
+        # Update "Version: 1.2.0" pattern
+        content = re.sub(r"Version: \d+\.\d+\.\d+", f"Version: {version}", content)
+        content = re.sub(r"\*\*Version\*\*: \d+\.\d+\.\d+", f"**Version**: {version}", content)
+        
+        # Update installer filename mentions
+        content = re.sub(r"Codentis-Setup-\d+\.\d+\.\d+\.exe", f"Codentis-Setup-{version}.exe", content)
+        content = re.sub(r"Codentis-\d+\.\d+\.\d+-arm64\.pkg", f"Codentis-{version}-arm64.pkg", content)
+        content = re.sub(r"Codentis-\d+\.\d+\.\d+-intel\.pkg", f"Codentis-{version}-intel.pkg", content)
+        content = re.sub(r"codentis_\d+\.\d+\.\d+_amd64\.deb", f"codentis_{version}_amd64.deb", content)
+        
+        # Update version tags in URLs
+        content = re.sub(r"v\d+\.\d+\.\d+", f"v{version}", content)
+        
+        with open(doc, 'w', encoding='utf-8') as f:
+            f.write(content)
+        print(f"✓ Updated {doc}")
+    return True
+
+def update_website_package_json(version, project_root):
+    """Update website/package.json version."""
+    file_path = project_root / 'website' / 'package.json'
+    if not file_path.exists():
+        return True # Not strictly required
+        
+    with open(file_path, 'r', encoding='utf-8') as f:
+        content = f.read()
+    
+    content = re.sub(r'"version": "[^"]*"', f'"version": "{version}"', content)
+    
+    with open(file_path, 'w', encoding='utf-8') as f:
+        f.write(content)
+        
+    print(f"✓ Updated {file_path}")
+    return True
+
 def update_website_env_files(version, project_root):
-    """Update website environment files (kept for deployment compatibility)."""
-    # Note: Environment files are no longer used since we switched to hardcoded versions
-    # This function is kept for backward compatibility but does nothing
-    print("✓ Website now uses hardcoded versions (no env files needed)")
+    """Website environment files are no longer used for versioning."""
     return True
 
 def update_changelog(version, project_root):
@@ -154,18 +222,15 @@ def update_changelog(version, project_root):
         print(f"Warning: {file_path} not found")
         return False
     
-    with open(file_path, 'r') as f:
+    with open(file_path, 'r', encoding='utf-8') as f:
         content = f.read()
     
-    # Get current date
     current_date = datetime.now().strftime('%Y-%m-%d')
     
-    # Check if version already exists
     if f'## [{version}]' in content:
         print(f"Version {version} already exists in CHANGELOG.md")
         return True
     
-    # Find the first ## [ pattern and insert new version before it
     new_entry = f"""## [{version}] - {current_date}
 
 ### Added
@@ -179,7 +244,6 @@ def update_changelog(version, project_root):
 
 """
     
-    # Insert after the first # Changelog line
     lines = content.split('\n')
     insert_index = -1
     for i, line in enumerate(lines):
@@ -188,7 +252,6 @@ def update_changelog(version, project_root):
             break
     
     if insert_index == -1:
-        # If no version entries found, add after the header
         for i, line in enumerate(lines):
             if line.strip() == '' and i > 0:
                 insert_index = i + 1
@@ -197,10 +260,8 @@ def update_changelog(version, project_root):
     if insert_index != -1:
         new_lines = lines[:insert_index] + new_entry.split('\n') + lines[insert_index:]
         content = '\n'.join(new_lines)
-        
-        with open(file_path, 'w') as f:
+        with open(file_path, 'w', encoding='utf-8') as f:
             f.write(content)
-        
         print(f"✓ Updated {file_path} with version {version}")
     
     return True
@@ -208,23 +269,18 @@ def update_changelog(version, project_root):
 def main():
     if len(sys.argv) != 2:
         print("Usage: python scripts/release_version.py <version>")
-        print("Example: python scripts/release_version.py 1.2.4")
         sys.exit(1)
     
     version = sys.argv[1].strip()
-    
-    # Validate version format (basic check)
     if not re.match(r'^\d+\.\d+\.\d+$', version):
-        print(f"Error: Invalid version format '{version}'. Use format like '1.2.3'")
+        print(f"Error: Invalid version format '{version}'.")
         sys.exit(1)
     
-    # Get project root directory
     project_root = get_project_root()
     print(f"Project root: {project_root}")
     print(f"Updating all version numbers to {version}...")
     print("=" * 50)
     
-    # Update all files
     success = True
     success &= update_env_file(version, project_root)
     success &= update_pyproject_toml(version, project_root)
@@ -232,19 +288,16 @@ def main():
     success &= update_codentis_init(version, project_root)
     success &= update_inno_setup_script(version, project_root)
     success &= update_website_files(version, project_root)
+    success &= update_documentation_files(version, project_root)
+    success &= update_website_package_json(version, project_root)
     success &= update_website_env_files(version, project_root)
     success &= update_changelog(version, project_root)
     
     print("=" * 50)
     if success:
         print(f"✓ Successfully updated all version numbers to {version}")
-        print("\nNext steps:")
-        print("1. Review the changes: git diff")
-        print("2. Commit the changes: git add . && git commit -m 'Release version {version}'")
-        print(f"3. Create and push tag: git tag v{version} && git push origin v{version}")
-        print("4. Push changes: git push origin main")
     else:
-        print("✗ Some updates failed. Please check the output above.")
+        print("✗ Some updates failed.")
         sys.exit(1)
 
 if __name__ == "__main__":
