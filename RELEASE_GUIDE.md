@@ -5,9 +5,16 @@
 To release a new version of Codentis, follow these simple steps:
 
 ### 1. Update Version Numbers
-Run the release script with your desired version:
+Run the release script with your desired version (can be run from any directory):
+
+**From project root:**
 ```bash
 python scripts/release_version.py 1.2.4
+```
+
+**From scripts directory:**
+```bash
+python release_version.py 1.2.4
 ```
 
 This will automatically update:

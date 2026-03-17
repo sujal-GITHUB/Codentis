@@ -34,7 +34,7 @@ import {
   RiCloseLine
 } from "react-icons/ri";
 
-const VERSION = '1.2.4';
+const VERSION = '1.3.0';
 
 export default function DocsPage() {
   const [activeSection, setActiveSection] = useState("introduction");
