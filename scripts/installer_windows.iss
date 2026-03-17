@@ -2,7 +2,7 @@
 ; Download Inno Setup from: https://jrsoftware.org/isdl.php
 
 #define MyAppName "Codentis"
-#define MyAppVersion "1.2.4"
+#define MyAppVersion "1.3.0"
 #define MyAppPublisher "Codentis Team"
 #define MyAppURL "https://github.com/sujal-GITHUB/Codentis"
 #define MyAppExeName "Codentis.exe"
@@ -26,6 +26,10 @@ SolidCompression=yes
 WizardStyle=modern
 PrivilegesRequired=lowest
 ChangesEnvironment=yes
+; Use the Codentis logo for the installer
+WizardImageFile=codentis.bmp
+WizardSmallImageFile=codentis.bmp
+SetupIconFile=codentis.ico
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
@@ -36,12 +40,13 @@ Name: "addtopath"; Description: "Add to PATH (allows running 'codentis' from any
 
 [Files]
 Source: "..\dist\Codentis.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "codentis.ico"; DestDir: "{app}"; Flags: ignoreversion
 ; Add any additional files here
 
 [Icons]
-Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
+Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\codentis.ico"
 Name: "{group}\{cm:UninstallProgram,{#MyAppName}}"; Filename: "{uninstallexe}"
-Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
+Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\codentis.ico"; Tasks: desktopicon
 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent

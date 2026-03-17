@@ -10,9 +10,18 @@ import re
 from pathlib import Path
 from datetime import datetime
 
-def update_env_file(version):
+def get_project_root():
+    """Get the project root directory regardless of where the script is run from."""
+    script_dir = Path(__file__).parent
+    # If we're in the scripts directory, go up one level
+    if script_dir.name == 'scripts':
+        return script_dir.parent
+    # Otherwise assume we're already in the project root
+    return script_dir
+
+def update_env_file(version, project_root):
     """Update .env file with new version."""
-    env_file = Path('.env')
+    env_file = project_root / '.env'
     if not env_file.exists():
         print(f"Creating {env_file}")
         with open(env_file, 'w') as f:
@@ -34,9 +43,9 @@ def update_env_file(version):
     print(f"✓ Updated {env_file}")
     return True
 
-def update_pyproject_toml(version):
+def update_pyproject_toml(version, project_root):
     """Update pyproject.toml version."""
-    file_path = Path('pyproject.toml')
+    file_path = project_root / 'pyproject.toml'
     if not file_path.exists():
         print(f"Warning: {file_path} not found")
         return False
@@ -52,9 +61,9 @@ def update_pyproject_toml(version):
     print(f"✓ Updated {file_path}")
     return True
 
-def update_setup_py(version):
+def update_setup_py(version, project_root):
     """Update setup.py version."""
-    file_path = Path('setup.py')
+    file_path = project_root / 'setup.py'
     if not file_path.exists():
         print(f"Warning: {file_path} not found")
         return False
@@ -70,9 +79,9 @@ def update_setup_py(version):
     print(f"✓ Updated {file_path}")
     return True
 
-def update_codentis_init(version):
+def update_codentis_init(version, project_root):
     """Update codentis/__init__.py version."""
-    file_path = Path('codentis/__init__.py')
+    file_path = project_root / 'codentis' / '__init__.py'
     if not file_path.exists():
         print(f"Warning: {file_path} not found")
         return False
@@ -88,9 +97,9 @@ def update_codentis_init(version):
     print(f"✓ Updated {file_path}")
     return True
 
-def update_inno_setup_script(version):
+def update_inno_setup_script(version, project_root):
     """Update Inno Setup script version."""
-    file_path = Path('scripts/installer_windows.iss')
+    file_path = project_root / 'scripts' / 'installer_windows.iss'
     if not file_path.exists():
         print(f"Warning: {file_path} not found")
         return False
@@ -106,42 +115,41 @@ def update_inno_setup_script(version):
     print(f"✓ Updated {file_path}")
     return True
 
-def update_website_files(version):
+def update_website_files(version, project_root):
     """Update website files with hardcoded version numbers."""
     files_to_update = [
-        'website/app/download/page.tsx',
-        'website/app/docs/page.tsx'
+        project_root / 'website' / 'app' / 'download' / 'page.tsx',
+        project_root / 'website' / 'app' / 'docs' / 'page.tsx'
     ]
     
     for file_path in files_to_update:
-        path = Path(file_path)
-        if not path.exists():
+        if not file_path.exists():
             print(f"Warning: {file_path} not found")
             continue
         
-        with open(path, 'r', encoding='utf-8') as f:
+        with open(file_path, 'r', encoding='utf-8') as f:
             content = f.read()
         
         # Update hardcoded VERSION constant
         content = re.sub(r"const VERSION = '[^']*';", f"const VERSION = '{version}';", content)
         
-        with open(path, 'w', encoding='utf-8') as f:
+        with open(file_path, 'w', encoding='utf-8') as f:
             f.write(content)
         
         print(f"✓ Updated {file_path}")
     
     return True
 
-def update_website_env_files(version):
+def update_website_env_files(version, project_root):
     """Update website environment files (kept for deployment compatibility)."""
     # Note: Environment files are no longer used since we switched to hardcoded versions
     # This function is kept for backward compatibility but does nothing
     print("✓ Website now uses hardcoded versions (no env files needed)")
     return True
 
-def update_changelog(version):
+def update_changelog(version, project_root):
     """Update CHANGELOG.md with new version entry."""
-    file_path = Path('CHANGELOG.md')
+    file_path = project_root / 'CHANGELOG.md'
     if not file_path.exists():
         print(f"Warning: {file_path} not found")
         return False
@@ -210,19 +218,22 @@ def main():
         print(f"Error: Invalid version format '{version}'. Use format like '1.2.3'")
         sys.exit(1)
     
+    # Get project root directory
+    project_root = get_project_root()
+    print(f"Project root: {project_root}")
     print(f"Updating all version numbers to {version}...")
     print("=" * 50)
     
     # Update all files
     success = True
-    success &= update_env_file(version)
-    success &= update_pyproject_toml(version)
-    success &= update_setup_py(version)
-    success &= update_codentis_init(version)
-    success &= update_inno_setup_script(version)
-    success &= update_website_files(version)
-    success &= update_website_env_files(version)
-    success &= update_changelog(version)
+    success &= update_env_file(version, project_root)
+    success &= update_pyproject_toml(version, project_root)
+    success &= update_setup_py(version, project_root)
+    success &= update_codentis_init(version, project_root)
+    success &= update_inno_setup_script(version, project_root)
+    success &= update_website_files(version, project_root)
+    success &= update_website_env_files(version, project_root)
+    success &= update_changelog(version, project_root)
     
     print("=" * 50)
     if success:
