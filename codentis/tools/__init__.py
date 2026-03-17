@@ -8,7 +8,8 @@ __all__ = [
     "ListDirTool",
     "GrepTool",
     "GlobTool",
-    "TodoTool"
+    "TodoTool",
+    "MemoryTool"
 ]
 
 def get_all_builtin_tools()->list[type]:
@@ -24,6 +25,7 @@ def get_all_builtin_tools()->list[type]:
     from tools.builtin.web_fetch import WebFetchTool
     from tools.builtin.ask_user import AskUserTool
     from tools.builtin.todo import TodoTool
+    from tools.builtin.memory import MemoryTool 
     
     return [
         ReadFileTool,
@@ -37,5 +39,6 @@ def get_all_builtin_tools()->list[type]:
         WebSearchTool,
         WebFetchTool,
         AskUserTool,
-        TodoTool
+        TodoTool,
+        MemoryTool
     ]

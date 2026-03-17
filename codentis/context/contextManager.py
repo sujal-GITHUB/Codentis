@@ -3,6 +3,9 @@ from codentis.utils.text import count_tokens
 from dataclasses import dataclass, field
 from typing import Any
 from codentis.config.config import Config
+import json
+from codentis.config.loader import get_data_dir
+from pathlib import Path
 
 @dataclass
 class MessageItem:
@@ -33,9 +36,34 @@ from codentis.tools.base import Tool
 class ContextManager:
     def __init__(self, config: Config, tools: list[Tool] | None = None)->None:
         self.config = config
-        self.system_prompt = get_system_prompt(self.config, tools=tools)
+        
+        # Load persistent memory
+        memory_str = self._load_persistent_memory()
+        
+        self.system_prompt = get_system_prompt(self.config, user_memory=memory_str, tools=tools)
         self.messages: list[MessageItem] = []
         self.model_name = self.config.model_name
+    
+    def _load_persistent_memory(self) -> str | None:
+        try:
+            memory_path = get_data_dir() / "memory.json"
+            if not memory_path.exists():
+                return None
+            
+            content = memory_path.read_text(encoding="utf-8")
+            data = json.loads(content)
+            entries = data.get("entries", {})
+            
+            if not entries:
+                return None
+            
+            memory_parts = []
+            for k, v in entries.items():
+                memory_parts.append(f"{k}: {v}")
+            
+            return "\n".join(memory_parts)
+        except Exception:
+            return None
     
     def add_user_message(self, content: str)->None:
         item = MessageItem(

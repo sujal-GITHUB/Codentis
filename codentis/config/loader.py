@@ -13,7 +13,7 @@ else:
     except ImportError:
         import tomllib
 
-from platformdirs import user_config_dir
+from platformdirs import user_config_dir, user_data_dir
 from codentis.utils.errors import ConfigError
 import logging
 
@@ -23,6 +23,9 @@ AGENT_MD_FILE = "agent.md"
 
 def get_config_dir()->Path:
     return Path(user_config_dir("codentis", appauthor=False))
+
+def get_data_dir()->Path:
+    return Path(user_data_dir("codentis", appauthor=False))
 
 def get_system_config_path()->Path:
     return get_config_dir() / CONFIG_FILE_NAME
