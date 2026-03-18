@@ -23,7 +23,7 @@ def _get_version():
             pass
     
     # Default fallback
-    return "1.3.4"
+    return "1.4.1"
 
 __version__ = _get_version()
 __author__ = "Codentis Team"

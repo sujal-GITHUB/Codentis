@@ -1,4 +1,10 @@
+"use client";
+import { useState } from "react";
+import { DownloadDrawer } from "./DownloadDrawer";
+
 export default function CTA() {
+    const [isDownloadOpen, setIsDownloadOpen] = useState(false);
+
     return (
         <section className="py-24 sm:py-32 sm:py-40 relative overflow-hidden">
             {/* Subtle sticks in CTA too */}
@@ -32,34 +38,30 @@ export default function CTA() {
                 <p className="text-zinc-500 text-sm sm:text-base mb-10 max-w-[400px] mx-auto">
                     Free. Open source. Built by developers, for developers.
                 </p>
-                <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                    <a
-                        href="/download"
-                        className="inline-flex items-center justify-center gap-2.5 px-8 py-3.5 bg-cyan-500 hover:bg-cyan-600 text-black font-semibold text-[0.85rem] sm:text-[0.9rem] rounded-full hover:shadow-[0_0_40px_rgba(6,182,212,0.4)] hover:-translate-y-0.5 transition-all duration-400 active:scale-95"
+                <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                    <button
+                        onClick={() => setIsDownloadOpen(true)}
+                        className="inline-flex items-center cursor-pointer justify-center gap-2 px-7 py-2.5 sm:px-9 sm:py-3.5 bg-white text-black text-[13px] sm:text-sm font-bold rounded-full hover:bg-zinc-100 transition-all active:scale-95 shadow-[0_0_30px_rgba(255,255,255,0.25)]"
                     >
-                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                            <polyline points="7 10 12 15 17 10"></polyline>
-                            <line x1="12" y1="15" x2="12" y2="3"></line>
-                        </svg>
                         Download Codentis
-                    </a>
+                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
+                    </button>
                     <a
                         href="https://github.com/sujal-GITHUB/Codentis"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center justify-center gap-2.5 px-8 py-3.5 bg-white text-black font-semibold text-[0.85rem] sm:text-[0.9rem] rounded-full hover:shadow-[0_0_40px_rgba(255,255,255,0.25)] hover:-translate-y-0.5 transition-all duration-400 active:scale-95"
+                        className="inline-flex items-center justify-center gap-2 px-7 py-2.5 sm:px-9 sm:py-3.5 bg-zinc-900 border border-cyan-900/50 text-white text-[13px] sm:text-sm font-normal rounded-full hover:bg-zinc-800 transition-all active:scale-95"
                     >
-                        <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
+                        <svg className="w-4 h-4 text-zinc-400" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-3.96-1.38-.09-.225-.48-1.38-.825-1.65-.285-.225-.69-.57-.015-.585.645-.015 1.11.585 1.275.855.75 1.26 1.95.885 2.43.675.075-.525.285-.885.51-1.08-2.37-.255-4.86-1.155-4.86-5.13 0-1.125.39-2.07 1.035-2.82-.105-.27-.45-1.35.105-2.805 0 0 .855-.27 2.79 1.05A9.73 9.73 0 0 1 12 6.84c.855.015 1.71.12 2.52.345 1.935-1.32 2.79-1.05 2.79-1.05.555 1.455.21 2.535.105 2.805.645.75 1.035 1.695 1.035 2.82 0 3.99-2.49 4.875-4.875 5.13.3.255.555.75.555 1.5 0 1.08-.015 1.95-.015 2.22 0 .315.225.69.84.57C20.58 21.78 24 17.295 24 12c0-6.63-5.37-12-12-12z" />
                         </svg>
                         View on GitHub
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                            <path d="M5 12h14M12 5l7 7-7 7" />
-                        </svg>
                     </a>
                 </div>
             </div>
+            
+            {/* Download Drawer */}
+            <DownloadDrawer isOpen={isDownloadOpen} setIsOpen={setIsDownloadOpen} />
         </section>
     );
 }

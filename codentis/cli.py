@@ -104,12 +104,16 @@ def chat(
         # Run the agent
         cli = CLI(config)
         if prompt:
+            # Single prompt mode
             asyncio.run(cli.run_single(prompt))
         else:
+            # Interactive mode - handle KeyboardInterrupt internally
             asyncio.run(cli.run_interactive())
             
     except KeyboardInterrupt:
-        print("\nInterrupted by user.")
+        # This should only happen during setup/config loading before interactive mode starts
+        # If interactive mode is running, KeyboardInterrupt should be handled internally
+        print("\nSetup interrupted.")
         sys.exit(0)
     except Exception as e:
         handle_exception(e)

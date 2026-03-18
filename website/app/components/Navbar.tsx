@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 
 export default function Navbar() {
     const [scrolled, setScrolled] = useState(false);
@@ -14,14 +15,14 @@ export default function Navbar() {
 
     const navLinks = [
         { name: "Features", href: "/#features" },
-        { name: "Architecture", href: "/#architecture" },
-        { name: "Demo", href: "/#demo" },
+        { name: "Reviews", href: "/#reviews" },
+        { name: "Workflows", href: "/#workflows" },
         { name: "Docs", href: "/docs" },
         { name: "Download", href: "/download" }
     ];
 
     return (
-        <div className="fixed inset-x-0 top-0 z-50 flex items-center justify-center pt-4 px-2 sm:px-4">
+        <div className="fixed inset-x-0 top-0 z-50 flex items-center justify-center pt-4 px-8 sm:px-10 lg:px-16">
             <nav
                 className={`
           flex items-center gap-0.5 sm:gap-1 px-1.5 sm:px-2 py-1.5 w-auto
@@ -37,8 +38,8 @@ export default function Navbar() {
         `}
             >
                 {/* Logo */}
-                <a
-                    href="#"
+                <Link
+                    href="/"
                     className="flex items-center gap-1.5 sm:gap-2 pl-1.5 sm:pl-2 pr-2 sm:pr-3 py-1.5 rounded-full hover:bg-white/[0.06] transition-colors duration-200"
                 >
                     <Image
@@ -51,7 +52,7 @@ export default function Navbar() {
                     <span className="font-semibold text-[11px] sm:text-sm tracking-tight text-white hidden xs:block">
                         Codentis
                     </span>
-                </a>
+                </Link>
 
                 {/* Divider */}
                 <div className="w-px h-3.5 sm:h-4 bg-white/[0.1] mx-0.5 sm:mx-1" />
@@ -59,13 +60,13 @@ export default function Navbar() {
                 {/* Links */}
                 <div className="flex items-center gap-0 sm:gap-0.5">
                     {navLinks.map((item) => (
-                        <a
+                        <Link
                             key={item.name}
                             href={item.href}
                             className="px-1.5 sm:px-3.5 py-1.5 rounded-full text-[10px] sm:text-[0.8rem] font-medium text-zinc-400 hover:text-white hover:bg-white/[0.06] transition-all duration-200"
                         >
                             {item.name}
-                        </a>
+                        </Link>
                     ))}
                 </div>
 

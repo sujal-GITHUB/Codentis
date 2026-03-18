@@ -60,6 +60,13 @@ class LLMClient:
                     event = await self.non_stream_response(client, kwargs)
                     yield event
                 return
+            except KeyboardInterrupt:
+                # Handle interruption during API calls
+                yield StreamEvent(
+                    type=StreamEventType.ERROR,
+                    error="API call interrupted by user",
+                )
+                return
             except RateLimitError as e:
                 if attempt < self.max_attempts:
                     wait_time = 2 ** attempt
@@ -94,83 +101,98 @@ class LLMClient:
                 return
 
     async def stream_response(self, client: AsyncOpenAI, kwargs: dict[str, Any])->AsyncGenerator[StreamEvent, None]:
-        response = await client.chat.completions.create(**kwargs)
+        try:
+            response = await client.chat.completions.create(**kwargs)
 
-        usage: TokenUsage | None = None
-        finish_reason : str | None = None
-        tool_calls: dict[int, dict[str, Any]] = {}
+            usage: TokenUsage | None = None
+            finish_reason : str | None = None
+            tool_calls: dict[int, dict[str, Any]] = {}
 
-        async for chunk in response:
-            if hasattr(chunk, "usage") and chunk.usage:
-                usage = TokenUsage(
-                    prompt_tokens=chunk.usage.prompt_tokens,
-                    completion_tokens=chunk.usage.completion_tokens,
-                    total_tokens=chunk.usage.total_tokens,
-                    cached_tokens=chunk.usage.prompt_tokens_details.cached_tokens,
-                )
+            async for chunk in response:
+                if hasattr(chunk, "usage") and chunk.usage:
+                    usage = TokenUsage(
+                        prompt_tokens=chunk.usage.prompt_tokens,
+                        completion_tokens=chunk.usage.completion_tokens,
+                        total_tokens=chunk.usage.total_tokens,
+                        cached_tokens=chunk.usage.prompt_tokens_details.cached_tokens,
+                    )
 
-            if not chunk.choices:
-                continue
+                if not chunk.choices:
+                    continue
 
-            choice = chunk.choices[0]
-            delta = choice.delta
+                choice = chunk.choices[0]
+                delta = choice.delta
 
-            if choice.finish_reason:
-                finish_reason = choice.finish_reason
-            
-            if delta.content:
+                if choice.finish_reason:
+                    finish_reason = choice.finish_reason
+                
+                if delta.content:
+                    yield StreamEvent(
+                        type=StreamEventType.TEXT_DELTA,
+                        text_delta=TextDelta(content=delta.content),
+                    )
+
+                if delta.tool_calls:
+                    for tool_call_delta in delta.tool_calls:
+                        idx = tool_call_delta.index
+                        if idx not in tool_calls:
+                            tool_calls[idx] = {
+                                'id' : tool_call_delta.id or "",
+                                'name' : "",
+                                'arguments' : "",
+                            }
+
+                        if tool_call_delta.function:
+                            if tool_call_delta.function.name:
+                                tool_calls[idx]['name'] = tool_call_delta.function.name
+                                yield StreamEvent(
+                                    type=StreamEventType.TOOL_CALL_START,
+                                    tool_call_delta=ToolCallDelta(
+                                        call_id=tool_calls[idx]['id'],
+                                        name=tool_calls[idx]['name'],
+                                    ),
+                                )
+                            
+                            if tool_call_delta.function.arguments:
+                                tool_calls[idx]['arguments'] += tool_call_delta.function.arguments
+                                yield StreamEvent(
+                                    type=StreamEventType.TOOL_CALL_DELTA,
+                                    tool_call_delta=ToolCallDelta(
+                                        call_id=tool_calls[idx]['id'],
+                                        name=tool_calls[idx]['name'],
+                                        arguments=tool_calls[idx]['arguments'],
+                                    ),
+                                )
+
+            for idx, tc in tool_calls.items():
                 yield StreamEvent(
-                    type=StreamEventType.TEXT_DELTA,
-                    text_delta=TextDelta(content=delta.content),
+                    type=StreamEventType.TOOL_CALL_COMPLETE,
+                    tool_call=ToolCall(
+                        call_id=tc['id'],
+                        name=tc['name'],
+                        arguments=parse_tool_call_arguements(tc['arguments']),
+                    ),
                 )
 
-            if delta.tool_calls:
-                for tool_call_delta in delta.tool_calls:
-                    idx = tool_call_delta.index
-                    if idx not in tool_calls:
-                        tool_calls[idx] = {
-                            'id' : tool_call_delta.id or "",
-                            'name' : "",
-                            'arguments' : "",
-                        }
-
-                    if tool_call_delta.function:
-                        if tool_call_delta.function.name:
-                            tool_calls[idx]['name'] = tool_call_delta.function.name
-                            yield StreamEvent(
-                                type=StreamEventType.TOOL_CALL_START,
-                                tool_call_delta=ToolCallDelta(
-                                    call_id=tool_calls[idx]['id'],
-                                    name=tool_calls[idx]['name'],
-                                ),
-                            )
-                        
-                        if tool_call_delta.function.arguments:
-                            tool_calls[idx]['arguments'] += tool_call_delta.function.arguments
-                            yield StreamEvent(
-                                type=StreamEventType.TOOL_CALL_DELTA,
-                                tool_call_delta=ToolCallDelta(
-                                    call_id=tool_calls[idx]['id'],
-                                    name=tool_calls[idx]['name'],
-                                    arguments=tool_calls[idx]['arguments'],
-                                ),
-                            )
-
-        for idx, tc in tool_calls.items():
             yield StreamEvent(
-                type=StreamEventType.TOOL_CALL_COMPLETE,
-                tool_call=ToolCall(
-                    call_id=tc['id'],
-                    name=tc['name'],
-                    arguments=parse_tool_call_arguements(tc['arguments']),
-                ),
+                type=StreamEventType.MESSAGE_COMPLETE,
+                finish_reason=finish_reason,
+                usage=usage,
             )
-
-        yield StreamEvent(
-            type=StreamEventType.MESSAGE_COMPLETE,
-            finish_reason=finish_reason,
-            usage=usage,
-        )    
+        
+        except KeyboardInterrupt:
+            # Handle interruption during streaming
+            yield StreamEvent(
+                type=StreamEventType.ERROR,
+                error="Streaming interrupted by user",
+            )
+            return
+        except Exception as e:
+            yield StreamEvent(
+                type=StreamEventType.ERROR,
+                error=f"Streaming error: {str(e)}",
+            )
+            return    
 
     async def non_stream_response(self, client: AsyncOpenAI, kwargs: dict[str, Any])->StreamEvent:
         response = await client.chat.completions.create(**kwargs)

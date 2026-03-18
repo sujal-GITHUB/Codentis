@@ -1,7 +1,7 @@
 import Navbar from "./components/Navbar";
 import Hero from "./components/Hero";
 import Features from "./components/Features";
-import Architecture from "./components/Architecture";
+import Testimonials from "./components/Testimonials";
 import Demo from "./components/Demo";
 import Terminal from "./components/Terminal";
 import Install from "./components/Install";
@@ -15,10 +15,8 @@ export default function Home() {
       <Navbar />
       <Hero />
       <Features />
-      <Architecture />
+      <Testimonials />
       <Demo />
-      <Terminal />
-      <Install />
       <CTA />
       <Footer />
       <Analytics/>

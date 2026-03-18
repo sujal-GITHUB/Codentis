@@ -3,6 +3,7 @@
 import sys
 import asyncio
 import threading
+import signal
 from typing import Any
 from pathlib import Path
 from codentis.agent.agent import Agent
@@ -28,6 +29,25 @@ class CLI:
         self.tui = TUI(config)
         self.keyboard_listener_running = False
         self.keyboard_thread = None
+        self.interrupted = False
+        self._original_sigint_handler = None
+    
+    def _setup_signal_handlers(self):
+        """Set up signal handlers for interactive mode."""
+        def sigint_handler(signum, frame):
+            """Handle SIGINT (Ctrl+C) in interactive mode."""
+            self.interrupted = True
+            self.tui.stop_thinking()
+            # Don't exit - just set the flag
+        
+        # Store original handler and set new one
+        self._original_sigint_handler = signal.signal(signal.SIGINT, sigint_handler)
+    
+    def _restore_signal_handlers(self):
+        """Restore original signal handlers."""
+        if self._original_sigint_handler is not None:
+            signal.signal(signal.SIGINT, self._original_sigint_handler)
+            self._original_sigint_handler = None
     
     def _keyboard_listener(self):
         """Listen for Ctrl+O keypresses in the background."""
@@ -117,65 +137,296 @@ class CLI:
         return tool.kind.value if tool else None
     
     async def run_single(self, message: str):
-        """Run a single query."""
+        """Run a single query with same TUI styling as interactive mode."""
         async with Agent(self.config) as agent:
             self.agent = agent
             
-            print(f"\nQuery: {message}\n")
+            print(f"\n{self.tui.BOLD}Query:{self.tui.RESET} {message}\n")
             
-            async for event in agent.run(message):
-                if event.type == AgentEventType.TEXT_DELTA:
-                    content = event.data.get("content")
-                    if content:
-                        print(content, end="", flush=True)
+            assistant_streaming = False
+            
+            try:
+                # Show thinking indicator
+                self.tui.start_thinking("Thinking")
                 
-                elif event.type == AgentEventType.TOOL_CALL_COMPLETE:
-                    tool_name = event.data.get("name", "unknown")
-                    success = event.data.get("success", False)
-                    output = event.data.get("output", "")
-                    print(f"\n\n[{tool_name}]: {output[:200]}...\n")
+                async for event in agent.run(message):
+                    # Handle tool call start
+                    if event.type == AgentEventType.TOOL_CALL_START:
+                        # Stop any existing thinking indicator first
+                        self.tui.stop_thinking()
+                        
+                        # Show the tool call
+                        tool_name = event.data.get("name", "unknown")
+                        tool_kind = self.get_tool_kind(tool_name)
+                        self.tui.tool_call_start(
+                            event.data.get("call_id", ""),
+                            tool_name,
+                            tool_kind,
+                            event.data.get("arguments", {})
+                        )
+                        
+                        # Only start thinking for long-running tools
+                        if self._should_show_thinking(tool_name):
+                            thinking_msg = self._get_thinking_message(tool_name)
+                            self.tui.start_thinking(thinking_msg)
+                    
+                    # Stop thinking when tool completes and start thinking for next decision
+                    elif event.type == AgentEventType.TOOL_CALL_COMPLETE:
+                        self.tui.stop_thinking()
+                    
+                    # Stop thinking when text starts
+                    elif event.type == AgentEventType.TEXT_DELTA:
+                        self.tui.stop_thinking()
+                    
+                    if event.type == AgentEventType.TEXT_DELTA:
+                        content = event.data.get("content")
+                        if content:
+                            if not assistant_streaming:
+                                self.tui.begin_assistant()
+                                assistant_streaming = True
+                            self.tui.stream_assistant_delta(content)
+                    
+                    elif event.type == AgentEventType.TEXT_COMPLETE:
+                        if assistant_streaming:
+                            self.tui.end_assistant()
+                            assistant_streaming = False
+                        # Stop thinking when agent finishes responding
+                        self.tui.stop_thinking()
+                    
+                    elif event.type == AgentEventType.AGENT_ERROR:
+                        error = event.data.get("error") or "Unknown error occurred"
+                        print(f"\n{self.tui.RED}Error: {error}{self.tui.RESET}\n")
+                        if assistant_streaming:
+                            self.tui.end_assistant()
+                            assistant_streaming = False
+                    
+                    elif event.type == AgentEventType.TOOL_CALL_COMPLETE:
+                        tool_name = event.data.get("name", "unknown")
+                        tool_kind = self.get_tool_kind(tool_name)
+                        metadata = event.data.get("metadata", {})
+                        
+                        # Check if this tool requires user input (ask_user tool only)
+                        if metadata.get("requires_user_input"):
+                            question = metadata.get("question", "Please provide input:")
+                            options = metadata.get("options", [])
+                            allow_freeform = metadata.get("allow_freeform", True)
+                            
+                            # Show the question to the user
+                            print(f"\n{self.tui.CYAN}{self.tui.BOLD}Question:{self.tui.RESET} {question}\n")
+                            
+                            if options:
+                                print(f"{self.tui.DIM}Options:{self.tui.RESET}")
+                                for i, option in enumerate(options, 1):
+                                    print(f"  {self.tui.CYAN}{i}.{self.tui.RESET} {option}")
+                                print()
+                            
+                            # Get user response
+                            if options and not allow_freeform:
+                                # Multiple choice only - be strict about valid options
+                                while True:
+                                    try:
+                                        choice = input(f"{self.tui.BOLD}Your choice (1-{len(options)}):{self.tui.RESET} ").strip()
+                                        if not choice:
+                                            print(f"{self.tui.RED}Please enter a number between 1 and {len(options)}{self.tui.RESET}")
+                                            continue
+                                        choice_num = int(choice)
+                                        if 1 <= choice_num <= len(options):
+                                            user_response = options[choice_num - 1]
+                                            break
+                                        else:
+                                            print(f"{self.tui.RED}Invalid choice. Please enter a number between 1 and {len(options)}{self.tui.RESET}")
+                                    except ValueError:
+                                        print(f"{self.tui.RED}Invalid input '{choice}'. Please enter a valid number between 1 and {len(options)}{self.tui.RESET}")
+                                    except EOFError:
+                                        print(f"\n{self.tui.RED}Input interrupted. Defaulting to last option{self.tui.RESET}")
+                                        user_response = options[-1] if options else "No"
+                                        break
+                                    except KeyboardInterrupt:
+                                        print(f"\n{self.tui.RED}Operation cancelled by user{self.tui.RESET}")
+                                        user_response = options[-1] if options else "No"
+                                        break
+                            else:
+                                # Freeform or mixed - allow numbers or text
+                                prompt = f"{self.tui.BOLD}Your answer:{self.tui.RESET} " if not options else f"{self.tui.BOLD}Your answer (or number):{self.tui.RESET} "
+                                try:
+                                    user_response = input(prompt).strip()
+                                    if not user_response:
+                                        if options:
+                                            print(f"{self.tui.RED}Please provide an answer or choose from the options above{self.tui.RESET}")
+                                            user_response = input(prompt).strip()
+                                        else:
+                                            print(f"{self.tui.RED}Please provide an answer{self.tui.RESET}")
+                                            user_response = input(prompt).strip()
+                                except EOFError:
+                                    print(f"\n{self.tui.RED}Input interrupted. Defaulting to last option{self.tui.RESET}")
+                                    user_response = options[-1] if options else "No"
+                                except KeyboardInterrupt:
+                                    print(f"\n{self.tui.RED}Operation cancelled by user{self.tui.RESET}")
+                                    user_response = options[-1] if options else "No"
+                                
+                                # If options provided and user entered a number, validate it
+                                if options and user_response.isdigit():
+                                    try:
+                                        choice_num = int(user_response)
+                                        if 1 <= choice_num <= len(options):
+                                            user_response = options[choice_num - 1]
+                                        else:
+                                            print(f"{self.tui.YELLOW}Note: '{user_response}' is not a valid option number. Using as freeform response.{self.tui.RESET}")
+                                    except ValueError:
+                                        pass  # Use the freeform response
+                            
+                            # Store user response
+                            event.data["output"] = user_response
+                            event.data["metadata"]["user_response"] = user_response
+                        
+                        self.tui.tool_call_complete(
+                            event.data.get("call_id", ""),
+                            tool_name,
+                            tool_kind,
+                            event.data.get("success", False),
+                            event.data.get("output", ""),
+                            event.data.get("error", None),
+                            event.data.get("metadata", {}),
+                            event.data.get("truncated", False),
+                            event.data.get("diff"),
+                            event.data.get("exit_code"),
+                        )
+                        
+                        # Start thinking indicator after tool completion - agent is deciding next steps
+                        self.tui.start_thinking("Thinking")
+                
+                # Stop thinking when agent processing is complete
+                self.tui.stop_thinking()
+                
+            except Exception as e:
+                print(f"\n{self.tui.RED}Error processing message: {str(e)}{self.tui.RESET}\n")
+                import traceback
+                traceback.print_exc()
+                if assistant_streaming:
+                    self.tui.end_assistant()
             
             print("\n")
     
     async def run_interactive(self):
         """Run interactive mode."""
-        async with Agent(self.config) as agent:
-            self.agent = agent
-            
-            # Show welcome
-            provider = "OpenAI"
-            if self.config.base_url:
-                if "openrouter" in self.config.base_url:
-                    provider = "OpenRouter"
-                elif "anthropic" in self.config.base_url:
-                    provider = "Anthropic"
-                else:
-                    provider = "Custom API"
-            
-            self.tui.print_welcome(
-                title="Codentis",
-                lines=[
-                    f'Model: {self.config.model_name}',
-                    f'Working Directory: {self.config.cwd}',
-                    f'Provider: {provider}',
-                ]
-            )
-            
-            # Start keyboard listener for Ctrl+O
-            self.start_keyboard_listener()
-            
-            try:
-                while True:
+        # Show welcome message once
+        provider = "OpenAI"
+        if self.config.base_url:
+            if "openrouter" in self.config.base_url:
+                provider = "OpenRouter"
+            elif "anthropic" in self.config.base_url:
+                provider = "Anthropic"
+            else:
+                provider = "Custom API"
+        
+        self.tui.print_welcome(
+            title="Codentis",
+            lines=[
+                f'Model: {self.config.model_name}',
+                f'Working Directory: {self.config.cwd}',
+                f'Provider: {provider}',
+            ]
+        )
+        
+        # Start keyboard listener for Ctrl+O
+        self.start_keyboard_listener()
+        
+        # Set up signal handlers for Ctrl+C
+        self._setup_signal_handlers()
+        
+        try:
+            async with Agent(self.config) as agent:
+                self.agent = agent
+                
+                while True:  # Main interactive loop
                     try:
-                        # Get user input with prompt
-                        user_input = input(f"\n{self.tui.BOLD}❯{self.tui.RESET} ").strip()
+                        # Check if we were interrupted by signal handler
+                        if self.interrupted:
+                            print(f"\n{self.tui.YELLOW}Operation interrupted. Type /exit to quit interactive mode.{self.tui.RESET}")
+                            self.interrupted = False  # Reset flag
+                            continue
+                        
+                        # Get user input with prompt - handle KeyboardInterrupt properly
+                        try:
+                            if WINDOWS:
+                                # Windows-specific input handling with Ctrl+C detection
+                                import msvcrt
+                                print(f"\n{self.tui.BOLD}❯{self.tui.RESET} ", end="", flush=True)
+                                user_input = ""
+                                
+                                while True:
+                                    # Check if interrupted by signal handler
+                                    if self.interrupted:
+                                        print(f"\n{self.tui.YELLOW}Operation interrupted. Type /exit to quit interactive mode.{self.tui.RESET}")
+                                        self.interrupted = False
+                                        user_input = None
+                                        break
+                                    
+                                    # Check for keyboard input
+                                    if msvcrt.kbhit():
+                                        char = msvcrt.getch()
+                                        
+                                        # Handle Ctrl+C (ASCII 3)
+                                        if char == b'\x03':
+                                            print(f"\n{self.tui.YELLOW}Operation interrupted. Type /exit to quit interactive mode.{self.tui.RESET}")
+                                            user_input = None
+                                            break
+                                        
+                                        # Handle Enter (ASCII 13)
+                                        elif char == b'\r':
+                                            print()  # New line
+                                            break
+                                        
+                                        # Handle Backspace (ASCII 8)
+                                        elif char == b'\x08':
+                                            if user_input:
+                                                user_input = user_input[:-1]
+                                                print('\b \b', end="", flush=True)
+                                        
+                                        # Handle regular characters
+                                        elif char >= b' ':
+                                            try:
+                                                decoded_char = char.decode('utf-8')
+                                                user_input += decoded_char
+                                                print(decoded_char, end="", flush=True)
+                                            except UnicodeDecodeError:
+                                                pass  # Ignore invalid characters
+                                    
+                                    # Small sleep to prevent high CPU usage
+                                    await asyncio.sleep(0.01)
+                                
+                                if user_input is None:
+                                    continue
+                                    
+                                user_input = user_input.strip()
+                            else:
+                                # Unix/Linux input handling
+                                def get_input():
+                                    try:
+                                        return input(f"\n{self.tui.BOLD}❯{self.tui.RESET} ").strip()
+                                    except KeyboardInterrupt:
+                                        return None  # Signal interruption
+                                
+                                loop = asyncio.get_event_loop()
+                                user_input = await loop.run_in_executor(None, get_input)
+                                
+                                if user_input is None:
+                                    print(f"\n{self.tui.YELLOW}Operation interrupted. Type /exit to quit interactive mode.{self.tui.RESET}")
+                                    continue
+                        except KeyboardInterrupt:
+                            # Handle Ctrl+C during input
+                            print(f"\n{self.tui.YELLOW}Operation interrupted. Type /exit to quit interactive mode.{self.tui.RESET}")
+                            continue
+                        except EOFError:
+                            # Handle Ctrl+D or EOF
+                            return
                         
                         if not user_input:
                             continue
                         
                         # Check for special commands
                         if user_input.lower() in ("/exit", "/quit", "exit", "quit"):
-                            break
+                            return  # Exit the entire interactive session
                         elif user_input.lower() == "/list":
                             # List all tool outputs
                             self.tui.list_tools()
@@ -194,18 +445,39 @@ class CLI:
                             self.tui.toggle_last_tool()
                             continue
                         
-                        await self._process_message(user_input)
+                        # Process the message
+                        try:
+                            await self._process_message(user_input)
+                        except KeyboardInterrupt:
+                            # Handle Ctrl+C during message processing
+                            print(f"\n{self.tui.YELLOW}Operation interrupted. Type /exit to quit interactive mode.{self.tui.RESET}")
+                            continue
+                        
+                        # Check if interrupted during processing
+                        if self.interrupted:
+                            continue
                     
                     except KeyboardInterrupt:
-                        print("\n\nInterrupted. Type /exit to quit.")
+                        # Catch any KeyboardInterrupt that escapes the inner try block
+                        print(f"\n{self.tui.YELLOW}Operation interrupted. Type /exit to quit interactive mode.{self.tui.RESET}")
                         continue
                     except EOFError:
-                        break
-            
-            finally:
-                self.stop_keyboard_listener()
-                print(f"\n{self.tui.GRAY}{'─' * 80}{self.tui.RESET}")
-                print(f"\n{self.tui.DIM}Goodbye!{self.tui.RESET}\n")
+                        return  # Exit the entire interactive session
+                    except Exception as e:
+                        print(f"\n{self.tui.RED}Unexpected error: {str(e)}{self.tui.RESET}")
+                        continue
+        
+        except KeyboardInterrupt:
+            # Final catch-all for KeyboardInterrupt - should never reach here
+            print(f"\n{self.tui.YELLOW}Operation interrupted. Type /exit to quit interactive mode.{self.tui.RESET}")
+        except Exception as e:
+            print(f"\n{self.tui.RED}Unexpected error: {str(e)}{self.tui.RESET}")
+        
+        finally:
+            self.stop_keyboard_listener()
+            self._restore_signal_handlers()
+            print(f"\n{self.tui.GRAY}{'─' * 80}{self.tui.RESET}")
+            print(f"\n{self.tui.DIM}Goodbye!{self.tui.RESET}\n")
     
     async def _process_message(self, message: str):
         """Process a message through the agent."""
@@ -220,6 +492,10 @@ class CLI:
             self.tui.start_thinking("Thinking")
             
             async for event in self.agent.run(message):
+                # Check if we were interrupted
+                if self.interrupted:
+                    break
+                    
                 # Handle tool call start
                 if event.type == AgentEventType.TOOL_CALL_START:
                     # Stop any existing thinking indicator first
@@ -370,9 +646,24 @@ class CLI:
             # Stop thinking when agent processing is complete
             self.tui.stop_thinking()
             
+        except KeyboardInterrupt:
+            # Handle Ctrl+C during message processing
+            self.interrupted = True
+            self.tui.stop_thinking()
+            if assistant_streaming:
+                self.tui.end_assistant()
+            # Don't re-raise - let the caller handle it
+            return
         except Exception as e:
             print(f"\n{self.tui.RED}Error processing message: {str(e)}{self.tui.RESET}\n")
             import traceback
             traceback.print_exc()
             if assistant_streaming:
                 self.tui.end_assistant()
+        
+        finally:
+            # Clean up if interrupted
+            if self.interrupted:
+                self.tui.stop_thinking()
+                if assistant_streaming:
+                    self.tui.end_assistant()

@@ -23,10 +23,10 @@ The easiest way to release is using GitHub Actions:
 3. **Commit and Tag**:
 ```bash
 git add .
-git commit -m "Release v1.3.4"
-git tag v1.3.4
+git commit -m "Release v1.4.1"
+git tag v1.4.1
 git push origin main
-git push origin v1.3.4
+git push origin v1.4.1
 ```
 
 4. **GitHub Actions Automatically**:
@@ -73,21 +73,21 @@ Add release notes to `CHANGELOG.md`:
 ```bash
 python scripts/build_exe.py 64
 # Then compile with Inno Setup: scripts/installer_windows.iss
-# Output: dist/Codentis-Setup-1.3.4.exe
+# Output: dist/Codentis-Setup-1.4.1.exe
 ```
 
 #### macOS:
 ```bash
 ./scripts/build_macos.sh
 ./scripts/build_macos_installer.sh
-# Output: dist/Codentis-1.3.4-arm64.pkg
+# Output: dist/Codentis-1.4.1-arm64.pkg
 ```
 
 #### Linux:
 ```bash
 ./scripts/build_linux.sh
 ./scripts/build_linux_deb.sh
-# Output: dist/codentis_1.3.4_amd64.deb
+# Output: dist/codentis_1.4.1_amd64.deb
 ```
 
 ### 4. Create GitHub Release
@@ -95,22 +95,22 @@ python scripts/build_exe.py 64
 1. Commit all changes:
 ```bash
 git add .
-git commit -m "Release v1.3.4"
-git tag v1.3.4
+git commit -m "Release v1.4.1"
+git tag v1.4.1
 git push origin main
-git push origin v1.3.4
+git push origin v1.4.1
 ```
 
 2. Go to GitHub → Releases → "Create a new release"
 
 3. Fill in:
-   - **Tag**: v1.3.4
-   - **Title**: Codentis v1.3.4
+   - **Tag**: v1.4.1
+   - **Title**: Codentis v1.4.1
    - **Description**: Copy from CHANGELOG.md
    - **Attach files**:
-     - `Codentis-Setup-1.3.4.exe` (Windows)
-     - `Codentis-1.3.4-arm64.pkg` (macOS)
-     - `codentis_1.3.4_amd64.deb` (Linux)
+     - `Codentis-Setup-1.4.1.exe` (Windows)
+     - `Codentis-1.4.1-arm64.pkg` (macOS)
+     - `codentis_1.4.1_amd64.deb` (Linux)
 
 4. Click "Publish release"
 
@@ -118,14 +118,14 @@ git push origin v1.3.4
 
 Update `website/app/download/page.tsx` with new version links:
 ```tsx
-<a href="/Codentis-Setup-1.3.4.exe" download>
+<a href="/Codentis-Setup-1.4.1.exe" download>
   Download for Windows
 </a>
 ```
 
 Copy installers to `website/public/`:
 ```bash
-cp dist/Codentis-Setup-1.3.4.exe website/public/
+cp dist/Codentis-Setup-1.4.1.exe website/public/
 ```
 
 Deploy website:
@@ -147,8 +147,8 @@ When users start Codentis, it automatically checks for updates (once per day):
    ╭─────────────────────────────────────╮
    │ ⚠ Update Available                  │
    │                                     │
-   │ New version available: v1.3.4       │
-   │ Current version: v1.3.4             │
+   │ New version available: v1.4.1       │
+   │ Current version: v1.4.1             │
    │                                     │
    │ Download: [link]                    │
    ╰─────────────────────────────────────╯
@@ -163,18 +163,18 @@ codentis version
 ### Installation Process
 
 #### Windows:
-1. Download new `Codentis-Setup-1.3.4.exe`
+1. Download new `Codentis-Setup-1.4.1.exe`
 2. Run installer
 3. It will automatically uninstall old version and install new one
 
 #### macOS:
 1. Download new `.pkg` file
-2. Run: `sudo installer -pkg Codentis-1.3.4-arm64.pkg -target /`
+2. Run: `sudo installer -pkg Codentis-1.4.1-arm64.pkg -target /`
 3. Overwrites old installation
 
 #### Linux:
 1. Download new `.deb` file
-2. Run: `sudo dpkg -i codentis_1.3.4_amd64.deb`
+2. Run: `sudo dpkg -i codentis_1.4.1_amd64.deb`
 3. Upgrades existing installation
 
 ## Update Frequency
@@ -204,10 +204,10 @@ If a release has critical bugs:
 
 1. Create hotfix branch:
 ```bash
-git checkout -b hotfix/0.1.2 v1.3.4
+git checkout -b hotfix/0.1.2 v1.4.1
 ```
 
-2. Fix the bug and release v1.3.4 following the same process
+2. Fix the bug and release v1.4.1 following the same process
 
 3. Users will be notified of the new version automatically
 

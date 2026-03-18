@@ -1,7 +1,7 @@
 import Navbar from "../components/Navbar";
 import { RiMicrosoftFill, RiAppleFill, RiUbuntuLine, RiDownloadLine } from "react-icons/ri";
 
-const VERSION = '1.3.4';
+const VERSION = '1.4.1';
 
 export default function DownloadPage() {
   return (
@@ -16,7 +16,7 @@ export default function DownloadPage() {
             <span className="text-[0.65rem] sm:text-[0.7rem] font-semibold uppercase tracking-[0.2em] text-cyan-400/80 mb-4 sm:mb-5 block">
               Get Started
             </span>
-            <h1 className="text-[clamp(2rem,5vw,3rem)] font-semibold tracking-[-0.03em] leading-[1.15] mb-4 sm:mb-6">
+            <h1 className="text-[clamp(2rem,5vw,3rem)] hover:cursor-pointer font-semibold tracking-[-0.03em] leading-[1.15] mb-4 sm:mb-6">
               <span className="text-gradient">Download Codentis</span>
             </h1>
             <p className="text-sm sm:text-base text-zinc-400 leading-relaxed max-w-[550px] mx-auto">

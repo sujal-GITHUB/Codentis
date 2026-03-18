@@ -90,12 +90,19 @@ class WorkspaceTrust:
         console.print("[bold]> [/bold]2. No, exit")
         console.print()
         
-        choice = Prompt.ask(
-            "[bold]Enter to confirm · Esc to cancel[/bold]",
-            choices=["1", "2"],
-            default="1",
-            show_choices=False
-        )
+        try:
+            choice = Prompt.ask(
+                "[bold]Enter to confirm · Esc to cancel[/bold]",
+                choices=["1", "2"],
+                default="1",
+                show_choices=False
+            )
+        except KeyboardInterrupt:
+            # Handle Ctrl+C during workspace trust prompt
+            console.print("\n[yellow]Workspace trust cancelled. Exiting.[/yellow]")
+            console.print("─" * 120)
+            console.print()
+            return False
         
         console.print("─" * 120)
         console.print()

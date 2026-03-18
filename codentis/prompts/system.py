@@ -104,6 +104,7 @@ The user can use these commands while interacting with you:
 - `/help` - Show help information
 - `/config` - Show current configuration
 - `/model` - Show current model information
+- `Ctrl+C` - Interrupt current operation (stops tool execution or thinking, returns to prompt without exiting interactive mode)
 
 **CLI Commands** (run from terminal, NOT inside this chat):
 - `codentis` - Start interactive chat session (default)

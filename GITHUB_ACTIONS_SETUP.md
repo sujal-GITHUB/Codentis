@@ -6,7 +6,7 @@ GitHub Actions will automatically build installers for Windows, macOS, and Linux
 ## What's Included
 
 ### 1. Release Workflow (`.github/workflows/release.yml`)
-Triggers when you push a version tag (e.g., `v1.3.4`):
+Triggers when you push a version tag (e.g., `v1.4.1`):
 - ✅ Builds Windows installer (.exe)
 - ✅ Builds macOS installer (.pkg) 
 - ✅ Builds Linux package (.deb)
@@ -57,10 +57,10 @@ git push origin main
 3. **Commit and create tag**:
 ```bash
 git add .
-git commit -m "Release v1.3.4"
-git tag v1.3.4
+git commit -m "Release v1.4.1"
+git tag v1.4.1
 git push origin main
-git push origin v1.3.4
+git push origin v1.4.1
 ```
 
 4. **Wait for GitHub Actions** (takes ~10-15 minutes):
@@ -70,7 +70,7 @@ git push origin v1.3.4
 
 5. **Check the release**:
    - Go to Releases tab
-   - You'll see "Codentis v1.3.4" with all installers attached
+   - You'll see "Codentis v1.4.1" with all installers attached
 
 ### Manual Trigger
 
@@ -90,10 +90,10 @@ You can also trigger the release workflow manually:
 - **Total**: ~10-15 minutes (parallel)
 
 ### Artifacts Produced
-- `Codentis-Setup-1.3.4.exe` (Windows installer, ~35 MB)
-- `Codentis-1.3.4-arm64.pkg` (macOS Apple Silicon, ~30 MB)
-- `Codentis-1.3.4-intel.pkg` (macOS Intel, ~30 MB)
-- `codentis_1.3.4_amd64.deb` (Linux Debian/Ubuntu, ~30 MB)
+- `Codentis-Setup-1.4.1.exe` (Windows installer, ~35 MB)
+- `Codentis-1.4.1-arm64.pkg` (macOS Apple Silicon, ~30 MB)
+- `Codentis-1.4.1-intel.pkg` (macOS Intel, ~30 MB)
+- `codentis_1.4.1_amd64.deb` (Linux Debian/Ubuntu, ~30 MB)
 
 ### Release Notes Format
 The workflow automatically generates release notes from CHANGELOG.md and includes:
@@ -111,8 +111,8 @@ The workflow automatically generates release notes from CHANGELOG.md and include
    - Version mismatch between files
 
 ### Release Not Created
-- Make sure you pushed the tag: `git push origin v1.3.4`
-- Check that tag starts with `v` (e.g., `v1.3.4` not `0.1.1`)
+- Make sure you pushed the tag: `git push origin v1.4.1`
+- Check that tag starts with `v` (e.g., `v1.4.1` not `0.1.1`)
 - Verify all three builds completed successfully
 
 ### Installers Missing
@@ -148,7 +148,7 @@ Edit `.github/workflows/release.yml`:
 on:
   push:
     tags:
-      - 'v*'  # Current: triggers on v1.3.4, v1.3.4, etc.
+      - 'v*'  # Current: triggers on v1.4.1, v1.4.1, etc.
       - 'release-*'  # Alternative: triggers on release-0.1.0
 ```
 
@@ -172,7 +172,7 @@ Comment out jobs you don't need:
 ## Next Steps
 
 1. ✅ Push workflow files to GitHub
-2. ✅ Test with a pre-release tag: `v1.3.4-beta`
+2. ✅ Test with a pre-release tag: `v1.4.1-beta`
 3. ✅ Verify all builds complete successfully
 4. ✅ Check release page for installers
 5. ✅ Create your first official release!
