@@ -7,16 +7,7 @@ PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$PROJECT_ROOT"
 
 APP_NAME="Codentis"
-
-# Read version from .env file
-if [ -f ".env" ]; then
-    VERSION=$(grep "^VERSION=" .env | cut -d'=' -f2 | tr -d '"' | tr -d "'")
-    echo "Found version in .env: $VERSION"
-else
-    VERSION="1.2.3"  # Fallback version
-    echo "Warning: .env file not found, using fallback version: $VERSION"
-fi
-
+VERSION="1.3.4"  # This version is updated by release_version.py script
 IDENTIFIER="com.codentis.app"
 INSTALL_LOCATION="/usr/local/bin"
 

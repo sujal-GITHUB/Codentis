@@ -36,13 +36,13 @@ git diff
 ```bash
 git add .
 git commit -m "Release version 1.2.4"
-git tag v1.3.3
+git tag v1.3.4
 ```
 
 ### 4. Push to GitHub
 ```bash
 git push origin main
-git push origin v1.3.3
+git push origin v1.3.4
 ```
 
 ### 5. Monitor Build
@@ -52,10 +52,10 @@ git push origin v1.3.3
 
 ## Build Artifacts
 The automated build will create:
-- `Codentis-Setup-1.3.3.exe` (Windows)
-- `Codentis-1.3.3-arm64.pkg` (macOS Apple Silicon)
-- `Codentis-1.3.3-intel.pkg` (macOS Intel)
-- `codentis_1.3.3_amd64.deb` (Linux)
+- `Codentis-Setup-1.3.4.exe` (Windows)
+- `Codentis-1.3.4-arm64.pkg` (macOS Apple Silicon)
+- `Codentis-1.3.4-intel.pkg` (macOS Intel)
+- `codentis_1.3.4_amd64.deb` (Linux)
 
 ## Notes
 - All build scripts now read versions from their respective files (no environment variables)

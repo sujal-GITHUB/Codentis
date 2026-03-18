@@ -215,6 +215,40 @@ def update_website_env_files(version, project_root):
     """Website environment files are no longer used for versioning."""
     return True
 
+def update_build_scripts(version, project_root):
+    """Update build scripts with hardcoded version numbers."""
+    scripts_to_update = [
+        (project_root / 'scripts' / 'build_macos_installer.sh', r'VERSION="[^"]*"', f'VERSION="{version}"'),
+        (project_root / 'scripts' / 'build_linux_deb.sh', r'VERSION="[^"]*"', f'VERSION="{version}"')
+    ]
+    
+    for file_path, pattern, replacement in scripts_to_update:
+        if not file_path.exists():
+            print(f"Warning: {file_path} not found")
+            continue
+        
+        with open(file_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+        
+        # Update hardcoded VERSION variable
+        content = re.sub(pattern, replacement, content)
+        
+        with open(file_path, 'w', encoding='utf-8') as f:
+            f.write(content)
+        
+        print(f"✓ Updated {file_path}")
+    
+    return True
+
+def create_version_file(version, project_root):
+    """Create a VERSION file for GitHub Actions to read."""
+    version_file = project_root / 'VERSION'
+    with open(version_file, 'w') as f:
+        f.write(version)
+    
+    print(f"✓ Created VERSION file with {version}")
+    return True
+
 def update_changelog(version, project_root):
     """Update CHANGELOG.md with new version entry."""
     file_path = project_root / 'CHANGELOG.md'
@@ -287,10 +321,12 @@ def main():
     success &= update_setup_py(version, project_root)
     success &= update_codentis_init(version, project_root)
     success &= update_inno_setup_script(version, project_root)
+    success &= update_build_scripts(version, project_root)
     success &= update_website_files(version, project_root)
     success &= update_documentation_files(version, project_root)
     success &= update_website_package_json(version, project_root)
     success &= update_website_env_files(version, project_root)
+    success &= create_version_file(version, project_root)
     success &= update_changelog(version, project_root)
     
     print("=" * 50)
