@@ -6,10 +6,10 @@ export default function Footer() {
         {
             title: "Product",
             links: [
-                { label: "Features", href: "/#features" },
-                { label: "Use Cases", href: "/#demo" },
-                { label: "Download", href: "/download" },
-                { label: "Documentation", href: "/docs" },
+                { label: "Features", href: "/#features", external: false },
+                { label: "Use Cases", href: "/#demo", external: false },
+                { label: "Download", href: "/download", external: false },
+                { label: "Documentation", href: "/docs", external: false },
             ]
         },
         {
