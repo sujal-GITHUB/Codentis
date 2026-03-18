@@ -1,7 +1,7 @@
 'use client';
 import { useState, useMemo } from 'react';
 
-const VERSION = '1.3.4';
+const VERSION = '1.4.3';
 
 // Simple icons as SVG components
 const WindowsIcon = () => (
@@ -131,7 +131,7 @@ export const DownloadDrawer = ({ isOpen, setIsOpen }: { isOpen: boolean; setIsOp
             
             <div className="space-y-3">
               <a
-                href={`https://github.com/sujal-GITHUB/Codentis/releases/latest/download/Codentis-Setup-${VERSION}.exe`}
+                href={`https://github.com/sujal-GITHUB/Codentis/releases/download/v${VERSION}/Codentis-Setup-${VERSION}.exe`}
                 className="flex items-center justify-center gap-2 w-full p-3 bg-cyan-500 hover:bg-cyan-600 text-black font-semibold rounded-lg transition-colors shadow-[0_0_20px_rgba(34,211,238,0.2)] text-sm"
               >
                 <DownloadIcon />
@@ -179,14 +179,14 @@ export const DownloadDrawer = ({ isOpen, setIsOpen }: { isOpen: boolean; setIsOp
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-2">
                 <a
-                  href={`https://github.com/sujal-GITHUB/Codentis/releases/latest/download/Codentis-${VERSION}-arm64.pkg`}
+                  href={`https://github.com/sujal-GITHUB/Codentis/releases/download/v${VERSION}/Codentis-${VERSION}-arm64.pkg`}
                   className="flex items-center justify-center gap-1.5 p-2.5 bg-cyan-500 hover:bg-cyan-600 text-black font-semibold rounded-lg transition-colors text-xs shadow-[0_0_20px_rgba(34,211,238,0.2)]"
                 >
                   <DownloadIcon />
                   Apple Silicon
                 </a>
                 <a
-                  href={`https://github.com/sujal-GITHUB/Codentis/releases/latest/download/Codentis-${VERSION}-intel.pkg`}
+                  href={`https://github.com/sujal-GITHUB/Codentis/releases/download/v${VERSION}/Codentis-${VERSION}-intel.pkg`}
                   className="flex items-center justify-center gap-1.5 p-2.5 bg-cyan-500/80 hover:bg-cyan-500 text-black font-semibold rounded-lg transition-colors text-xs"
                 >
                   <DownloadIcon />
@@ -231,7 +231,7 @@ export const DownloadDrawer = ({ isOpen, setIsOpen }: { isOpen: boolean; setIsOp
             
             <div className="space-y-3">
               <a
-                href={`https://github.com/sujal-GITHUB/Codentis/releases/latest/download/codentis_${VERSION}_amd64.deb`}
+                href={`https://github.com/sujal-GITHUB/Codentis/releases/download/v${VERSION}/codentis_${VERSION}_amd64.deb`}
                 className="flex items-center justify-center gap-2 w-full p-3 bg-cyan-500 hover:bg-cyan-600 text-black font-semibold rounded-lg transition-colors shadow-[0_0_20px_rgba(34,211,238,0.2)] text-sm"
               >
                 <DownloadIcon />
