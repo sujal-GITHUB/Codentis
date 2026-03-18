@@ -118,7 +118,8 @@ def update_website_files(version, project_root):
     """Update website files with version numbers and descriptive text."""
     files_to_update = [
         project_root / 'website' / 'app' / 'download' / 'page.tsx',
-        project_root / 'website' / 'app' / 'docs' / 'page.tsx'
+        project_root / 'website' / 'app' / 'docs' / 'page.tsx',
+        project_root / 'website' / 'app' / 'components' / 'DownloadDrawer.tsx'
     ]
     
     for file_path in files_to_update:
