@@ -10,7 +10,7 @@ Simple installation guide for users downloading from the website.
 Click the **Download Installer** button for Windows on the website.
 
 ### Step 2: Run the Installer
-1. Double-click `Codentis-Setup-1.4.1.exe`
+1. Double-click `Codentis-Setup-1.4.3.exe`
 2. If you see a Windows SmartScreen warning:
    - Click "More info"
    - Click "Run anyway"
@@ -73,7 +73,7 @@ Click the **Download .deb Package** button.
 **Option B: Terminal**
 ```bash
 cd ~/Downloads
-sudo dpkg -i codentis_1.4.1_amd64.deb
+sudo dpkg -i codentis_1.4.3_amd64.deb
 ```
 
 ### Step 3: Start Using Codentis

@@ -618,7 +618,7 @@ Core dependencies (from `requirements.txt`):
 - `platformdirs` — Cross-platform paths
 - `tomli` — TOML parsing
 
-## Implemented Features (v1.4.1)
+## Implemented Features (v1.4.3)
 
 ✅ **Multi-turn agentic loop** - Fully implemented in `agentic_loop()`
 ✅ **Platform detection** - Automatic OS detection with platform-specific command handling
