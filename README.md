@@ -1,296 +1,88 @@
 # Codentis
 
-![Python](https://img.shields.io/badge/python-3.10+-blue.svg)
-![Rich](https://img.shields.io/badge/UI-Rich-purple.svg)
-![Version](https://img.shields.io/badge/version-1.5.1-green.svg)
-![Status](https://img.shields.io/badge/status-Production-brightgreen.svg)
-![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)
+Codentis is a high-performance CLI AI agent designed for terminal-based developers. It provides intelligent code assistance, file operations, and automated workflows through a modular agentic loop.
 
-**Codentis** is an intelligent, high-performance CLI AI agent designed to bring the power of LLMs directly to your terminal. Inspired by tools like Claude Code, it features a beautiful TUI with collapsible tool outputs, markdown rendering, context-aware thinking indicators, and a modular architecture for building complex agentic loop workflows.
+## Distinguishing Factors
 
-## ✨ Key Features
+- **Sub-Agent Delegation**: Automatically offloads complex analysis, debugging, and refactoring to specialized sub-agents with curated goal prompts.
+- **Structured Tool Registry**: Features collapsible outputs with persistent IDs, allowing developers to expand only the data they need to see.
+- **Workspace Security**: Implements a proactive trust system requiring explicit user approval before performing operations in new directories.
+- **Provider Agnostic**: Seamlessly switches between OpenAI, Anthropic, OpenRouter, and local OpenAI-compatible endpoints.
+- **Native Packaging**: Ships as standalone installers (EXE, PKG, DEB) for professional deployment beyond standard pip environments.
 
-### 🎨 User Experience
-- **Collapsible Tool Outputs**: Tool outputs hidden by default with unique IDs, expandable via `/e <id>` command
-- **Markdown Rendering**: AI responses stream with inline ANSI styling (headers, bold, lists, code)
-- **Context-Aware Thinking**: Animated spinner with context-specific messages (Thinking, Writing, Executing, Searching)
-- **Color-Coded Tools**: Each tool type has a unique color for easy visual identification
-- **Workspace Trust**: Security system requiring explicit trust for new directories
-- **Auto-Update System**: Checks for updates daily and notifies users of new releases
+## Use Cases
 
-### 🖥️ Platform Support
-- **Cross-Platform**: Windows, macOS, and Linux support with platform-specific command handling
-- **Platform Detection**: Automatic OS detection stored in config for intelligent command adaptation
-- **Shell Command Permissions**: Automatic detection and user approval for write operations
+- **Codebase Onboarding**: Build a comprehensive knowledge graph and dependency map of unfamiliar projects in a single pass.
+- **Automated Code Audits**: Perform deep security and performance reviews using specialized reviewer agents before committing changes.
+- **Legacy Migration**: systematically translate logic between frameworks or language versions with correctness verification.
+- **Local Development**: Connect to local LLM servers for private, offline-first development workflows.
 
-### 🤖 AI & Agent Features
-- **Multiple AI Providers**: OpenAI, OpenRouter, Anthropic, and custom endpoints
-- **Loop Detection**: Detects repeated failed tool calls and asks user for guidance
-- **Interactive User Input**: `ask_user` tool for multi-choice or freeform user input
-- **Agentic Loop**: Multi-turn conversations with automatic tool execution
-- **Streaming Responses**: Real-time text streaming with proper markdown formatting
+## Installation
 
-### 🛠️ Developer Experience
-- **Modular Architecture**: Clean separation of concerns (Client, Agent, Tools, UI)
-- **Extensible Tool System**: Easy to add new tools with validation and schema export
-- **First-Run Setup**: Interactive configuration wizard with provider selection
-- **Professional CLI**: Built with Typer for polished command-line experience
-- **Async Core**: Fully asynchronous for high performance
+### From Release (Recommended)
+Download the latest installer for your platform from the [Releases page](https://github.com/sujal-GITHUB/Codentis/releases).
 
-## 📦 Installation
-
-### Quick Install (Recommended)
-
-Download the latest installer for your platform from the [Releases page](https://github.com/sujal-GITHUB/Codentis/releases):
-
-**Windows:**
+### Development
 ```bash
-# Download and run Codentis-Setup-1.5.1.exe
-# The installer will add Codentis to your PATH
-```
-
-**macOS:**
-```bash
-# Download Codentis-1.5.1-arm64.pkg (Apple Silicon) or Codentis-1.5.1-intel.pkg (Intel)
-sudo installer -pkg Codentis-1.5.1-arm64.pkg -target /
-```
-
-**Linux (Debian/Ubuntu):**
-```bash
-# Download codentis_1.5.1_amd64.deb
-sudo dpkg -i codentis_1.5.1_amd64.deb
-```
-
-### Install from PyPI
-
-```bash
-pip install codentis
+git clone https://github.com/sujal-GITHUB/Codentis.git
+cd Codentis
+pip install -e .
 codentis
 ```
 
-### Development Install
+## Usage
 
-1.  **Clone the repository:**
-    ```bash
-    git clone https://github.com/sujal-GITHUB/Codentis.git
-    cd Codentis
-    ```
-
-2.  **Install in editable mode:**
-    ```bash
-    pip install -e .
-    ```
-
-3.  **Run the setup wizard:**
-    ```bash
-    codentis
-    ```
-
-The first time you run Codentis, it will guide you through configuration setup.
-
-## 🚀 Usage
-
-### Interactive Mode
-
-Start an interactive chat session:
-
+Start an interactive session:
 ```bash
 codentis
 ```
 
-Or use the explicit chat command:
-
+Run a single prompt:
 ```bash
-codentis chat
+codentis chat "Analyze the current project structure"
 ```
 
-### Tool Output Commands
+Common TUI commands:
+- `/e <id>`: Expand specific tool output
+- `/list`: Show all tool calls in session
+- `/exit`: Quit the session
 
-In interactive mode, tool outputs are hidden by default. Use these commands to view them:
+## Configuration
 
+Manage settings with the config command:
 ```bash
-/e <id>    # Expand specific tool output (e.g., /e 3)
-/e         # Expand last tool output
-/list      # List all tool calls with their IDs
-/exit      # Exit the chat session
-```
-
-### Single Prompt
-
-Send a single prompt and exit:
-
-```bash
-codentis chat "Explain quantum computing in one sentence"
-```
-
-### Configuration
-
-Manage your configuration:
-
-```bash
-# Show current configuration
 codentis config --show
-
-# Reset and reconfigure
 codentis config --reset
-
-# Run setup wizard
-codentis config
 ```
 
-### System Diagnostics
+The application stores settings in `~/.codentis/config.json`. Project-specific overrides can be defined in `.agent/codentis.toml`.
 
-Check your system health:
+## Architecture
 
-```bash
-codentis doctor
-```
+Codentis follows a modular design:
+- `agent/`: Core agent loop and session management.
+- `client/`: LLM provider integrations (OpenAI, Anthropic, OpenRouter).
+- `tools/`: Extensible tool registry and implementations.
+- `ui/`: Terminal rendering and user interaction.
 
-### Version Information
+## Development
 
-```bash
-codentis version
-# or
-codentis --version
-```
-
-### Workspace Trust
-
-For security, Codentis requires explicit trust for new directories:
-
-```bash
-# Trust current directory
-codentis trust add .
-
-# List trusted workspaces
-codentis trust list
-
-# Remove trust
-codentis trust remove /path/to/workspace
-
-# Clear all trusted workspaces
-codentis trust clear
-```
-
-On first access to a new directory, Codentis will prompt you to trust it before allowing file operations.
-
-## 🔧 Configuration
-
-Codentis stores configuration in `~/.codentis/config.json`. You can also use project-specific configuration with `.agent/codentis.toml` files.
-
-### Supported AI Providers
-
-- **OpenAI**: Official OpenAI API
-- **OpenRouter**: Access multiple AI models through OpenRouter
-- **Anthropic**: Official Anthropic Claude API
-- **Custom**: Any OpenAI-compatible endpoint (e.g., local LLMs)
-
-## 🏗️ Architecture
-
-Codentis follows a clean, modular architecture:
-
-```
-codentis/
-├── agent/          # Agent loop and event handling
-├── client/         # LLM client implementation
-├── config/         # Configuration management
-├── context/        # Context and conversation management
-├── prompts/        # System prompts
-├── tools/          # Tool registry and implementations
-│   └── builtin/    # Built-in tools (read, write, shell, web, etc.)
-├── ui/             # Terminal UI rendering (collapsible outputs, markdown)
-└── utils/          # Utilities (platform detection, updater, trust)
-```
-
-See [ARCHITECTURE.md](ARCHITECTURE.md) for detailed documentation.
-
-## 🔄 Auto-Updates
-
-Codentis automatically checks for updates once per day and notifies you when a new version is available. The update check is cached for 24 hours to minimize API calls.
-
-When an update is available, you'll see a notification with a download link on startup.
-
-## 🛠️ Built-in Tools
-
-Codentis comes with a comprehensive set of built-in tools:
-
-- **File Operations**: `read_file`, `write_file`, `edit_file`, `apply_patch`
-- **Directory Operations**: `list_dir`, `glob`, `grep`
-- **Shell Commands**: `shell` (with permission system for write operations)
-- **Web Tools**: `web_search`, `web_fetch`
-- **User Interaction**: `ask_user` (multi-choice or freeform input)
-- **Task Management**: `todo` (track tasks and progress)
-
-## 📝 Development
-
-### Prerequisites
-
-- Python 3.10+
-- An API Key (OpenAI, OpenRouter, etc.)
-
-### Running Tests
-
+Run tests:
 ```bash
 pytest
 ```
 
-### Building Installers
-
-Codentis supports building native installers for all platforms:
-
-**Windows:**
+Build native installers:
 ```bash
-python scripts/build_exe.py 64
-# Creates: dist/Codentis.exe and dist/Codentis-Setup-1.5.1.exe
+python scripts/build_exe.py 64  # Windows
+./scripts/build_macos.sh         # macOS
+./scripts/build_linux.sh         # Linux
 ```
 
-**macOS:**
-```bash
-./scripts/build_macos.sh
-./scripts/build_macos_installer.sh
-# Creates: dist/codentis and dist/Codentis-1.5.1-arm64.pkg (or -intel.pkg)
-```
-
-**Linux:**
-```bash
-./scripts/build_linux.sh
-./scripts/build_linux_deb.sh
-# Creates: dist/codentis and dist/codentis_1.5.1_amd64.deb
-```
-
-See [BUILD_INSTALLERS.md](BUILD_INSTALLERS.md) for detailed build instructions.
-
-### GitHub Actions
-
-Automated builds are configured via GitHub Actions:
-- **Build Test**: Runs on every push to test builds on all platforms
-- **Release**: Triggered by version tags (e.g., `v1.5.1`) to create releases with installers
-
-See [GITHUB_ACTIONS_SETUP.md](GITHUB_ACTIONS_SETUP.md) for setup instructions.
-
-## 📚 Documentation
-
-- [ARCHITECTURE.md](ARCHITECTURE.md) - Detailed architecture documentation
-- [QUICKSTART.md](QUICKSTART.md) - Quick start guide
-- [INSTALL.md](INSTALL.md) - Installation instructions
-- [BUILD_INSTALLERS.md](BUILD_INSTALLERS.md) - Building installers
-- [RELEASE_PROCESS.md](RELEASE_PROCESS.md) - Release workflow
-- [CHANGELOG.md](CHANGELOG.md) - Version history
-
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-## 📄 License
+## License
 
 This project is licensed under the MIT License.
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
-Inspired by Claude Code and other AI-powered developer tools.
-
----
-
-**Version**: 1.5.1  
-**Status**: Production Ready  
-**Platform**: Windows, macOS, Linux
+Inspired by modern AI-powered developer tools like Claude Code.
