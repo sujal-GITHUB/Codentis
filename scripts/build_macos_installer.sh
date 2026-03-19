@@ -7,7 +7,7 @@ PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$PROJECT_ROOT"
 
 APP_NAME="Codentis"
-VERSION="1.4.3"  # This version is updated by release_version.py script
+VERSION="1.5.1"  # This version is updated by release_version.py script
 IDENTIFIER="com.codentis.app"
 INSTALL_LOCATION="/usr/local/bin"
 

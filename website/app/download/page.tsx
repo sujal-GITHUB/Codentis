@@ -1,7 +1,7 @@
 import Navbar from "../components/Navbar";
 import { RiMicrosoftFill, RiAppleFill, RiUbuntuLine, RiDownloadLine } from "react-icons/ri";
 
-const VERSION = '1.4.3';
+const VERSION = '1.5.1';
 
 export default function DownloadPage() {
   return (

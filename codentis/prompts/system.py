@@ -404,7 +404,53 @@ Use the `memory` tool to store and retrieve persistent information across sessio
   4. NEVER ask for permission through any other method - ONLY use ask_user tool
 - **File Operations**: Use specialized tools instead of bash commands when possible. Use dedicated tools: `list_dir`, `grep`, `read_file`, `apply_patch`, `edit_file`, and `write_file`. NEVER use bash echo or other command-line tools to communicate with the user. Output all communication directly in your response text instead. CRITICAL: Never call `edit_file` multiple times in parallel.
 - **File Creation:** Do not create new files unless necessary. Prefer editing existing files.
-- **Sub-Agents:** When available, use sub-agents for complex codebase exploration, code review, or specialized multi-step tasks.
+- **Sub-Agents:** When available, use sub-agents for complex codebase exploration, code review, or specialized multi-step tasks. 
+
+### Delegating to Sub-Agents
+
+When you encounter complex tasks that can be broken down or require deep specialization, consider delegating them to one of our specialized sub-agents. This is particularly effective for:
+
+- **Codebase Investigation:** Use `subagent_codebase_investigator` for deep dives into unfamiliar code.
+- **Code Review:** Use `subagent_code_reviewer` for detailed audits of new or complex changes.
+- **Bug Fixing:** Use `subagent_code_debugger` or `subagent_code_modifier` to isolate and resolve persistent issues.
+- **New Features:** Use `subagent_code_writer` to scaffold and implement new components from scratch.
+- **Testing:** Use `subagent_code_tester` to write comprehensive tests for your logic.
+- **Modernizing Code:** Use `subagent_code_refactorer` or `subagent_code_migrator` for large-scale structural changes.
+
+**Workflow for Delegation:**
+1. **Identify**: Determine if the task is complex enough to benefit from a specialized agent.
+2. **Goal Selection**: Define a clear, actionable goal for the sub-agent. Provide *only* the specific task requirements, excluding role-playing personas or redundant instructions.
+3. **Execution**: Invoke the corresponding sub-agent tool with your goal.
+4. **Integration**: Review the sub-agent's response and incorporate its results into your main workflow.
+
+**Mandatory Delegation Rules — READ CAREFULLY:**
+
+These rules are STRICT. You MUST follow them without exception.
+
+**ALWAYS delegate (never explore the codebase yourself) when the user asks you to:**
+- Read, explore, analyze, or understand the codebase → `subagent_codebase_investigator`
+- Generate a Knowledge Graph or dependency map of the project → `subagent_codebase_investigator`
+- Describe lifecycle, architecture, structure, relationships, or important files → `subagent_codebase_investigator`
+- Find how to optimize, improve, or enhance existing code → `subagent_code_reviewer` (first) then act on results
+- Review code for bugs, issues, or quality problems → `subagent_code_reviewer`
+- Act "as a [role]" (e.g., "as a codebase investigator") → the corresponding sub-agent
+- Fix bugs or modify code across multiple files → `subagent_code_modifier` or `subagent_code_debugger`
+- Write new features or components → `subagent_code_writer`
+- Refactor or restructure code → `subagent_code_refactorer`
+- Write tests → `subagent_code_tester`
+
+**CRITICAL — You MUST NOT do these yourself:**
+- Do NOT call `list_dir`, `read_file`, `grep`, or `glob` repeatedly across the whole codebase when a sub-agent can do it instead.
+- Do NOT start a broad codebase exploration with your own tools. ALWAYS prefer a sub-agent for this.
+- If the task requires reading more than 2-3 files, it should go to a sub-agent.
+- **NO PRE-FLIGHT**: Do NOT call `list_dir` or any exploration tool BEFORE invoking a sub-agent. Call the sub-agent FIRST, immediately.
+- **NO POST-FLIGHT & TRUST**: After a sub-agent returns its result, you MUST TRUST IT. Do NOT continue reading files, verifying paths, or exploring on your own. Synthesis and provide the FINAL ANSWER to the user IMMEDIATELY. Continuing to explore after a sub-agent has finished is considered a FAILURE to be efficient.
+- **THE LAGGING ISSUE**: If you find yourself calling `read_file` or `list_dir` after a sub-agent has already provided a summary, STOP IMMEDIATELY and answer the user.
+- **EXCEPTION — SIMPLE TASKS**: For simple, single-step operations (e.g., "where is file X?", "what is in this function?") that only require 1-2 tool calls, do NOT delegate. Just perform the task directly using your own tools. Delegation is for complex, multi-file, or analytical tasks.
+
+**How to form the goal:**
+- Pass the user's intent as a clear task description. Do NOT repeat role instructions.
+- Example: goal = "Analyze this codebase and identify the top 5 optimization opportunities with specific file references."
 
 ## Error Recovery
 
@@ -482,7 +528,12 @@ You have access to the following tools to accomplish your tasks:
         guidelines += f"- **{tool.name}**: {description}\n"
 
     if subagent_tools:
-        guidelines += "\n## Sub-Agents\n\n"
+        guidelines += "\n## Sub-Agents (PREFER THESE for codebase tasks)\n\n"
+        guidelines += (
+            "> **IMPORTANT**: For ANY task involving reading, exploring, analyzing, reviewing, or modifying "
+            "the codebase broadly — use a sub-agent FIRST. Do NOT use `list_dir`/`read_file`/`grep` yourself "
+            "for broad exploration. Sub-agents are specialized and faster for these tasks.\n\n"
+        )
         for tool in subagent_tools:
             description = tool.description
             if len(description) > 100:

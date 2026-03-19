@@ -34,7 +34,7 @@ import {
   RiCloseLine
 } from "react-icons/ri";
 
-const VERSION = '1.4.3';
+const VERSION = '1.5.1';
 
 export default function DocsPage() {
   const [activeSection, setActiveSection] = useState("introduction");
@@ -482,7 +482,7 @@ export default function DocsPage() {
                     <div className="space-y-4">
                       <div>
                         <p className="text-sm font-semibold text-cyan-400 mb-2">Step 1: Download the Installer</p>
-                        <p className="text-[13px] sm:text-sm text-zinc-400">Download the Codentis-Setup-{'1.4.3'}.exe file from the link above.</p>
+                        <p className="text-[13px] sm:text-sm text-zinc-400">Download the Codentis-Setup-{'1.5.1'}.exe file from the link above.</p>
                       </div>
 
                       <div>
@@ -504,7 +504,7 @@ export default function DocsPage() {
                         <p className="text-sm text-zinc-400 mb-2">Open a new Command Prompt or PowerShell window and run:</p>
                         <div className="bg-black/50 p-3 rounded-lg font-mono text-sm">
                           <div className="text-white">codentis --version</div>
-                          <div className="text-cyan-400 mt-1">Codentis v1.4.3</div>
+                          <div className="text-cyan-400 mt-1">Codentis v1.5.1</div>
                         </div>
                       </div>
 
@@ -560,7 +560,7 @@ export default function DocsPage() {
                         <p className="text-sm text-zinc-400 mb-2">Open Terminal and run:</p>
                         <div className="bg-black/50 p-3 rounded-lg font-mono text-sm">
                           <div className="text-white">codentis --version</div>
-                          <div className="text-cyan-400 mt-1">Codentis v1.4.3</div>
+                          <div className="text-cyan-400 mt-1">Codentis v1.5.1</div>
                         </div>
                       </div>
                     </div>
@@ -603,7 +603,7 @@ export default function DocsPage() {
                         <p className="text-sm font-semibold text-cyan-400 mb-2">Verify Installation</p>
                         <div className="bg-black/50 p-3 rounded-lg font-mono text-sm">
                           <div className="text-white">codentis --version</div>
-                          <div className="text-cyan-400 mt-1">Codentis v1.4.3</div>
+                          <div className="text-cyan-400 mt-1">Codentis v1.5.1</div>
                         </div>
                       </div>
                     </div>
@@ -765,7 +765,7 @@ export default function DocsPage() {
                     <p className="text-sm text-zinc-400 mb-3">First, make sure Codentis is installed correctly by checking the version:</p>
                     <div className="bg-black/50 p-4 rounded-lg font-mono text-sm space-y-1">
                       <div className="text-white">$ codentis --version</div>
-                      <div className="text-cyan-400 mt-1">Codentis v1.4.3</div>
+                      <div className="text-cyan-400 mt-1">Codentis v1.5.1</div>
                     </div>
                     <p className="text-sm text-zinc-400 mt-3">If you see the version number, you're ready to go! If not, head to the <button onClick={() => setActiveSection("installation")} className="text-cyan-400 hover:text-cyan-300 underline">Installation</button> section.</p>
                   </div>
@@ -2462,7 +2462,7 @@ testing = "Always include unit tests"`}</pre>
                       <div className="text-zinc-500"># Usage</div>
                       <div className="text-white">$ codentis version</div>
                       <div className="text-zinc-400 mt-1">╭──────────────────────────────────────────────────────────────╮</div>
-                      <div className="text-zinc-400">│ Codentis v1.4.3                                              │</div>
+                      <div className="text-zinc-400">│ Codentis v1.5.1                                              │</div>
                       <div className="text-zinc-400">│                                                              │</div>
                       <div className="text-zinc-400">│ An intelligent CLI AI agent for developers                  │</div>
                       <div className="text-zinc-400">│ Python 3.14.2                                                │</div>
@@ -2471,7 +2471,7 @@ testing = "Always include unit tests"`}</pre>
                     <p className="text-sm text-zinc-400 mb-2"><strong>Alternative:</strong> Use <code className="text-cyan-300 bg-black/50 px-1 rounded">codentis --version</code> for a simple one-line output:</p>
                     <div className="bg-black/50 p-3 rounded-lg font-mono text-sm mb-3">
                       <div className="text-white">$ codentis --version</div>
-                      <div className="text-cyan-400 mt-1">Codentis v1.4.3</div>
+                      <div className="text-cyan-400 mt-1">Codentis v1.5.1</div>
                     </div>
                     <p className="text-[13px] sm:text-sm text-zinc-400"><strong>Use when:</strong> Checking if you have the latest version or reporting issues.</p>
                   </div>
@@ -2893,7 +2893,7 @@ testing = "Always include unit tests"`}</pre>
                     <p className="text-sm text-zinc-400 mb-2">Or check your current version:</p>
                     <div className="bg-black/50 p-3 rounded-lg font-mono text-sm space-y-1">
                       <div className="text-white">$ codentis --version</div>
-                      <div className="text-cyan-400 mt-1">Codentis v1.4.3</div>
+                      <div className="text-cyan-400 mt-1">Codentis v1.5.1</div>
                     </div>
                   </div>
 

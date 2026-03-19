@@ -19,6 +19,7 @@ class AgentEventType(Enum):
     # Tool calls
     TOOL_CALL_START = 'tool_call_start'
     TOOL_CALL_COMPLETE = 'tool_call_complete'
+    TOOL_CALL_PROGRESS = 'tool_call_progress'
     
     # Permission requests
     PERMISSION_REQUEST = 'permission_request'
@@ -104,4 +105,12 @@ class AgentEvent:
                 "command": command,
                 "reason": reason
             }
+        )
+
+    @classmethod
+    def tool_call_progress(cls, call_id: str, status: str) -> "AgentEvent":
+        """Emitted while a long-running tool (e.g. sub-agent) is still working."""
+        return cls(
+            type=AgentEventType.TOOL_CALL_PROGRESS,
+            data={"call_id": call_id, "status": status}
         )

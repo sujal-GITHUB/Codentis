@@ -13,6 +13,8 @@ class ConfigManager:
     def __init__(self):
         self.config_dir = Path(user_config_dir("codentis", appauthor=False))
         self.config_file = self.config_dir / "config.json"
+        self._config_cache: Dict[str, Any] | None = None
+        self._config_cache_timestamp = 0
     
     def ensure_config_dir(self) -> None:
         """Create config directory if it doesn't exist."""
@@ -23,13 +25,23 @@ class ConfigManager:
         return self.config_file.exists()
     
     def load_config(self) -> Dict[str, Any]:
-        """Load configuration from file."""
+        """Load configuration from file with caching."""
+        from time import time
+        
+        # Check if cache is still valid (1 minute)
+        current_time = time()
+        if self._config_cache is not None and (current_time - self._config_cache_timestamp) < 60:
+            return self._config_cache
+        
         if not self.config_exists():
             return {}
         
         try:
             with open(self.config_file, 'r', encoding='utf-8') as f:
-                return json.load(f)
+                config = json.load(f)
+                self._config_cache = config
+                self._config_cache_timestamp = current_time
+                return config
         except (json.JSONDecodeError, IOError) as e:
             logger.error(f"Failed to load config: {e}")
             return {}
@@ -41,6 +53,7 @@ class ConfigManager:
         try:
             with open(self.config_file, 'w', encoding='utf-8') as f:
                 json.dump(config, f, indent=2)
+            self._config_cache = None  # Invalidate cache
         except IOError as e:
             logger.error(f"Failed to save config: {e}")
             raise
@@ -77,3 +90,8 @@ class ConfigManager:
     def get_provider(self) -> Optional[str]:
         """Get AI provider from config."""
         return self.get('provider')
+    
+    def clear_cache(self) -> None:
+        """Clear configuration cache."""
+        self._config_cache = None
+        self._config_cache_timestamp = 0

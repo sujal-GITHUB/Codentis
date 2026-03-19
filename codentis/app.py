@@ -31,6 +31,31 @@ class CLI:
         self.keyboard_thread = None
         self.interrupted = False
         self._original_sigint_handler = None
+        
+        # Cache frequently accessed tools
+        self._tool_kinds = {}
+        self._thinking_messages = {
+            "read_file": "Reading",
+            "write_file": "Writing",
+            "edit_file": "Editing",
+            "apply_patch": "Applying changes",
+            "shell": "Executing",
+            "list_dir": "Exploring",
+            "grep": "Searching",
+            "glob": "Finding files",
+            "web_search": "Searching web",
+            "web_fetch": "Fetching content",
+            "ask_user": "Waiting for input",
+        }
+        self._long_running_tools = {
+            "write_file",
+            "edit_file", 
+            "apply_patch",
+            "shell",
+            "web_search",
+            "web_fetch",
+            "grep",
+        }
     
     def _setup_signal_handlers(self):
         """Set up signal handlers for interactive mode."""
@@ -81,7 +106,7 @@ class CLI:
                             pass  # Ignore keyboard errors
                 finally:
                     termios.tcsetattr(sys.stdin, termios.TCSADRAIN, old_settings)
-        except Exception as e:
+        except Exception:
             # Silently fail if keyboard listener can't start
             pass
     
@@ -100,42 +125,34 @@ class CLI:
     
     def _get_thinking_message(self, tool_name: str) -> str:
         """Get appropriate thinking message based on tool being used."""
-        thinking_messages = {
-            "read_file": "Reading",
-            "write_file": "Writing",
-            "edit_file": "Editing",
-            "apply_patch": "Applying changes",
-            "shell": "Executing",
-            "list_dir": "Exploring",
-            "grep": "Searching",
-            "glob": "Finding files",
-            "web_search": "Searching web",
-            "web_fetch": "Fetching content",
-            "ask_user": "Waiting for input",
-        }
-        return thinking_messages.get(tool_name, "Processing")
+        return self._thinking_messages.get(tool_name, "Processing")
     
     def _should_show_thinking(self, tool_name: str) -> bool:
         """Determine if thinking indicator should be shown for this tool."""
-        # Only show for tools that typically take longer
-        long_running_tools = {
-            "write_file",
-            "edit_file", 
-            "apply_patch",
-            "shell",
-            "web_search",
-            "web_fetch",
-            "grep",
-        }
-        return tool_name in long_running_tools
+        return tool_name in self._long_running_tools
     
     def get_tool_kind(self, tool_name: str) -> str | None:
         if not self.agent or not self.agent.session:
             return None
         
-        tool = self.agent.session.tool_registry.get(tool_name)
-        return tool.kind.value if tool else None
-    
+        # Cache tool kinds to avoid repeated lookups
+        if tool_name not in self._tool_kinds:
+            tool = self.agent.session.tool_registry.get(tool_name)
+            self._tool_kinds[tool_name] = tool.kind.value if tool else None
+        
+        return self._tool_kinds[tool_name]
+
+    def _attach_subagent_progress(self, tool_name: str):
+        """If the tool being called is a sub-agent, attach a live progress callback to the registry."""
+        if not self.agent or not self.agent.session:
+            return
+        if tool_name.startswith("subagent_"):
+            def _cb(status: str):
+                self.tui.update_thinking(status)
+            self.agent.session.tool_registry.progress_callback = _cb
+        else:
+            self.agent.session.tool_registry.progress_callback = None
+
     async def run_single(self, message: str):
         """Run a single query with same TUI styling as interactive mode."""
         async with Agent(self.config) as agent:
@@ -165,8 +182,13 @@ class CLI:
                             event.data.get("arguments", {})
                         )
                         
-                        # Only start thinking for long-running tools
-                        if self._should_show_thinking(tool_name):
+                        # Attach progress callback for sub-agents
+                        self._attach_subagent_progress(tool_name)
+                        
+                        # Start thinking: always for subagent tools, selectively for others
+                        if tool_name.startswith("subagent_"):
+                            self.tui.start_thinking("Processing")
+                        elif self._should_show_thinking(tool_name):
                             thinking_msg = self._get_thinking_message(tool_name)
                             self.tui.start_thinking(thinking_msg)
                     
@@ -351,7 +373,7 @@ class CLI:
                             if WINDOWS:
                                 # Windows-specific input handling with Ctrl+C detection
                                 import msvcrt
-                                print(f"\n{self.tui.BOLD}❯{self.tui.RESET} ", end="", flush=True)
+                                print(f"\n{self.tui.BOLD}\❯{self.tui.RESET} ", end="", flush=True)
                                 user_input = ""
                                 
                                 while True:
@@ -403,7 +425,7 @@ class CLI:
                                 # Unix/Linux input handling
                                 def get_input():
                                     try:
-                                        return input(f"\n{self.tui.BOLD}❯{self.tui.RESET} ").strip()
+                                        return input(f"\n{self.tui.BOLD}\❯{self.tui.RESET} ").strip()
                                     except KeyboardInterrupt:
                                         return None  # Signal interruption
                                 
@@ -511,11 +533,16 @@ class CLI:
                         event.data.get("arguments", {})
                     )
                     
-                    # Only start thinking for long-running tools
-                    if self._should_show_thinking(tool_name):
+                    # Attach progress callback for sub-agents
+                    self._attach_subagent_progress(tool_name)
+                    
+                    # Start thinking: always for subagent tools, selectively for others
+                    if tool_name.startswith("subagent_"):
+                        self.tui.start_thinking("Processing")
+                    elif self._should_show_thinking(tool_name):
                         thinking_msg = self._get_thinking_message(tool_name)
                         self.tui.start_thinking(thinking_msg)
-                
+            
                 # Stop thinking when tool completes and start thinking for next decision
                 elif event.type == AgentEventType.TOOL_CALL_COMPLETE:
                     self.tui.stop_thinking()
@@ -642,7 +669,7 @@ class CLI:
                     
                     # Start thinking indicator after tool completion - agent is deciding next steps
                     self.tui.start_thinking("Thinking")
-            
+        
             # Stop thinking when agent processing is complete
             self.tui.stop_thinking()
             

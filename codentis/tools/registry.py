@@ -4,12 +4,15 @@ from codentis.tools.base import Tool, ToolResult, ToolInvocation
 import logging
 from codentis.tools.builtin import get_all_builtin_tools
 from codentis.config.config import Config
+from codentis.tools.subagents import get_default_subagent_definitions, SubAgentTool
 
 logger = logging.getLogger(__name__)
 
 class ToolRegistry:
-    def __init__(self):
+    def __init__(self, config: Config):
         self.tools: dict[str, Tool] = {}
+        self.config = config
+        self.progress_callback: Any = None  # set by TUI to receive live sub-agent status
     
     def register(self, tool: Tool):
         if tool.name in self.tools:
@@ -35,7 +38,16 @@ class ToolRegistry:
             return None
 
     def get_tools(self) -> list[Tool]:
-        return list(self.tools.values())
+        tools: list[Tool] = []
+
+        for tool in self.tools.values():
+            tools.append(tool)
+
+        if self.config.allowed_tools:
+            allowed_set = set(self.config.allowed_tools)
+            tools = [tool for tool in tools if tool.name in allowed_set]
+        
+        return tools
     
     def get_schemas(self) -> list[dict[str, Any]]:
         return [tool.to_openai_schema() for tool in self.get_tools()]
@@ -63,7 +75,8 @@ class ToolRegistry:
         
         invocation = ToolInvocation(
             params=params,
-            cwd=cwd
+            cwd=cwd,
+            metadata={"progress_callback": self.progress_callback} if self.progress_callback else {}
         )
 
         try:
@@ -81,9 +94,20 @@ class ToolRegistry:
         return result
 
 def create_default_registry(config: Config) -> ToolRegistry:
-    registry = ToolRegistry()
+    registry = ToolRegistry(config)
 
     for tool_class in get_all_builtin_tools():
         registry.register(tool_class(config))
+
+    for subagent_definition in get_default_subagent_definitions():
+        registry.register(SubAgentTool(config, subagent_definition))
     
     return registry
+
+
+def create_subagent_registry(config: Config) -> ToolRegistry:
+    """Registry for sub-agents: builtin tools only. No recursive sub-agent tools."""
+    registry = ToolRegistry(config)
+    for tool_class in get_all_builtin_tools():
+        registry.register(tool_class(config))
+    return registry

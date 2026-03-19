@@ -153,12 +153,12 @@ class TUI:
             while self.thinking_active:
                 frame = frames[idx % len(frames)]
                 msg = self.thinking_message
-                print(f"\r{self.DIM}{frame} {msg}...{self.RESET}", end="", flush=True)
+                print(f"\r{self.DIM}{frame} {msg}...\033[K{self.RESET}", end="", flush=True)
                 idx += 1
                 import time
                 time.sleep(0.1)
             # Clear the line when done
-            print(f"\r{' ' * 50}\r", end="", flush=True)
+            print(f"\r\033[2K\r", end="", flush=True)
         
         self.thinking_thread = threading.Thread(target=animate, daemon=True)
         self.thinking_thread.start()
@@ -349,12 +349,50 @@ class TUI:
         output = ""
         buffer = self.markdown_buffer
         
-        # Check for complete markdown patterns and render them
+        # 1. Headers: (anywhere in buffer, complete when newline found)
+        header_match = re.search(r'(^|\n)(#{1,6})\s+([^\n]+)\n', buffer)
+        if header_match:
+            before = buffer[:header_match.start()]
+            prefix = header_match.group(1) # \n or empty
+            header_text = header_match.group(3)
+            after = buffer[header_match.end():]
+            
+            output = self._apply_inline_markdown(before) + prefix + f'{self.CYAN}{self.BOLD}{header_text}{self.RESET}\n'
+            self.markdown_buffer = after
+            return output
         
-        # Bold: **text** (only if pattern is complete)
+        # 2. Code Blocks: ```lang\ncode\n```
+        code_block_match = re.search(r'```([a-zA-Z0-9]*)\n(.*?)\n```', buffer, re.DOTALL)
+        if code_block_match:
+            before = buffer[:code_block_match.start()]
+            lang = code_block_match.group(1)
+            code_content = code_block_match.group(2)
+            after = buffer[code_block_match.end():]
+            
+            styled_code = "\n".join([f"  {self.DIM}{line}{self.RESET}" for line in code_content.split("\n")])
+            output = self._apply_inline_markdown(before) + f"\n{self.GRAY}┌─ {lang}{self.RESET}\n{styled_code}\n{self.GRAY}└─{self.RESET}\n"
+            self.markdown_buffer = after
+            return output
+
+        # 3. List items (bullets and numbers)
+        list_match = re.search(r'(^|\n)(\s*)([-*+]|\d+\.)\s+([^\n]+)\n', buffer)
+        if list_match:
+            before = buffer[:list_match.start()]
+            prefix = list_match.group(1)
+            indent = list_match.group(2)
+            bullet = list_match.group(3)
+            item_text = list_match.group(4)
+            after = buffer[list_match.end():]
+            
+            # Use a dot for bullets, keep number for numbered lists
+            display_bullet = f"{self.CYAN}•{self.RESET}" if bullet in "-*+" else f"{self.CYAN}{bullet}{self.RESET}"
+            output = self._apply_inline_markdown(before) + prefix + f'{indent}{display_bullet} {item_text}\n'
+            self.markdown_buffer = after
+            return output
+
+        # 4. Bold: **text**
         bold_match = re.search(r'\*\*([^*]+)\*\*', buffer)
         if bold_match:
-            # Found complete bold pattern
             before = buffer[:bold_match.start()]
             bold_text = bold_match.group(1)
             after = buffer[bold_match.end():]
@@ -363,28 +401,7 @@ class TUI:
             self.markdown_buffer = after
             return output
         
-        # Headers: ## Text (at start of line, complete when newline found)
-        header_match = re.match(r'^(#{1,6})\s+([^\n]+)\n', buffer)
-        if header_match:
-            header_text = header_match.group(2)
-            after = buffer[header_match.end():]
-            
-            output = f'{self.CYAN}{self.BOLD}{header_text}{self.RESET}\n'
-            self.markdown_buffer = after
-            return output
-        
-        # List items: - Item or * Item (complete when newline found)
-        list_match = re.match(r'^(\s*)([-*])\s+([^\n]+)\n', buffer, re.MULTILINE)
-        if list_match:
-            indent = list_match.group(1)
-            item_text = list_match.group(3)
-            after = buffer[list_match.end():]
-            
-            output = f'{indent}{self.CYAN}•{self.RESET} {item_text}\n'
-            self.markdown_buffer = after
-            return output
-        
-        # Inline code: `code` (only if pattern is complete)
+        # 5. Inline code: `code`
         code_match = re.search(r'`([^`]+)`', buffer)
         if code_match:
             before = buffer[:code_match.start()]
@@ -395,21 +412,28 @@ class TUI:
             self.markdown_buffer = after
             return output
         
-        # If buffer has complete lines without markdown, output them
-        if '\n' in buffer and not any(pattern in buffer for pattern in ['**', '##', '`', '- ', '* ']):
+        # If buffer has complete lines without markdown patterns potentially starting, output them
+        if '\n' in buffer and not any(p in buffer for p in ['**', '##', '```', '`', '- ', '* ', '1. ']):
             lines = buffer.split('\n')
             if len(lines) > 1:
-                # Output all complete lines except the last (incomplete) one
                 output = '\n'.join(lines[:-1]) + '\n'
                 self.markdown_buffer = lines[-1]
                 return output
         
-        # If buffer is getting long without patterns, output some of it
-        if len(buffer) > 100 and not any(pattern in buffer[-50:] for pattern in ['**', '##', '`', '- ', '* ']):
-            # Output first 50 chars
-            output = buffer[:50]
-            self.markdown_buffer = buffer[50:]
-            return output
+        # If buffer is getting very long, output some of it to keep things moving
+        if len(buffer) > 200:
+            # Output first 100 chars, being careful not to break an ongoing pattern
+            # (simple heuristic: don't break if we see start of a pattern near the end)
+            safe_to_output = True
+            for p in ['**', '#', '`', '-', '*', '1.']:
+                if p in buffer[80:100]:
+                    safe_to_output = False
+                    break
+            
+            if safe_to_output:
+                output = buffer[:100]
+                self.markdown_buffer = buffer[100:]
+                return output
         
         return ""
     
@@ -426,8 +450,18 @@ class TUI:
         # Headers: ## Text -> colored and bold
         result = re.sub(r'^(#{1,6})\s+(.+)$', f'{self.CYAN}{self.BOLD}\\2{self.RESET}', result, flags=re.MULTILINE)
         
-        # List items: - Item or * Item -> colored bullet
-        result = re.sub(r'^(\s*)([-*])\s+', f'\\1{self.CYAN}•{self.RESET} ', result, flags=re.MULTILINE)
+        # List items: - Item or * Item or 1. Item -> colored bullet/number
+        result = re.sub(r'^(\s*)([-*+]|\d+\.)\s+', f'\\1{self.CYAN}\\2{self.RESET} ', result, flags=re.MULTILINE)
+        
+        # Replace bullets with dots for -*+ after styling if desired, but keep numbers
+        def replace_bullet(match):
+            indent = match.group(1)
+            bullet = match.group(2)
+            if bullet in "-*+":
+                return f"{indent}{self.CYAN}•{self.RESET} "
+            return f"{indent}{self.CYAN}{bullet}{self.RESET} "
+            
+        result = re.sub(r'^(\s*)([-*+]|\d+\.)\s+', replace_bullet, result, flags=re.MULTILINE)
         
         # Inline code: `code` -> styled
         result = re.sub(r'`([^`]+)`', f'{self.YELLOW}\\1{self.RESET}', result)

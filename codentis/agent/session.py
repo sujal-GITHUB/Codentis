@@ -1,17 +1,20 @@
 from codentis.config.config import Config
 from codentis.client.llm_client import LLMClient
 from codentis.context.contextManager import ContextManager
-from codentis.tools.registry import create_default_registry
+from codentis.tools.registry import create_default_registry, create_subagent_registry
 from datetime import datetime
 import uuid
 
 class Session:
-    def __init__(self, config: Config):
+    def __init__(self, config: Config, is_subagent: bool = False):
         self.config = config
         self.client = LLMClient(
             config = self.config
         )
-        self.tool_registry = create_default_registry(self.config)
+        if is_subagent:
+            self.tool_registry = create_subagent_registry(self.config)
+        else:
+            self.tool_registry = create_default_registry(self.config)
         self.context_manager = ContextManager(
             config = self.config,
             tools = self.tool_registry.get_tools()

@@ -71,6 +71,7 @@ class FileDiff:
 class ToolInvocation:
     params: dict[str, Any] 
     cwd: Path
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 @dataclass
 class ToolResult:

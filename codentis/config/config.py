@@ -2,6 +2,7 @@ from pydantic import BaseModel, Field
 from enum import Enum
 from pathlib import Path
 import platform
+from typing import Any
 
 class ModelConfig(BaseModel):
     name: str = "gpt-4o"
@@ -62,3 +63,6 @@ class Config(BaseModel):
             errors.append("Working directory does not exist : " + str(self.cwd))
         
         return errors
+
+    def to_dict(self)->dict[str, Any]:
+        return self.model_dump(mode="json")

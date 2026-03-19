@@ -7,7 +7,7 @@ PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$PROJECT_ROOT"
 
 APP_NAME="codentis"
-VERSION="1.4.3"  # This version is updated by release_version.py script
+VERSION="1.5.1"  # This version is updated by release_version.py script
 ARCH="amd64"
 
 echo "Building .deb package for $APP_NAME v$VERSION..."

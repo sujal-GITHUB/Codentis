@@ -22,7 +22,7 @@ def get_version():
             pass
     
     # Default fallback
-    return "1.4.3"
+    return "1.5.1"
 
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()

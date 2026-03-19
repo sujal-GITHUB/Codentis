@@ -1,7 +1,7 @@
 'use client';
 import { useState, useMemo } from 'react';
 
-const VERSION = '1.4.3';
+const VERSION = '1.5.1';
 
 // Simple icons as SVG components
 const WindowsIcon = () => (

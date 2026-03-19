@@ -8,15 +8,16 @@ from codentis.agent.session import Session
 import json
 
 class Agent:
-    def __init__(self, config: Config):
+    def __init__(self, config: Config, is_subagent: bool = False):
         self.config = config
+        self.is_subagent = is_subagent
         self.session: Session | None = None
 
     async def run(self, message: str)->AsyncGenerator[AgentEvent, None]:
         try:
             yield AgentEvent.agent_start(message)
             if not self.session:
-                self.session = Session(self.config)
+                self.session = Session(self.config, is_subagent=self.is_subagent)
             self.session.context_manager.add_user_message(message)
 
             final_response: str | None = None
@@ -237,6 +238,28 @@ class Agent:
 
                 for tool_result in tool_call_results:
                     self.session.context_manager.add_tool_result(tool_result.tool_call_id, tool_result.content, tool_result.is_error)
+            
+            # max_turns exhausted — force one final turn to get a text summary
+            if self.is_subagent:
+                self.session.context_manager.add_user_message(
+                    "You have reached the maximum number of investigation turns. "
+                    "Based on all the files and code you have read so far, provide your complete "
+                    "final answer now. Do NOT use any more tools."
+                )
+                final_summary = ""
+                try:
+                    async for event in self.session.client.chat_completion(
+                        self.session.context_manager.get_messages(),
+                        tools=None,  # force text-only response
+                        stream=True
+                    ):
+                        if event.type == StreamEventType.TEXT_DELTA and event.text_delta:
+                            final_summary += event.text_delta.content
+                            yield AgentEvent.text_delta(event.text_delta.content)
+                        elif event.type == StreamEventType.MESSAGE_COMPLETE:
+                            yield AgentEvent.text_complete(final_summary)
+                except Exception:
+                    pass  # best-effort
         
         except KeyboardInterrupt:
             # Handle interruption during the entire agentic loop
