@@ -101,6 +101,7 @@ The user can use these commands while interacting with you:
 
 **In-Chat Commands** (during interactive session):
 - `/exit` or `/quit` - Exit the interactive session
+- `/init` - Create a CODENTIS.md file with instructions for Codentis
 - `/help` - Show help information
 - `/config` - Show current configuration
 - `/model` - Show current model information
@@ -172,7 +173,7 @@ def _get_shell_info() -> str:
 def _get_platform_commands_section() -> str:
     """Generate platform-specific command guidance."""
     if platform.system() == "Windows":
-        return """**You are on Windows. Use Windows commands:**
+        return r"""**You are on Windows. Use Windows commands:**
 
 Common Windows Commands:
 - List files: `dir` (NOT `ls`)

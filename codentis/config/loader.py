@@ -19,7 +19,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 CONFIG_FILE_NAME = "codentis.toml"
-AGENT_MD_FILE = "agent.md"
+CODENTIS_MD_FILE = "CODENTIS.md"
 
 def get_config_dir()->Path:
     return Path(user_config_dir("codentis", appauthor=False))
@@ -71,15 +71,22 @@ def merge_dicts(a: dict[str, Any], b: dict[str, Any])->dict[str, Any]:
             result[k] = v
     return result
 
-def get_agent_md_files(cwd: Path)->Path | None:
+def get_codentis_md_files(cwd: Path)->str | None:
     curr = cwd.resolve()
 
-    if curr.is_dir():
-        agent_dir = curr / ".agent"
-        agent_md_file = agent_dir/AGENT_MD_FILE
-        if agent_md_file.is_file():
-            content = agent_md_file.read_text(encoding='utf-8')
+    # Look for CODENTIS.md in current directory and parent directories up to root
+    while curr != curr.parent:
+        codentis_md_file = curr / CODENTIS_MD_FILE
+        if codentis_md_file.is_file():
+            content = codentis_md_file.read_text(encoding='utf-8')
             return content
+        curr = curr.parent
+    
+    # Check root directory as well
+    codentis_md_file = curr / CODENTIS_MD_FILE
+    if codentis_md_file.is_file():
+        content = codentis_md_file.read_text(encoding='utf-8')
+        return content
 
     return None
 
@@ -124,9 +131,9 @@ def load_config(cwd: Path | None)->Config:
         config_dict["cwd"] = cwd
     
     if "developer_instructions" not in config_dict:
-        agent_md_content = get_agent_md_files(cwd)
-        if agent_md_content:
-            config_dict['developer_instructions'] = agent_md_content
+        codentis_md_content = get_codentis_md_files(cwd)
+        if codentis_md_content:
+            config_dict['developer_instructions'] = codentis_md_content
     
     if "user_instructions" not in config_dict:
         config_dict["user_instructions"] = None

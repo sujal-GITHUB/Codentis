@@ -373,7 +373,7 @@ class CLI:
                             if WINDOWS:
                                 # Windows-specific input handling with Ctrl+C detection
                                 import msvcrt
-                                print(f"\n{self.tui.BOLD}\❯{self.tui.RESET} ", end="", flush=True)
+                                print(f"\n{self.tui.BOLD}❯{self.tui.RESET} ", end="", flush=True)
                                 user_input = ""
                                 
                                 while True:
@@ -425,7 +425,7 @@ class CLI:
                                 # Unix/Linux input handling
                                 def get_input():
                                     try:
-                                        return input(f"\n{self.tui.BOLD}\❯{self.tui.RESET} ").strip()
+                                        return input(f"\n{self.tui.BOLD}❯{self.tui.RESET} ").strip()
                                     except KeyboardInterrupt:
                                         return None  # Signal interruption
                                 
@@ -449,6 +449,10 @@ class CLI:
                         # Check for special commands
                         if user_input.lower() in ("/exit", "/quit", "exit", "quit"):
                             return  # Exit the entire interactive session
+                        elif user_input.lower() in ("/init", "init"):
+                            # Create CODENTIS.md file with instructions
+                            await self._create_codentis_md()
+                            continue
                         elif user_input.lower() == "/list":
                             # List all tool outputs
                             self.tui.list_tools()
@@ -694,3 +698,99 @@ class CLI:
                 self.tui.stop_thinking()
                 if assistant_streaming:
                     self.tui.end_assistant()
+    
+    async def _create_codentis_md(self):
+        """Create a CODENTIS.md file with instructions for using Codentis."""
+        codentis_md_path = Path(self.config.cwd) / "CODENTIS.md"
+        
+        if codentis_md_path.exists():
+            print(f"{self.tui.YELLOW}CODENTIS.md already exists. Overwrite? (y/N):{self.tui.RESET} ", end="", flush=True)
+            try:
+                response = input().strip().lower()
+                if response not in ['y', 'yes']:
+                    print(f"{self.tui.CYAN}Cancelled. CODENTIS.md was not modified.{self.tui.RESET}")
+                    return
+            except (KeyboardInterrupt, EOFError):
+                print(f"\n{self.tui.CYAN}Cancelled. CODENTIS.md was not modified.{self.tui.RESET}")
+                return
+        
+        content = f"""# Codentis Instructions
+
+Welcome to your project! This file contains instructions for Codentis, your AI coding assistant.
+
+## About This Project
+
+This is a {Path(self.config.cwd).name} project. Codentis can help you with:
+
+- **Code Development**: Writing, editing, and refactoring code
+- **File Management**: Creating, reading, and organizing project files
+- **Testing & Debugging**: Running tests and fixing issues
+- **Documentation**: Writing and updating documentation
+- **Build & Deploy**: Managing build processes and deployment
+
+## Project Structure
+
+```
+{Path(self.config.cwd).name}/
+├── CODENTIS.md          # This file - instructions for Codentis
+├── README.md            # Project documentation (if exists)
+├── src/                 # Source code (typical location)
+├── tests/               # Test files (typical location)
+└── ...                  # Other project files
+```
+
+## Getting Started
+
+1. **Ask Codentis for help**: Just type your request in natural language
+   - "Create a new Python script for data processing"
+   - "Add unit tests for the main function"
+   - "Fix the bug in the authentication module"
+
+2. **Use Codentis commands**:
+   - `/list` - Show all tool outputs with IDs
+   - `/e <id>` - Expand/collapse specific tool output
+   - `/e` - Expand/collapse last tool output
+   - `/exit` - Quit Codentis
+
+3. **Let Codentis explore**: Codentis can read your existing code and understand your project structure
+
+## Best Practices
+
+- **Be specific**: "Add error handling to the login function" is better than "fix the code"
+- **Provide context**: Mention relevant files, functions, or requirements
+- **Review changes**: Always review code changes before committing
+- **Ask questions**: Codentis can explain code, suggest improvements, and help with decisions
+
+## Example Requests
+
+- "Analyze the current codebase and suggest improvements"
+- "Create a comprehensive test suite for the API endpoints"
+- "Add logging to all error cases in the application"
+- "Refactor the database connection code to use connection pooling"
+- "Generate documentation for all public functions"
+
+## Project-Specific Notes
+
+Add any project-specific information here:
+- Coding standards and conventions
+- Build and deployment instructions
+- Testing requirements
+- Dependencies and setup notes
+- Architecture decisions
+
+---
+
+*This file was generated by Codentis v{self.config.version if hasattr(self.config, 'version') else '1.5.1'}*
+*You can edit this file to add project-specific instructions for Codentis*
+"""
+        
+        try:
+            with open(codentis_md_path, 'w', encoding='utf-8') as f:
+                f.write(content)
+            
+            print(f"{self.tui.GREEN}✓ Created CODENTIS.md with project instructions{self.tui.RESET}")
+            print(f"{self.tui.DIM}Location: {codentis_md_path}{self.tui.RESET}")
+            print(f"{self.tui.CYAN}You can edit this file to add project-specific instructions for Codentis.{self.tui.RESET}")
+            
+        except Exception as e:
+            print(f"{self.tui.RED}Error creating CODENTIS.md: {str(e)}{self.tui.RESET}")

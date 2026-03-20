@@ -28,6 +28,7 @@ codentis/                      # Main package
 ├── tools/                    # Tool system
 │   ├── base.py              # Tool abstractions
 │   ├── registry.py          # Tool registry
+│   ├── subagents.py         # Sub-agent orchestration system
 │   └── builtin/             # Built-in tools
 │       ├── read_file.py
 │       ├── write_file.py
@@ -38,7 +39,8 @@ codentis/                      # Main package
 │       ├── glob.py
 │       ├── shell.py
 │       ├── ask_user.py      # User input tool
-│       ├── todo.py          # TODO management
+│       ├── memory.py            # Persistent memory storage
+      ├── todo.py          # TODO management
 │       ├── web_search.py
 │       └── web_fetch.py
 ├── ui/                       # Terminal UI
@@ -98,6 +100,34 @@ graph TD
 ```
 
 ## Core Components
+
+### CODENTIS.md Specification
+
+Codentis implements a project-specific instruction system through `CODENTIS.md` files:
+
+- **Purpose**: Allows developers to provide project-specific instructions, coding conventions, and context to the AI agent.
+- **Location**: Can appear anywhere within the repository hierarchy.
+- **Scope**: Each `CODENTIS.md` file applies to the entire directory tree rooted at the folder containing it.
+- **Precedence**: More deeply nested files take precedence over parent directory files.
+- **Auto-loading**: The system automatically searches for and loads `CODENTIS.md` files from the current working directory up to the repository root.
+- **Content**: Can include coding standards, architecture decisions, build instructions, testing requirements, or any project-specific guidance.
+
+**Loading Behavior**:
+```python
+def get_codentis_md_files(cwd: Path) -> str | None:
+    curr = cwd.resolve()
+    
+    # Walk up directory tree looking for CODENTIS.md
+    while curr != curr.parent:
+        codentis_md_file = curr / "CODENTIS.md"
+        if codentis_md_file.is_file():
+            return codentis_md_file.read_text(encoding='utf-8')
+        curr = curr.parent
+    
+    return None
+```
+
+The content is loaded as `developer_instructions` in the system prompt, ensuring the agent follows project-specific guidelines for all operations.
 
 ### 1. Client Layer (`client/`)
 Handles all external communication with Large Language Models.
@@ -180,6 +210,34 @@ Contains the core agentic loop and event orchestration.
 ### 4. Tool System (`tools/`)
 A pluggable tool execution layer with validation, kind-based categorisation, and schema export.
 
+#### Sub-Agent System (`subagents.py`)
+Codentis includes a sophisticated sub-agent orchestration system that allows spawning specialized agents for complex tasks:
+
+- **`SubAgentDefinition`**: Defines sub-agent configuration including name, description, goal prompt, allowed tools, max turns, and timeout.
+- **`SubAgentTool`**: Base class for creating sub-agent tools that can spawn and manage child agents.
+- **Specialized Sub-Agents**: Multiple pre-configured sub-agents for different tasks:
+  - `subagent_codebase_investigator` - Deep codebase analysis and exploration
+  - `subagent_code_reviewer` - Code quality review and suggestions
+  - `subagent_code_debugger` - Bug identification and fixing
+  - `subagent_code_modifier` - Code modification across multiple files
+  - `subagent_code_writer` - New feature and component creation
+  - `subagent_code_tester` - Test suite generation and validation
+  - `subagent_code_refactorer` - Code restructuring and optimization
+  - `subagent_code_migrator` - Code migration and modernization
+
+**Sub-Agent Execution Flow:**
+```python
+# Sub-agent spawns with isolated config and context
+subagent_config = Config(**config_dict)
+subagent_config.max_turns = definition.max_turns
+
+# Runs independently with specialized prompt and tools
+agent = Agent(subagent_config)
+result = await agent.run(goal_message)
+```
+
+Sub-agents provide specialized expertise for complex multi-step tasks while maintaining isolation from the parent agent's context.
+
 - **`base.py`**: Core abstractions:
   - `ToolKind` — enum: `READ`, `WRITE`, `SHELL`, `NETWORK`, `MEMORY`, `MCP`.
   - `ToolInvocation` — carries `params` and `cwd` for an execution request.
@@ -203,6 +261,7 @@ A pluggable tool execution layer with validation, kind-based categorisation, and
   - **`apply_patch.py`** (`ApplyPatchTool`): Similar to `EditFileTool` but supports multiple non-contiguous edits in a single call.
   - **`shell.py`** (`ShellTool`): Executes shell commands with platform-specific handling, permission system for write operations, captures STDOUT/STDERR separately with timeout limits.
   - **`ask_user.py`** (`AskUserTool`): Prompts user for input with support for multiple choice or freeform responses.
+  - **`memory.py`** (`MemoryTool`): Provides persistent memory storage across sessions for user preferences, project context, and other information that should survive between conversations.
   - **`todo.py`** (`TodoTool`): Manages TODO items for tracking tasks and progress.
   - **`web_search.py`** (`WebSearchTool`): Searches the web for information using DuckDuckGo, returning titles, links, and snippets.
   - **`web_fetch.py`** (`WebFetchTool`): Fetches the raw content of a specific web page.
@@ -273,7 +332,7 @@ Manages configuration from multiple sources with a hierarchical loading strategy
   - `api_key` — API key for LLM provider.
   - `base_url` — API endpoint URL.
   - `max_turns` — maximum agentic loop iterations.
-  - `developer_instructions` — loaded from `.agent/agent.md` if present.
+  - `developer_instructions` — loaded from `CODENTIS.md` if present.
   - `shell_environment` — shell command environment policy.
 
 - **`ConfigManager`** (`config_manager.py`): Manages user configuration in JSON format.
@@ -288,7 +347,7 @@ Manages configuration from multiple sources with a hierarchical loading strategy
     3. Project TOML config: `.agent/codentis.toml`
   - Later sources override earlier ones.
   - Merges configurations intelligently (deep merge for nested dicts).
-  - Auto-loads `developer_instructions` from `.agent/agent.md`.
+  - Auto-loads `developer_instructions` from `CODENTIS.md` (searches current directory and parent directories up to root).
 
 - **`setup_wizard.py`**: Interactive first-run configuration.
   - Rich-based prompts for user-friendly setup.
@@ -599,11 +658,15 @@ After installation, the `codentis` command is globally available.
 
 **Project Configuration** (overrides user config):
 - `.agent/codentis.toml` — Project-specific settings
-- `.agent/agent.md` — Developer instructions (auto-loaded)
+- `CODENTIS.md` — Developer instructions (auto-loaded)
 
 **Logs**:
 - Linux/Mac: `~/.local/share/codentis/codentis.log`
 - Windows: `%LOCALAPPDATA%\codentis\codentis.log`
+
+**Memory Storage**:
+- Linux/Mac: `~/.local/share/codentis/memory.json`
+- Windows: `%LOCALAPPDATA%\codentis\memory.json`
 
 ### Dependencies
 Core dependencies (from `requirements.txt`):
@@ -621,6 +684,8 @@ Core dependencies (from `requirements.txt`):
 ## Implemented Features (v1.5.1)
 
 ✅ **Multi-turn agentic loop** - Fully implemented in `agentic_loop()`
+✅ **Sub-agent orchestration** - Specialized agents for codebase analysis, code review, debugging, and modification
+✅ **Persistent memory system** - Cross-session storage for user preferences and project context
 ✅ **Platform detection** - Automatic OS detection with platform-specific command handling
 ✅ **Shell command permissions** - User approval required for write operations
 ✅ **User input tool** - `ask_user` for interactive prompts
