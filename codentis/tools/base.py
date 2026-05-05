@@ -180,19 +180,35 @@ class Tool(abc.ABC):
             output=""
         )
 
-    def to_openai_schema(self)->dict[str, Any]:
+    def to_openai_schema(self) -> dict[str, Any]:
         schema = self.schema
 
         if isinstance(schema, type) and issubclass(schema, BaseModel):
             json_schema = schema.model_json_schema(mode="serialization")
+            
+            def resolve_refs(obj: Any, defs: dict[str, Any]) -> Any:
+                if isinstance(obj, dict):
+                    if "$ref" in obj:
+                        ref_path = obj["$ref"]
+                        if ref_path.startswith("#/$defs/"):
+                            def_name = ref_path.split("/")[-1]
+                            return resolve_refs(defs.get(def_name, {}), defs)
+                    return {k: resolve_refs(v, defs) for k, v in obj.items()}
+                elif isinstance(obj, list):
+                    return [resolve_refs(item, defs) for item in obj]
+                return obj
+
+            defs = json_schema.get("$defs", {})
+            properties = resolve_refs(json_schema.get("properties", {}), defs)
+            required = json_schema.get("required", [])
 
             return {
                 "name": self.name,
                 "description": self.description,
                 "parameters": {
-                    'type': 'object',
-                    'properties': json_schema.get('properties', {}),
-                    'required': json_schema.get('required', [])
+                    "type": "object",
+                    "properties": properties,
+                    "required": required
                 }
             }
 

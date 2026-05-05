@@ -304,3 +304,11 @@ body {
     transform: translateY(-6px);
   }
 }
+/* ── Utilities ── */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}

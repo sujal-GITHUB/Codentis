@@ -88,6 +88,36 @@ sudo apt remove codentis
 
 ---
 
+## 🎩 Fedora / RHEL
+
+### Step 1: Download
+Click the **Download .rpm Package** button.
+
+### Step 2: Install
+
+**Option A: Double-click**
+1. Double-click the downloaded `.rpm` file
+2. Click "Install" in Software Center
+3. Enter your password
+
+**Option B: Terminal**
+```bash
+cd ~/Downloads
+sudo dnf install ./codentis-1.5.1-1.x86_64.rpm
+```
+
+### Step 3: Start Using Codentis
+1. Open Terminal
+2. Type: `codentis`
+3. Follow the first-time setup
+
+### Uninstall
+```bash
+sudo dnf remove codentis
+```
+
+---
+
 ## 🚀 First-Time Setup
 
 When you run `codentis` for the first time:
