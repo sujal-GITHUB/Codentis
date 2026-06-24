@@ -27,6 +27,7 @@ class CLI:
         self.agent: Agent | None = None
         self.config = config
         self.tui = TUI(config)
+        self.interactive_mode = False
         self.keyboard_listener_running = False
         self.keyboard_thread = None
         self.interrupted = False
@@ -112,6 +113,8 @@ class CLI:
     
     def start_keyboard_listener(self):
         """Start the keyboard listener thread."""
+        if not self.interactive_mode:
+            return
         if not self.keyboard_listener_running:
             self.keyboard_listener_running = True
             self.keyboard_thread = threading.Thread(target=self._keyboard_listener, daemon=True)
@@ -122,6 +125,7 @@ class CLI:
         self.keyboard_listener_running = False
         if self.keyboard_thread:
             self.keyboard_thread.join(timeout=1)
+            self.keyboard_thread = None
     
     def _get_thinking_message(self, tool_name: str) -> str:
         """Get appropriate thinking message based on tool being used."""
@@ -331,6 +335,7 @@ class CLI:
     
     async def run_interactive(self):
         """Run interactive mode."""
+        self.interactive_mode = True
         # Show welcome message once
         provider = "OpenAI"
         if self.config.base_url:
@@ -369,17 +374,19 @@ class CLI:
                             continue
                         
                         # Get user input with prompt - handle KeyboardInterrupt properly
+                        self.stop_keyboard_listener()
                         try:
                             if WINDOWS:
                                 # Windows-specific input handling with Ctrl+C detection
                                 import msvcrt
-                                print(f"\n{self.tui.BOLD}❯{self.tui.RESET} ", end="", flush=True)
+                                print(f"\n{self.tui.GRAY}{'─' * 80}{self.tui.RESET}")
+                                print(f"{self.tui.SKY}{self.tui.BOLD}❯{self.tui.RESET} {self.tui.SKY}", end="", flush=True)
                                 user_input = ""
                                 
                                 while True:
                                     # Check if interrupted by signal handler
                                     if self.interrupted:
-                                        print(f"\n{self.tui.YELLOW}Operation interrupted. Type /exit to quit interactive mode.{self.tui.RESET}")
+                                        print(f"{self.tui.RESET}\n{self.tui.YELLOW}Operation interrupted. Type /exit to quit interactive mode.{self.tui.RESET}")
                                         self.interrupted = False
                                         user_input = None
                                         break
@@ -390,13 +397,13 @@ class CLI:
                                         
                                         # Handle Ctrl+C (ASCII 3)
                                         if char == b'\x03':
-                                            print(f"\n{self.tui.YELLOW}Operation interrupted. Type /exit to quit interactive mode.{self.tui.RESET}")
+                                            print(f"{self.tui.RESET}\n{self.tui.YELLOW}Operation interrupted. Type /exit to quit interactive mode.{self.tui.RESET}")
                                             user_input = None
                                             break
                                         
                                         # Handle Enter (ASCII 13)
                                         elif char == b'\r':
-                                            print()  # New line
+                                            print(self.tui.RESET)  # New line and reset style
                                             break
                                         
                                         # Handle Backspace (ASCII 8)
@@ -421,12 +428,18 @@ class CLI:
                                     continue
                                     
                                 user_input = user_input.strip()
+                                print(f"{self.tui.GRAY}{'─' * 80}{self.tui.RESET}")
                             else:
                                 # Unix/Linux input handling
                                 def get_input():
                                     try:
-                                        return input(f"\n{self.tui.BOLD}❯{self.tui.RESET} ").strip()
+                                        print(f"\n{self.tui.GRAY}{'─' * 80}{self.tui.RESET}")
+                                        print(f"{self.tui.SKY}{self.tui.BOLD}❯{self.tui.RESET} {self.tui.SKY}", end="", flush=True)
+                                        user_typed = input().strip()
+                                        print(f"{self.tui.RESET}{self.tui.GRAY}{'─' * 80}{self.tui.RESET}")
+                                        return user_typed
                                     except KeyboardInterrupt:
+                                        print(self.tui.RESET)
                                         return None  # Signal interruption
                                 
                                 loop = asyncio.get_event_loop()
@@ -442,6 +455,8 @@ class CLI:
                         except EOFError:
                             # Handle Ctrl+D or EOF
                             return
+                        finally:
+                            self.start_keyboard_listener()
                         
                         if not user_input:
                             continue
@@ -600,59 +615,63 @@ class CLI:
                             print()
                         
                         # Get user response
-                        if options and not allow_freeform:
-                            # Multiple choice only - be strict about valid options
-                            while True:
-                                try:
-                                    choice = input(f"{self.tui.BOLD}Your choice (1-{len(options)}):{self.tui.RESET} ").strip()
-                                    if not choice:
-                                        print(f"{self.tui.RED}Please enter a number between 1 and {len(options)}{self.tui.RESET}")
-                                        continue
-                                    choice_num = int(choice)
-                                    if 1 <= choice_num <= len(options):
-                                        user_response = options[choice_num - 1]
+                        self.stop_keyboard_listener()
+                        try:
+                            if options and not allow_freeform:
+                                # Multiple choice only - be strict about valid options
+                                while True:
+                                    try:
+                                        choice = input(f"{self.tui.BOLD}Your choice (1-{len(options)}):{self.tui.RESET} ").strip()
+                                        if not choice:
+                                            print(f"{self.tui.RED}Please enter a number between 1 and {len(options)}{self.tui.RESET}")
+                                            continue
+                                        choice_num = int(choice)
+                                        if 1 <= choice_num <= len(options):
+                                            user_response = options[choice_num - 1]
+                                            break
+                                        else:
+                                            print(f"{self.tui.RED}Invalid choice. Please enter a number between 1 and {len(options)}{self.tui.RESET}")
+                                    except ValueError:
+                                        print(f"{self.tui.RED}Invalid input '{choice}'. Please enter a valid number between 1 and {len(options)}{self.tui.RESET}")
+                                    except EOFError:
+                                        print(f"\n{self.tui.RED}Input interrupted. Defaulting to last option{self.tui.RESET}")
+                                        user_response = options[-1] if options else "No"
                                         break
-                                    else:
-                                        print(f"{self.tui.RED}Invalid choice. Please enter a number between 1 and {len(options)}{self.tui.RESET}")
-                                except ValueError:
-                                    print(f"{self.tui.RED}Invalid input '{choice}'. Please enter a valid number between 1 and {len(options)}{self.tui.RESET}")
+                                    except KeyboardInterrupt:
+                                        print(f"\n{self.tui.RED}Operation cancelled by user{self.tui.RESET}")
+                                        user_response = options[-1] if options else "No"
+                                        break
+                            else:
+                                # Freeform or mixed - allow numbers or text
+                                prompt = f"{self.tui.BOLD}Your answer:{self.tui.RESET} " if not options else f"{self.tui.BOLD}Your answer (or number):{self.tui.RESET} "
+                                try:
+                                    user_response = input(prompt).strip()
+                                    if not user_response:
+                                        if options:
+                                            print(f"{self.tui.RED}Please provide an answer or choose from the options above{self.tui.RESET}")
+                                            user_response = input(prompt).strip()
+                                        else:
+                                            print(f"{self.tui.RED}Please provide an answer{self.tui.RESET}")
+                                            user_response = input(prompt).strip()
                                 except EOFError:
                                     print(f"\n{self.tui.RED}Input interrupted. Defaulting to last option{self.tui.RESET}")
                                     user_response = options[-1] if options else "No"
-                                    break
                                 except KeyboardInterrupt:
                                     print(f"\n{self.tui.RED}Operation cancelled by user{self.tui.RESET}")
                                     user_response = options[-1] if options else "No"
-                                    break
-                        else:
-                            # Freeform or mixed - allow numbers or text
-                            prompt = f"{self.tui.BOLD}Your answer:{self.tui.RESET} " if not options else f"{self.tui.BOLD}Your answer (or number):{self.tui.RESET} "
-                            try:
-                                user_response = input(prompt).strip()
-                                if not user_response:
-                                    if options:
-                                        print(f"{self.tui.RED}Please provide an answer or choose from the options above{self.tui.RESET}")
-                                        user_response = input(prompt).strip()
-                                    else:
-                                        print(f"{self.tui.RED}Please provide an answer{self.tui.RESET}")
-                                        user_response = input(prompt).strip()
-                            except EOFError:
-                                print(f"\n{self.tui.RED}Input interrupted. Defaulting to last option{self.tui.RESET}")
-                                user_response = options[-1] if options else "No"
-                            except KeyboardInterrupt:
-                                print(f"\n{self.tui.RED}Operation cancelled by user{self.tui.RESET}")
-                                user_response = options[-1] if options else "No"
-                            
-                            # If options provided and user entered a number, validate it
-                            if options and user_response.isdigit():
-                                try:
-                                    choice_num = int(user_response)
-                                    if 1 <= choice_num <= len(options):
-                                        user_response = options[choice_num - 1]
-                                    else:
-                                        print(f"{self.tui.YELLOW}Note: '{user_response}' is not a valid option number. Using as freeform response.{self.tui.RESET}")
-                                except ValueError:
-                                    pass  # Use the freeform response
+                                
+                                # If options provided and user entered a number, validate it
+                                if options and user_response.isdigit():
+                                    try:
+                                        choice_num = int(user_response)
+                                        if 1 <= choice_num <= len(options):
+                                            user_response = options[choice_num - 1]
+                                        else:
+                                            print(f"{self.tui.YELLOW}Note: '{user_response}' is not a valid option number. Using as freeform response.{self.tui.RESET}")
+                                    except ValueError:
+                                        pass  # Use the freeform response
+                        finally:
+                            self.start_keyboard_listener()
                         
                         # Store user response
                         event.data["output"] = user_response
@@ -705,6 +724,7 @@ class CLI:
         
         if codentis_md_path.exists():
             print(f"{self.tui.YELLOW}CODENTIS.md already exists. Overwrite? (y/N):{self.tui.RESET} ", end="", flush=True)
+            self.stop_keyboard_listener()
             try:
                 response = input().strip().lower()
                 if response not in ['y', 'yes']:
@@ -713,6 +733,8 @@ class CLI:
             except (KeyboardInterrupt, EOFError):
                 print(f"\n{self.tui.CYAN}Cancelled. CODENTIS.md was not modified.{self.tui.RESET}")
                 return
+            finally:
+                self.start_keyboard_listener()
         
         content = f"""# Codentis Instructions
 

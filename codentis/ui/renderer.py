@@ -311,12 +311,29 @@ class TUI:
         )
         console.print()
     
+    def _get_active_formatting(self) -> str:
+        """Get combined ANSI formatting codes for current state."""
+        codes = self.RESET
+        if self.in_bold:
+            codes += self.BOLD
+        if self.in_inline_code:
+            codes += self.YELLOW
+        if self.in_code_block:
+            codes += self.DIM
+        return codes
+
     def begin_assistant(self):
         """Start streaming assistant message."""
         self.assistant_streaming = True
         self.current_message = ""
         self.markdown_buffer = ""  # Buffer for incomplete markdown patterns
         self.stop_thinking()  # Stop thinking indicator when response starts
+        
+        # Initialize streaming markdown parser states
+        self.in_code_block = False
+        self.in_inline_code = False
+        self.in_bold = False
+        self.line_start = True
         
         # Don't print new line or arrow - continue on the same line where thinking was
         print(f"{self.BOLD}❯{self.RESET} ", end="", flush=True)
@@ -337,105 +354,162 @@ class TUI:
         
         # Flush any remaining buffer
         if self.markdown_buffer:
-            print(self.markdown_buffer, end="", flush=True)
-            self.markdown_buffer = ""
+            rendered = self._render_streaming_markdown()
+            if rendered:
+                print(rendered, end="", flush=True)
+            if self.markdown_buffer:
+                print(self.markdown_buffer, end="", flush=True)
+                self.markdown_buffer = ""
         
-        print()  # Add newline after output
+        print(self.RESET)  # Reset formatting and add newline
     
     def _render_streaming_markdown(self) -> str:
-        """Render markdown patterns from buffer as they complete."""
+        """Render markdown patterns from buffer as they complete using a state machine."""
         import re
         
         output = ""
-        buffer = self.markdown_buffer
-        
-        # 1. Headers: (anywhere in buffer, complete when newline found)
-        header_match = re.search(r'(^|\n)(#{1,6})\s+([^\n]+)\n', buffer)
-        if header_match:
-            before = buffer[:header_match.start()]
-            prefix = header_match.group(1) # \n or empty
-            header_text = header_match.group(3)
-            after = buffer[header_match.end():]
-            
-            output = self._apply_inline_markdown(before) + prefix + f'{self.CYAN}{self.BOLD}{header_text}{self.RESET}\n'
-            self.markdown_buffer = after
-            return output
-        
-        # 2. Code Blocks: ```lang\ncode\n```
-        code_block_match = re.search(r'```([a-zA-Z0-9]*)\n(.*?)\n```', buffer, re.DOTALL)
-        if code_block_match:
-            before = buffer[:code_block_match.start()]
-            lang = code_block_match.group(1)
-            code_content = code_block_match.group(2)
-            after = buffer[code_block_match.end():]
-            
-            styled_code = "\n".join([f"  {self.DIM}{line}{self.RESET}" for line in code_content.split("\n")])
-            output = self._apply_inline_markdown(before) + f"\n{self.GRAY}┌─ {lang}{self.RESET}\n{styled_code}\n{self.GRAY}└─{self.RESET}\n"
-            self.markdown_buffer = after
-            return output
-
-        # 3. List items (bullets and numbers)
-        list_match = re.search(r'(^|\n)(\s*)([-*+]|\d+\.)\s+([^\n]+)\n', buffer)
-        if list_match:
-            before = buffer[:list_match.start()]
-            prefix = list_match.group(1)
-            indent = list_match.group(2)
-            bullet = list_match.group(3)
-            item_text = list_match.group(4)
-            after = buffer[list_match.end():]
-            
-            # Use a dot for bullets, keep number for numbered lists
-            display_bullet = f"{self.CYAN}•{self.RESET}" if bullet in "-*+" else f"{self.CYAN}{bullet}{self.RESET}"
-            output = self._apply_inline_markdown(before) + prefix + f'{indent}{display_bullet} {item_text}\n'
-            self.markdown_buffer = after
-            return output
-
-        # 4. Bold: **text**
-        bold_match = re.search(r'\*\*([^*]+)\*\*', buffer)
-        if bold_match:
-            before = buffer[:bold_match.start()]
-            bold_text = bold_match.group(1)
-            after = buffer[bold_match.end():]
-            
-            output = before + f'{self.BOLD}{bold_text}{self.RESET}'
-            self.markdown_buffer = after
-            return output
-        
-        # 5. Inline code: `code`
-        code_match = re.search(r'`([^`]+)`', buffer)
-        if code_match:
-            before = buffer[:code_match.start()]
-            code_text = code_match.group(1)
-            after = buffer[code_match.end():]
-            
-            output = before + f'{self.YELLOW}{code_text}{self.RESET}'
-            self.markdown_buffer = after
-            return output
-        
-        # If buffer has complete lines without markdown patterns potentially starting, output them
-        if '\n' in buffer and not any(p in buffer for p in ['**', '##', '```', '`', '- ', '* ', '1. ']):
-            lines = buffer.split('\n')
-            if len(lines) > 1:
-                output = '\n'.join(lines[:-1]) + '\n'
-                self.markdown_buffer = lines[-1]
-                return output
-        
-        # If buffer is getting very long, output some of it to keep things moving
-        if len(buffer) > 200:
-            # Output first 100 chars, being careful not to break an ongoing pattern
-            # (simple heuristic: don't break if we see start of a pattern near the end)
-            safe_to_output = True
-            for p in ['**', '#', '`', '-', '*', '1.']:
-                if p in buffer[80:100]:
-                    safe_to_output = False
+        while True:
+            buf = self.markdown_buffer
+            if not buf:
+                break
+                
+            # --- 1. CODE BLOCK STATE ---
+            if self.in_code_block:
+                # Look for the end of the code block: "```"
+                if buf.startswith("```"):
+                    self.in_code_block = False
+                    output += f"\n{self.GRAY}└─{self.RESET}\n"
+                    self.markdown_buffer = buf[3:]
+                    self.line_start = True
+                    continue
+                elif buf.startswith("\n```"):
+                    self.in_code_block = False
+                    output += f"\n{self.GRAY}└─{self.RESET}\n"
+                    self.markdown_buffer = buf[4:]
+                    self.line_start = True
+                    continue
+                
+                # If we are in code block, we want to print line by line.
+                if "\n" in buf:
+                    line, rest = buf.split("\n", 1)
+                    output += f"  {self.DIM}{line}{self.RESET}\n"
+                    self.markdown_buffer = rest
+                    self.line_start = True
+                    continue
+                else:
+                    # No newline yet. If the buffer could be the start of "```", wait.
+                    # Otherwise, if it is long, we can output some characters.
+                    if len(buf) > 3 and not any(buf.endswith(p) for p in ["`", "``"]):
+                        to_print = buf[:-3]
+                        output += f"{self.DIM}{to_print}{self.RESET}"
+                        self.markdown_buffer = buf[-3:]
                     break
             
-            if safe_to_output:
-                output = buffer[:100]
-                self.markdown_buffer = buffer[100:]
-                return output
-        
-        return ""
+            # --- 2. NOT IN CODE BLOCK ---
+            # Check if starting a code block: "```"
+            if buf.startswith("```"):
+                if "\n" in buf:
+                    line, rest = buf.split("\n", 1)
+                    lang = line[3:].strip()
+                    self.in_code_block = True
+                    output += f"\n{self.GRAY}┌─ {lang}{self.RESET}\n"
+                    self.markdown_buffer = rest
+                    self.line_start = True
+                    continue
+                else:
+                    break
+            
+            if buf in ["`", "``"]:
+                break
+                
+            # Line start checks: headers, list items
+            if self.line_start:
+                if buf.startswith("#"):
+                    # Count hashes
+                    hashes = 0
+                    for c in buf:
+                        if c == "#":
+                            hashes += 1
+                        else:
+                            break
+                    if hashes == len(buf):
+                        # Might have more hashes, wait
+                        break
+                    
+                    next_char = buf[hashes]
+                    if next_char == " ":
+                        # Header! Wait for whole line
+                        if "\n" in buf:
+                            line, rest = buf.split("\n", 1)
+                            header_text = line[hashes+1:]
+                            styled_header = self._apply_inline_markdown(header_text)
+                            output += f"{self.CYAN}{self.BOLD}{styled_header}{self.RESET}\n"
+                            self.markdown_buffer = rest
+                            self.line_start = True
+                            continue
+                        else:
+                            break
+                
+                # Check for bullet list items: "- ", "* ", "+ "
+                if len(buf) >= 2 and buf[:2] in ["- ", "* ", "+ "]:
+                    output += f"{self.CYAN}•{self.RESET} "
+                    self.markdown_buffer = buf[2:]
+                    self.line_start = False
+                    continue
+                elif buf in ["-", "*", "+"]:
+                    break
+                
+                # Numbered lists: "1. "
+                num_match = re.match(r'^(\d+)\.\s', buf)
+                if num_match:
+                    num_str = num_match.group(1)
+                    output += f"{self.CYAN}{num_str}.{self.RESET} "
+                    self.markdown_buffer = buf[len(num_match.group(0)):]
+                    self.line_start = False
+                    continue
+                elif re.match(r'^\d+$', buf) or re.match(r'^\d+\.$', buf):
+                    break
+            
+            # Inline formatting processing
+            c = buf[0]
+            
+            # Backslash escape
+            if c == "\\":
+                if len(buf) < 2:
+                    break
+                output += buf[1]
+                self.markdown_buffer = buf[2:]
+                self.line_start = False
+                continue
+                
+            # Bold: "**"
+            if buf.startswith("**"):
+                if len(buf) < 2:
+                    break
+                self.in_bold = not self.in_bold
+                output += self._get_active_formatting()
+                self.markdown_buffer = buf[2:]
+                self.line_start = False
+                continue
+                
+            # Inline code: "`"
+            if c == "`":
+                self.in_inline_code = not self.in_inline_code
+                output += self._get_active_formatting()
+                self.markdown_buffer = buf[1:]
+                self.line_start = False
+                continue
+                
+            # Check for asterisk prefix that could form bold
+            if buf == "*":
+                break
+                
+            # Regular character
+            output += c
+            self.markdown_buffer = buf[1:]
+            self.line_start = (c == "\n")
+            
+        return output
     
     def _apply_inline_markdown(self, text: str) -> str:
         """Apply basic markdown styling to text for streaming."""
