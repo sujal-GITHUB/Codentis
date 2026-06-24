@@ -450,10 +450,16 @@ class CLI:
                                 if user_input is not None:
                                     user_input = user_input.strip()
                                 
+                                print(f"{self.tui.RESET}{self.tui.GRAY}{'─' * 80}{self.tui.RESET}")
                                 self.start_keyboard_listener()
                             else:
                                 # Unix/Linux input handling
-                                user_input = await self._safe_input_async(f"{self.tui.BOLD}❯{self.tui.RESET} ")
+                                # Print top boundary line
+                                print(f"\n{self.tui.GRAY}{'─' * 80}{self.tui.RESET}")
+                                # Prompt in SKY blue color
+                                user_input = await self._safe_input_async(f"{self.tui.SKY}{self.tui.BOLD}❯{self.tui.RESET} {self.tui.SKY}")
+                                # Print bottom boundary line (and reset style)
+                                print(f"{self.tui.RESET}{self.tui.GRAY}{'─' * 80}{self.tui.RESET}")
                             
                             if user_input is None:
                                 if not WINDOWS:
