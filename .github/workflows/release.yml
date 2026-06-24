@@ -98,11 +98,19 @@ jobs:
           chmod +x scripts/build_linux_deb.sh
           ./scripts/build_linux_deb.sh
       
+      - name: Build RPM package
+        run: |
+          sudo apt-get update && sudo apt-get install -y rpm
+          chmod +x scripts/build_linux_rpm.sh
+          ./scripts/build_linux_rpm.sh
+      
       - name: Upload Linux package
         uses: actions/upload-artifact@v4
         with:
           name: linux-package
-          path: dist/codentis_*.deb
+          path: |
+            dist/codentis_*.deb
+            dist/codentis-*.rpm
 
   create-release:
     needs: [build-windows, build-macos, build-linux]
@@ -158,12 +166,19 @@ jobs:
             sudo dpkg -i codentis_${{ steps.get_version.outputs.VERSION }}_amd64.deb
             ```
             
+            ### Linux (Fedora/RHEL/CentOS)
+            Download and install the `.rpm` file:
+            ```bash
+            sudo dnf install ./codentis-${{ steps.get_version.outputs.VERSION }}-1.x86_64.rpm
+            ```
+            
             ## What's Changed
             See full changelog: [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md)
           files: |
             artifacts/windows-installer/*.exe
             artifacts/macos-installer/*.pkg
             artifacts/linux-package/*.deb
+            artifacts/linux-package/*.rpm
           draft: false
           prerelease: false
         env:

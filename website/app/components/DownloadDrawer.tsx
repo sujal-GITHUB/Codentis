@@ -230,17 +230,29 @@ export const DownloadDrawer = ({ isOpen, setIsOpen }: { isOpen: boolean; setIsOp
             </div>
             
             <div className="space-y-3">
-              <a
-                href={`https://github.com/sujal-GITHUB/Codentis/releases/download/v${VERSION}/codentis_${VERSION}_amd64.deb`}
-                className="flex items-center justify-center gap-2 w-full p-3 bg-cyan-500 hover:bg-cyan-600 text-black font-semibold rounded-lg transition-colors shadow-[0_0_20px_rgba(34,211,238,0.2)] text-sm"
-              >
-                <DownloadIcon />
-                Download .deb
-              </a>
+              <div className="grid grid-cols-2 gap-2">
+                <a
+                  href={`https://github.com/sujal-GITHUB/Codentis/releases/download/v${VERSION}/codentis_${VERSION}_amd64.deb`}
+                  className="flex items-center justify-center gap-1.5 p-2.5 bg-cyan-500 hover:bg-cyan-600 text-black font-semibold rounded-lg transition-colors text-xs"
+                >
+                  <DownloadIcon />
+                  Download .deb
+                </a>
+                <a
+                  href={`https://github.com/sujal-GITHUB/Codentis/releases/download/v${VERSION}/codentis-${VERSION}-1.x86_64.rpm`}
+                  className="flex items-center justify-center gap-1.5 p-2.5 bg-cyan-500/80 hover:bg-cyan-500 text-black font-semibold rounded-lg transition-colors text-xs"
+                >
+                  <DownloadIcon />
+                  Download .rpm
+                </a>
+              </div>
               
-              <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3">
+              <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3 space-y-1.5">
                 <p className="text-zinc-400 text-xs leading-relaxed">
-                  💡 Install with <code className="text-cyan-300 bg-black/50 px-1 py-0.5 rounded font-mono text-[10px]">sudo dpkg -i codentis_{VERSION}_amd64.deb</code> then run <code className="text-cyan-300 bg-black/50 px-1 py-0.5 rounded font-mono text-[10px]">codentis config</code> to set up your API key.
+                  💡 <strong>Ubuntu/Debian:</strong> <code className="text-cyan-300 bg-black/50 px-1 py-0.5 rounded font-mono text-[10px]">sudo dpkg -i codentis_{VERSION}_amd64.deb</code>
+                </p>
+                <p className="text-zinc-400 text-xs leading-relaxed">
+                  💡 <strong>Fedora/RHEL:</strong> <code className="text-cyan-300 bg-black/50 px-1 py-0.5 rounded font-mono text-[10px]">sudo dnf install ./codentis-{VERSION}-1.x86_64.rpm</code>
                 </p>
               </div>
             </div>
