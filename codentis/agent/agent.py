@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import AsyncGenerator
 from codentis.agent.events import AgentEvent, AgentEventType
-from codentis.client.response import StreamEvent, StreamEventType, ToolResultMessage
+from codentis.client.response import StreamEvent, StreamEventType, ToolCall, ToolResultMessage
 from codentis.config.config import Config
 from pathlib import Path
 from codentis.agent.session import Session
@@ -83,7 +83,8 @@ class Agent:
                             'function': {
                                 'name': tool_call.name,
                                 'arguments': json.dumps(tool_call.arguments)
-                            }
+                            },
+                            **(tool_call.extra_content or {})
                         }
                         for tool_call in tool_calls
                     ]
