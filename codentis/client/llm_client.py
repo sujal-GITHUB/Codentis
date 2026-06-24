@@ -133,8 +133,8 @@ class LLMClient:
                     )
 
                 if delta.tool_calls:
-                    for tool_call_delta in delta.tool_calls:
-                        idx = tool_call_delta.index
+                    for i, tool_call_delta in enumerate(delta.tool_calls):
+                        idx = tool_call_delta.index if tool_call_delta.index is not None else (tool_call_delta.id or i)
                         if idx not in tool_calls:
                             tool_calls[idx] = {
                                 'id' : tool_call_delta.id or "",

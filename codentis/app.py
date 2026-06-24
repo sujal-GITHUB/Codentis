@@ -258,8 +258,10 @@ class CLI:
                             options = metadata.get("options", [])
                             allow_freeform = metadata.get("allow_freeform", True)
                             
+                            # Print top boundary line
+                            print(f"\n{self.tui.GRAY}{'─' * 80}{self.tui.RESET}")
                             # Show the question to the user
-                            print(f"\n{self.tui.CYAN}{self.tui.BOLD}Question:{self.tui.RESET} {question}\n")
+                            print(f"{self.tui.CYAN}{self.tui.BOLD}Question:{self.tui.RESET} {question}\n")
                             
                             if options:
                                 print(f"{self.tui.DIM}Options:{self.tui.RESET}")
@@ -272,7 +274,8 @@ class CLI:
                                 # Multiple choice only - be strict about valid options
                                 while True:
                                     try:
-                                        choice = self._safe_input(f"{self.tui.BOLD}Your choice (1-{len(options)}):{self.tui.RESET} ").strip()
+                                        choice = self._safe_input(f"{self.tui.CYAN}{self.tui.BOLD}Your choice (1-{len(options)}):{self.tui.RESET} {self.tui.SKY}").strip()
+                                        print(self.tui.RESET, end="", flush=True)
                                         if not choice:
                                             print(f"{self.tui.RED}Please enter a number between 1 and {len(options)}{self.tui.RESET}")
                                             continue
@@ -294,16 +297,19 @@ class CLI:
                                         break
                             else:
                                 # Freeform or mixed - allow numbers or text
-                                prompt = f"{self.tui.BOLD}Your answer:{self.tui.RESET} " if not options else f"{self.tui.BOLD}Your answer (or number):{self.tui.RESET} "
+                                prompt = f"{self.tui.CYAN}{self.tui.BOLD}Your answer:{self.tui.RESET} {self.tui.SKY}" if not options else f"{self.tui.CYAN}{self.tui.BOLD}Your answer (or number):{self.tui.RESET} {self.tui.SKY}"
                                 try:
                                     user_response = self._safe_input(prompt).strip()
+                                    print(self.tui.RESET, end="", flush=True)
                                     if not user_response:
                                         if options:
                                             print(f"{self.tui.RED}Please provide an answer or choose from the options above{self.tui.RESET}")
                                             user_response = self._safe_input(prompt).strip()
+                                            print(self.tui.RESET, end="", flush=True)
                                         else:
                                             print(f"{self.tui.RED}Please provide an answer{self.tui.RESET}")
                                             user_response = self._safe_input(prompt).strip()
+                                            print(self.tui.RESET, end="", flush=True)
                                 except EOFError:
                                     print(f"\n{self.tui.RED}Input interrupted. Defaulting to last option{self.tui.RESET}")
                                     user_response = options[-1] if options else "No"
@@ -321,6 +327,9 @@ class CLI:
                                             print(f"{self.tui.YELLOW}Note: '{user_response}' is not a valid option number. Using as freeform response.{self.tui.RESET}")
                                     except ValueError:
                                         pass  # Use the freeform response
+                            
+                            # Print bottom boundary line
+                            print(f"{self.tui.RESET}{self.tui.GRAY}{'─' * 80}{self.tui.RESET}")
                             
                             # Store user response
                             event.data["output"] = user_response
@@ -623,8 +632,10 @@ class CLI:
                         options = metadata.get("options", [])
                         allow_freeform = metadata.get("allow_freeform", True)
                         
+                        # Print top boundary line
+                        print(f"\n{self.tui.GRAY}{'─' * 80}{self.tui.RESET}")
                         # Show the question to the user
-                        print(f"\n{self.tui.CYAN}{self.tui.BOLD}Question:{self.tui.RESET} {question}\n")
+                        print(f"{self.tui.CYAN}{self.tui.BOLD}Question:{self.tui.RESET} {question}\n")
                         
                         if options:
                             print(f"{self.tui.DIM}Options:{self.tui.RESET}")
@@ -639,7 +650,8 @@ class CLI:
                                 # Multiple choice only - be strict about valid options
                                 while True:
                                     try:
-                                        choice = self._safe_input(f"{self.tui.BOLD}Your choice (1-{len(options)}):{self.tui.RESET} ").strip()
+                                        choice = self._safe_input(f"{self.tui.CYAN}{self.tui.BOLD}Your choice (1-{len(options)}):{self.tui.RESET} {self.tui.SKY}").strip()
+                                        print(self.tui.RESET, end="", flush=True)
                                         if not choice:
                                             print(f"{self.tui.RED}Please enter a number between 1 and {len(options)}{self.tui.RESET}")
                                             continue
@@ -661,16 +673,19 @@ class CLI:
                                         break
                             else:
                                 # Freeform or mixed - allow numbers or text
-                                prompt = f"{self.tui.BOLD}Your answer:{self.tui.RESET} " if not options else f"{self.tui.BOLD}Your answer (or number):{self.tui.RESET} "
+                                prompt = f"{self.tui.CYAN}{self.tui.BOLD}Your answer:{self.tui.RESET} {self.tui.SKY}" if not options else f"{self.tui.CYAN}{self.tui.BOLD}Your answer (or number):{self.tui.RESET} {self.tui.SKY}"
                                 try:
                                     user_response = self._safe_input(prompt).strip()
+                                    print(self.tui.RESET, end="", flush=True)
                                     if not user_response:
                                         if options:
                                             print(f"{self.tui.RED}Please provide an answer or choose from the options above{self.tui.RESET}")
                                             user_response = self._safe_input(prompt).strip()
+                                            print(self.tui.RESET, end="", flush=True)
                                         else:
                                             print(f"{self.tui.RED}Please provide an answer{self.tui.RESET}")
                                             user_response = self._safe_input(prompt).strip()
+                                            print(self.tui.RESET, end="", flush=True)
                                 except EOFError:
                                     print(f"\n{self.tui.RED}Input interrupted. Defaulting to last option{self.tui.RESET}")
                                     user_response = options[-1] if options else "No"
@@ -690,6 +705,9 @@ class CLI:
                                         pass  # Use the freeform response
                         finally:
                             self.start_keyboard_listener()
+                        
+                        # Print bottom boundary line
+                        print(f"{self.tui.RESET}{self.tui.GRAY}{'─' * 80}{self.tui.RESET}")
                         
                         # Store user response
                         event.data["output"] = user_response
