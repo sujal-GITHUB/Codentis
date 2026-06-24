@@ -84,7 +84,7 @@ class Agent:
                                 'name': tool_call.name,
                                 'arguments': json.dumps(tool_call.arguments)
                             },
-                            **(tool_call.extra_content or {})
+                            **({'extra_content': tool_call.extra_content} if tool_call.extra_content else {})
                         }
                         for tool_call in tool_calls
                     ]
