@@ -588,6 +588,17 @@ export default function DocsPage() {
                       </div>
 
                       <div>
+                        <p className="text-sm font-semibold text-cyan-400 mb-2">Fedora/RHEL/CentOS Installation</p>
+                        <p className="text-sm text-zinc-400 mb-2">Download and install the .rpm package:</p>
+                        <div className="bg-black/50 p-3 rounded-lg font-mono text-sm space-y-1">
+                          <div className="text-zinc-500"># Download the package</div>
+                          <div className="text-white">wget https://github.com/sujal-GITHUB/Codentis/releases/latest/download/codentis-{VERSION}-1.x86_64.rpm</div>
+                          <div className="text-zinc-500 mt-2"># Install using DNF</div>
+                          <div className="text-white">sudo dnf install ./codentis-{VERSION}-1.x86_64.rpm</div>
+                        </div>
+                      </div>
+
+                      <div>
                         <p className="text-sm font-semibold text-cyan-400 mb-2">Other Distributions</p>
                         <p className="text-sm text-zinc-400 mb-2">For other Linux distributions, you can install from source:</p>
                         <div className="bg-black/50 p-3 rounded-lg font-mono text-sm space-y-1">

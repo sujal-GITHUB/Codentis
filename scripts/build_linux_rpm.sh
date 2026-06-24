@@ -8,7 +8,7 @@ PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$PROJECT_ROOT"
 
 APP_NAME="codentis"
-VERSION="1.5.1"  # This version is updated by release_version.py script
+VERSION="1.5.2"  # This version is updated by release_version.py script
 ARCH=$(uname -m)
 # Normalize architecture for RPM (usually x86_64)
 if [ "$ARCH" == "x86_64" ]; then
@@ -27,26 +27,19 @@ if [ ! -f "dist/codentis" ]; then
     exit 1
 fi
 
-# Check if rpmbuild is installed
-if ! command -v rpmbuild &> /dev/null; then
-    echo "Error: rpmbuild is not installed. Install it with: sudo dnf install rpm-build"
-    exit 1
-fi
+# Create custom rpmbuild directory structure inside dist
+RPM_DIR="dist/rpmbuild"
+rm -rf "$RPM_DIR"
+mkdir -p "$RPM_DIR"/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
 
-# Create RPM build structure
-RPM_ROOT="$PROJECT_ROOT/build/rpmbuild"
-mkdir -p "$RPM_ROOT"/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
-mkdir -p "$RPM_ROOT/BUILDROOT/${APP_NAME}-${VERSION}-1.${RPM_ARCH}/usr/local/bin"
-
-# Copy binary
-cp "dist/codentis" "$RPM_ROOT/BUILDROOT/${APP_NAME}-${VERSION}-1.${RPM_ARCH}/usr/local/bin/codentis"
-chmod +x "$RPM_ROOT/BUILDROOT/${APP_NAME}-${VERSION}-1.${RPM_ARCH}/usr/local/bin/codentis"
+# Copy binary to SOURCES
+cp "dist/codentis" "$RPM_DIR/SOURCES/codentis"
 
 # Create SPEC file
-cat > "$RPM_ROOT/SPECS/${APP_NAME}.spec" << EOF
+cat > "$RPM_DIR/SPECS/${APP_NAME}.spec" << EOF
 Name:           ${APP_NAME}
 Version:        ${VERSION}
-Release:        1%{?dist}
+Release:        1
 Summary:        AI-powered coding assistant for the terminal
 License:        MIT
 URL:            https://github.com/sujal-GITHUB/Codentis
@@ -55,25 +48,30 @@ URL:            https://github.com/sujal-GITHUB/Codentis
 Codentis is an intelligent CLI AI agent that brings the power
 of LLMs directly to your terminal with a beautiful TUI interface.
 
+%prep
+# Nothing to do
+
+%build
+# Nothing to do (using pre-compiled binary)
+
 %install
+rm -rf %{buildroot}
 mkdir -p %{buildroot}/usr/local/bin
-cp -p %{_buildrootdir}/${APP_NAME}-${VERSION}-1.${RPM_ARCH}/usr/local/bin/codentis %{buildroot}/usr/local/bin/codentis
+cp %{_sourcedir}/codentis %{buildroot}/usr/local/bin/codentis
+chmod +x %{buildroot}/usr/local/bin/codentis
 
 %files
 /usr/local/bin/codentis
 
 %changelog
 * $(date +"%a %b %d %Y") Codentis Team <support@codentis.dev> - ${VERSION}-1
-- Initial RPM release for version ${VERSION}
+- Release ${VERSION}
 EOF
 
 # Build package
-rpmbuild -bb \
-    --define "_topdir $RPM_ROOT" \
-    "$RPM_ROOT/SPECS/${APP_NAME}.spec"
+rpmbuild --define "_topdir $PROJECT_ROOT/$RPM_DIR" -bb "$RPM_DIR/SPECS/${APP_NAME}.spec"
 
 # Move result to dist
-cp "$RPM_ROOT/RPMS/${RPM_ARCH}/${APP_NAME}-${VERSION}-1."*"${RPM_ARCH}.rpm" "dist/"
+cp "$RPM_DIR/RPMS/${RPM_ARCH}/${APP_NAME}-${VERSION}-1.${RPM_ARCH}.rpm" "dist/"
 
-echo "✅ .rpm package created in dist/"
-echo "To install: sudo dnf install ./dist/${APP_NAME}-${VERSION}-1.*.${RPM_ARCH}.rpm"
+echo "✅ .rpm package created: dist/${APP_NAME}-${VERSION}-1.${RPM_ARCH}.rpm"
