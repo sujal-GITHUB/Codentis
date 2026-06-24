@@ -220,7 +220,8 @@ def update_build_scripts(version, project_root):
     """Update build scripts with hardcoded version numbers."""
     scripts_to_update = [
         (project_root / 'scripts' / 'build_macos_installer.sh', r'VERSION="[^"]*"', f'VERSION="{version}"'),
-        (project_root / 'scripts' / 'build_linux_deb.sh', r'VERSION="[^"]*"', f'VERSION="{version}"')
+        (project_root / 'scripts' / 'build_linux_deb.sh', r'VERSION="[^"]*"', f'VERSION="{version}"'),
+        (project_root / 'scripts' / 'build_linux_rpm.sh', r'VERSION="[^"]*"', f'VERSION="{version}"')
     ]
     
     for file_path, pattern, replacement in scripts_to_update:

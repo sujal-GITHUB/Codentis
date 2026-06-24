@@ -177,8 +177,6 @@ class TUI:
             # Small delay to ensure the line is fully cleared
             import time
             time.sleep(0.05)
-            # Add a newline after clearing to ensure proper spacing
-            print()
     
     def _print_expanded_tool(self, tool: ToolOutput):
         """Print the full expanded view of a tool output."""
@@ -336,7 +334,7 @@ class TUI:
         self.line_start = True
         
         # Don't print new line or arrow - continue on the same line where thinking was
-        print(f"{self.BOLD}❯{self.RESET} ", end="", flush=True)
+        print(f"", end="", flush=True)
     
     def stream_assistant_delta(self, delta: str):
         """Stream assistant message delta with real-time markdown rendering."""

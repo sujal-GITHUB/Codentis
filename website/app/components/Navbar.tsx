@@ -31,6 +31,7 @@ export default function Navbar() {
           bg-white/[0.04] backdrop-blur-2xl
           shadow-[0_4px_30px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.06)]
           transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)]
+          no-scrollbar
           ${scrolled
                         ? "bg-white/[0.07] border-white/[0.12] shadow-[0_8px_40px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)]"
                         : ""
@@ -49,7 +50,7 @@ export default function Navbar() {
                         height={20}
                         className="w-5 h-5 sm:w-6 sm:h-6 brightness-0 invert"
                     />
-                    <span className="font-semibold text-[11px] sm:text-sm tracking-tight text-white hidden xs:block">
+                    <span className="font-semibold text-[11px] sm:text-sm tracking-tight text-white hidden sm:block">
                         Codentis
                     </span>
                 </Link>
@@ -58,12 +59,12 @@ export default function Navbar() {
                 <div className="w-px h-3.5 sm:h-4 bg-white/[0.1] mx-0.5 sm:mx-1" />
 
                 {/* Links */}
-                <div className="flex items-center gap-0 sm:gap-0.5">
+                <div className="flex items-center gap-0 sm:gap-0.5 overflow-x-auto no-scrollbar [mask-image:linear-gradient(to_right,black_calc(100%-24px),transparent)] sm:[mask-image:none] px-1">
                     {navLinks.map((item) => (
                         <Link
                             key={item.name}
                             href={item.href}
-                            className="px-1.5 sm:px-3.5 py-1.5 rounded-full text-[10px] sm:text-[0.8rem] font-medium text-zinc-400 hover:text-white hover:bg-white/[0.06] transition-all duration-200"
+                            className="px-1.5 sm:px-3.5 py-1.5 rounded-full text-[10px] sm:text-[0.8rem] font-medium text-zinc-400 hover:text-white hover:bg-white/[0.06] transition-all duration-200 whitespace-nowrap"
                         >
                             {item.name}
                         </Link>
@@ -71,9 +72,9 @@ export default function Navbar() {
                 </div>
 
                 {/* Divider */}
-                <div className="w-px h-3.5 sm:h-4 bg-white/[0.1] mx-0.5 sm:mx-1" />
+                <div className="hidden sm:block w-px h-3.5 sm:h-4 bg-white/[0.1] mx-0.5 sm:mx-1" />
 
-                <div className="flex items-center gap-1 sm:gap-1.5">
+                <div className="hidden sm:flex items-center gap-1 sm:gap-1.5">
                     {/* GitHub pill button */}
                     <a
                         href="https://github.com/sujal-GITHUB/Codentis"
