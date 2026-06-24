@@ -25,6 +25,12 @@ PROVIDERS = {
         "default_model": "anthropic/claude-3.5-sonnet",
         "description": "Access multiple AI models through OpenRouter"
     },
+    "gemini": {
+        "name": "Gemini",
+        "base_url": "https://generativelanguage.googleapis.com/v1beta/openai/",
+        "default_model": "gemini-1.5-flash",
+        "description": "Official Google Gemini API (OpenAI Compatible)"
+    },
     "anthropic": {
         "name": "Anthropic",
         "base_url": "https://api.anthropic.com/v1",
@@ -133,6 +139,8 @@ def run_setup_wizard(cwd: Optional[Path] = None) -> Dict[str, Any]:
                 detected_provider = "openrouter"
             elif "anthropic" in existing_base_url:
                 detected_provider = "anthropic"
+            elif "googleapis.com" in existing_base_url or "gemini" in existing_base_url:
+                detected_provider = "gemini"
             elif "openai" in existing_base_url:
                 detected_provider = "openai"
             else:
