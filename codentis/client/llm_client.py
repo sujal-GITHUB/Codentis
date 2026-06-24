@@ -140,7 +140,20 @@ class LLMClient:
                                 'id' : tool_call_delta.id or "",
                                 'name' : "",
                                 'arguments' : "",
+                                'extra_content': None,
                             }
+
+                        # Check for extra content (used by Gemini for thought_signature)
+                        extra_content = None
+                        if hasattr(tool_call_delta, "model_extra") and tool_call_delta.model_extra:
+                            extra_content = tool_call_delta.model_extra.get("extra_content")
+                        if not extra_content and hasattr(tool_call_delta, "extra_content"):
+                            extra_content = getattr(tool_call_delta, "extra_content", None)
+                        if not extra_content and isinstance(tool_call_delta, dict):
+                            extra_content = tool_call_delta.get("extra_content")
+                        
+                        if extra_content:
+                            tool_calls[idx]['extra_content'] = extra_content
 
                         if tool_call_delta.function:
                             if tool_call_delta.function.name:
@@ -169,12 +182,21 @@ class LLMClient:
                     break
 
             for idx, tc in tool_calls.items():
+                extra_content = tc.get('extra_content')
+                model_name = self.config.model_name.lower() if self.config.model_name else ""
+                if not extra_content and ("gemini" in model_name or "google" in model_name):
+                    extra_content = {
+                        "google": {
+                            "thought_signature": "skip_thought_signature_validator"
+                        }
+                    }
                 yield StreamEvent(
                     type=StreamEventType.TOOL_CALL_COMPLETE,
                     tool_call=ToolCall(
                         call_id=tc['id'],
                         name=tc['name'],
                         arguments=parse_tool_call_arguements(tc['arguments']),
+                        extra_content=extra_content,
                     ),
                 )
 
@@ -210,11 +232,26 @@ class LLMClient:
         tool_calls: list[ToolCall] = []
         if message.tool_calls:
             for tool_call in message.tool_calls:
+                extra_content = None
+                if hasattr(tool_call, "model_extra") and tool_call.model_extra:
+                    extra_content = tool_call.model_extra.get("extra_content")
+                if not extra_content and hasattr(tool_call, "extra_content"):
+                    extra_content = getattr(tool_call, "extra_content", None)
+                
+                model_name = self.config.model_name.lower() if self.config.model_name else ""
+                if not extra_content and ("gemini" in model_name or "google" in model_name):
+                    extra_content = {
+                        "google": {
+                            "thought_signature": "skip_thought_signature_validator"
+                        }
+                    }
+
                 tool_calls.append(
                     ToolCall(
                         call_id=tool_call.id,
                         name=tool_call.function.name,
                         arguments=parse_tool_call_arguements(tool_call.function.arguments),
+                        extra_content=extra_content,
                     )
                 )
                 

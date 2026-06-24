@@ -39,6 +39,7 @@ class ToolCall:
     call_id: str
     name: str 
     arguments: dict[str, Any]
+    extra_content: dict[str, Any] | None = None
 
 @dataclass
 class ToolCallDelta:
