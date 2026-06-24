@@ -164,6 +164,10 @@ class LLMClient:
                                     ),
                                 )
 
+                # If this chunk signaled completion, break the loop early to avoid blocking on TCP stream EOF
+                if choice.finish_reason is not None:
+                    break
+
             for idx, tc in tool_calls.items():
                 yield StreamEvent(
                     type=StreamEventType.TOOL_CALL_COMPLETE,
