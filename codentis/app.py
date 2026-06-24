@@ -627,66 +627,63 @@ class CLI:
                             print()
                         
                         # Get user response
-                        if options and not allow_freeform:
-                            # Multiple choice only - be strict about valid options
-                            while True:
-                                try:
-                                    choice = self._safe_input(f"{self.tui.BOLD}Your choice (1-{len(options)}):{self.tui.RESET} ").strip()
-                                    if not choice:
-                                        print(f"{self.tui.RED}Please enter a number between 1 and {len(options)}{self.tui.RESET}")
-                                        continue
-                                    choice_num = int(choice)
-                                    if 1 <= choice_num <= len(options):
-                                        user_response = options[choice_num - 1]
+                        self.stop_keyboard_listener()
+                        try:
+                            if options and not allow_freeform:
+                                # Multiple choice only - be strict about valid options
+                                while True:
+                                    try:
+                                        choice = self._safe_input(f"{self.tui.BOLD}Your choice (1-{len(options)}):{self.tui.RESET} ").strip()
+                                        if not choice:
+                                            print(f"{self.tui.RED}Please enter a number between 1 and {len(options)}{self.tui.RESET}")
+                                            continue
+                                        choice_num = int(choice)
+                                        if 1 <= choice_num <= len(options):
+                                            user_response = options[choice_num - 1]
+                                            break
+                                        else:
+                                            print(f"{self.tui.RED}Invalid choice. Please enter a number between 1 and {len(options)}{self.tui.RESET}")
+                                    except ValueError:
+                                        print(f"{self.tui.RED}Invalid input '{choice}'. Please enter a valid number between 1 and {len(options)}{self.tui.RESET}")
+                                    except EOFError:
+                                        print(f"\n{self.tui.RED}Input interrupted. Defaulting to last option{self.tui.RESET}")
+                                        user_response = options[-1] if options else "No"
+                                        break
+                                    except KeyboardInterrupt:
+                                        print(f"\n{self.tui.RED}Operation cancelled by user{self.tui.RESET}")
+                                        user_response = options[-1] if options else "No"
                                         break
                             else:
                                 # Freeform or mixed - allow numbers or text
                                 prompt = f"{self.tui.BOLD}Your answer:{self.tui.RESET} " if not options else f"{self.tui.BOLD}Your answer (or number):{self.tui.RESET} "
                                 try:
-                                    user_response = input(prompt).strip()
+                                    user_response = self._safe_input(prompt).strip()
                                     if not user_response:
                                         if options:
                                             print(f"{self.tui.RED}Please provide an answer or choose from the options above{self.tui.RESET}")
-                                            user_response = input(prompt).strip()
+                                            user_response = self._safe_input(prompt).strip()
                                         else:
                                             print(f"{self.tui.RED}Please provide an answer{self.tui.RESET}")
-                                            user_response = input(prompt).strip()
+                                            user_response = self._safe_input(prompt).strip()
                                 except EOFError:
                                     print(f"\n{self.tui.RED}Input interrupted. Defaulting to last option{self.tui.RESET}")
                                     user_response = options[-1] if options else "No"
                                 except KeyboardInterrupt:
                                     print(f"\n{self.tui.RED}Operation cancelled by user{self.tui.RESET}")
                                     user_response = options[-1] if options else "No"
-                                    break
-                        else:
-                            # Freeform or mixed - allow numbers or text
-                            prompt = f"{self.tui.BOLD}Your answer:{self.tui.RESET} " if not options else f"{self.tui.BOLD}Your answer (or number):{self.tui.RESET} "
-                            try:
-                                user_response = self._safe_input(prompt).strip()
-                                if not user_response:
-                                    if options:
-                                        print(f"{self.tui.RED}Please provide an answer or choose from the options above{self.tui.RESET}")
-                                        user_response = self._safe_input(prompt).strip()
-                                    else:
-                                        print(f"{self.tui.RED}Please provide an answer{self.tui.RESET}")
-                                        user_response = self._safe_input(prompt).strip()
-                            except EOFError:
-                                print(f"\n{self.tui.RED}Input interrupted. Defaulting to last option{self.tui.RESET}")
-                                user_response = options[-1] if options else "No"
-                            except KeyboardInterrupt:
-                                print(f"\n{self.tui.RED}Operation cancelled by user{self.tui.RESET}")
-                                user_response = options[-1] if options else "No"
-                            
-                            # If options provided and user entered a number, validate it
-                            if options and user_response.isdigit():
-                                try:
-                                    choice_num = int(user_response)
-                                    if 1 <= choice_num <= len(options):
-                                        user_response = options[choice_num - 1]
-                                    else:
-                                        print(f"{self.tui.YELLOW}Note: '{user_response}' is not a valid option number. Using as freeform response.{self.tui.RESET}")
-                                except ValueError:
-                                    pass  # Use the freeform response
+                                
+                                # If options provided and user entered a number, validate it
+                                if options and user_response.isdigit():
+                                    try:
+                                        choice_num = int(user_response)
+                                        if 1 <= choice_num <= len(options):
+                                            user_response = options[choice_num - 1]
+                                        else:
+                                            print(f"{self.tui.YELLOW}Note: '{user_response}' is not a valid option number. Using as freeform response.{self.tui.RESET}")
+                                    except ValueError:
+                                        pass  # Use the freeform response
+                        finally:
+                            self.start_keyboard_listener()
                         
                         # Store user response
                         event.data["output"] = user_response
