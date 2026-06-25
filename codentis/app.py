@@ -225,6 +225,11 @@ class CLI:
             
             try:
                 tty.setcbreak(fd)
+                # Disable ICRNL so we can distinguish carriage return (\r) and line feed (\n)
+                mode = termios.tcgetattr(fd)
+                mode[0] &= ~termios.ICRNL
+                termios.tcsetattr(fd, termios.TCSADRAIN, mode)
+                
                 while True:
                     # Check for interruption by signal handler
                     if self.interrupted:
@@ -275,11 +280,15 @@ class CLI:
                                 # Arrow keys - ignore to avoid garbage output
                                 pass
                                 
-                        # Handle standard Enter (ASCII 13 / 10)
-                        elif char in ('\r', '\n'):
+                        # Handle standard Enter (ASCII 13)
+                        elif char == '\r':
                             sys.stdout.write('\n')
                             sys.stdout.flush()
                             break
+                            
+                        # Handle Shift+Enter or Line Feed (ASCII 10)
+                        elif char == '\n':
+                            user_input += '\n'
                             
                         # Regular character
                         else:
