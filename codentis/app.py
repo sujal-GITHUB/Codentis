@@ -136,7 +136,13 @@ class CLI:
                 """Alt+Enter / Ctrl+J inserts a newline."""
                 event.current_buffer.insert_text('\n')
 
-            session = PromptSession(key_bindings=kb, multiline=False)
+            from prompt_toolkit.styles import Style
+
+            style = Style.from_dict({
+                '': '#87d7ff',  # Sky-blue color matching self.tui.SKY
+            })
+
+            session = PromptSession(key_bindings=kb, multiline=False, style=style)
 
             # Use prompt_toolkit's native async prompt to play well with asyncio
             result = await session.prompt_async(
@@ -355,7 +361,7 @@ class CLI:
                                 # Multiple choice only - be strict about valid options
                                 while True:
                                     try:
-                                        choice = self._safe_input(f"{self.tui.CYAN}{self.tui.BOLD}Your choice (1-{len(options)}):{self.tui.RESET} {self.tui.SKY}").strip()
+                                        choice = self._safe_input(f"{self.tui.CYAN}{self.tui.BOLD}Your choice (1-{len(options)}):{self.tui.RESET} {self.tui.WHITE}").strip()
                                         print(self.tui.RESET, end="", flush=True)
                                         if not choice:
                                             print(f"{self.tui.RED}Please enter a number between 1 and {len(options)}{self.tui.RESET}")
@@ -378,7 +384,7 @@ class CLI:
                                         break
                             else:
                                 # Freeform or mixed - allow numbers or text
-                                prompt = f"{self.tui.CYAN}{self.tui.BOLD}Your answer:{self.tui.RESET} {self.tui.SKY}" if not options else f"{self.tui.CYAN}{self.tui.BOLD}Your answer (or number):{self.tui.RESET} {self.tui.SKY}"
+                                prompt = f"{self.tui.CYAN}{self.tui.BOLD}Your answer:{self.tui.RESET} {self.tui.WHITE}" if not options else f"{self.tui.CYAN}{self.tui.BOLD}Your answer (or number):{self.tui.RESET} {self.tui.WHITE}"
                                 try:
                                     user_response = self._safe_input(prompt).strip()
                                     print(self.tui.RESET, end="", flush=True)
@@ -490,7 +496,7 @@ class CLI:
                             # Print top boundary line
                             print(f"\n{self.tui.GRAY}{'─' * 80}{self.tui.RESET}")
                             # Prompt in SKY blue color
-                            user_input = await self._get_multiline_input_async(f"{self.tui.SKY}{self.tui.BOLD}❯{self.tui.RESET} {self.tui.SKY}")
+                            user_input = await self._get_multiline_input_async(f"{self.tui.SKY}{self.tui.BOLD}❯{self.tui.RESET} ")
                             # Print bottom boundary line (and reset style)
                             print(f"{self.tui.RESET}{self.tui.GRAY}{'─' * 80}{self.tui.RESET}")
                         except KeyboardInterrupt:
@@ -669,7 +675,7 @@ class CLI:
                                 # Multiple choice only - be strict about valid options
                                 while True:
                                     try:
-                                        choice = self._safe_input(f"{self.tui.CYAN}{self.tui.BOLD}Your choice (1-{len(options)}):{self.tui.RESET} {self.tui.SKY}").strip()
+                                        choice = self._safe_input(f"{self.tui.CYAN}{self.tui.BOLD}Your choice (1-{len(options)}):{self.tui.RESET} {self.tui.WHITE}").strip()
                                         print(self.tui.RESET, end="", flush=True)
                                         if not choice:
                                             print(f"{self.tui.RED}Please enter a number between 1 and {len(options)}{self.tui.RESET}")
@@ -692,7 +698,7 @@ class CLI:
                                         break
                             else:
                                 # Freeform or mixed - allow numbers or text
-                                prompt = f"{self.tui.CYAN}{self.tui.BOLD}Your answer:{self.tui.RESET} {self.tui.SKY}" if not options else f"{self.tui.CYAN}{self.tui.BOLD}Your answer (or number):{self.tui.RESET} {self.tui.SKY}"
+                                prompt = f"{self.tui.CYAN}{self.tui.BOLD}Your answer:{self.tui.RESET} {self.tui.WHITE}" if not options else f"{self.tui.CYAN}{self.tui.BOLD}Your answer (or number):{self.tui.RESET} {self.tui.WHITE}"
                                 try:
                                     user_response = self._safe_input(prompt).strip()
                                     print(self.tui.RESET, end="", flush=True)
