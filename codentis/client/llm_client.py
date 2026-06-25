@@ -6,6 +6,65 @@ from codentis.config.config import Config
 import asyncio
 import os
 
+class TagFilter:
+    def __init__(self):
+        self.buffer = ""
+        self.tags_to_strip = [
+            "<|channel|>thought",
+            "<|channel|>final<|message|>",
+            "<|channel|>call",
+            "<|channel|>",
+            "<|im_start|>",
+            "<|im_end|>",
+            "<|thought|>"
+        ]
+        
+    def feed(self, chunk: str) -> str:
+        self.buffer += chunk
+        output = ""
+        while self.buffer:
+            if not self.buffer.startswith("<"):
+                output += self.buffer[0]
+                self.buffer = self.buffer[1:]
+                continue
+                
+            matched_tag = None
+            for tag in self.tags_to_strip:
+                if self.buffer.startswith(tag):
+                    matched_tag = tag
+                    break
+                    
+            if matched_tag:
+                self.buffer = self.buffer[len(matched_tag):]
+                continue
+                
+            is_prefix = False
+            for tag in self.tags_to_strip:
+                if tag.startswith(self.buffer):
+                    is_prefix = True
+                    break
+            
+            if not is_prefix:
+                if self.buffer.startswith("<|") and "|>" not in self.buffer and len(self.buffer) < 50:
+                    is_prefix = True
+                elif self.buffer.startswith("<|") and "|>" in self.buffer:
+                    end_idx = self.buffer.find("|>") + 2
+                    self.buffer = self.buffer[end_idx:]
+                    continue
+                    
+            if is_prefix:
+                break
+            else:
+                output += self.buffer[0]
+                self.buffer = self.buffer[1:]
+                
+        return output
+
+    def flush(self) -> str:
+        res = self.buffer
+        self.buffer = ""
+        return res
+
 class LLMClient:
     def __init__(self, config: Config)->None:
         self.client : AsyncOpenAI | None = None
@@ -107,6 +166,7 @@ class LLMClient:
             usage: TokenUsage | None = None
             finish_reason : str | None = None
             tool_calls: dict[int, dict[str, Any]] = {}
+            tag_filter = TagFilter()
 
             async for chunk in response:
                 if hasattr(chunk, "usage") and chunk.usage:
@@ -127,10 +187,12 @@ class LLMClient:
                     finish_reason = choice.finish_reason
                 
                 if delta.content:
-                    yield StreamEvent(
-                        type=StreamEventType.TEXT_DELTA,
-                        text_delta=TextDelta(content=delta.content),
-                    )
+                    filtered = tag_filter.feed(delta.content)
+                    if filtered:
+                        yield StreamEvent(
+                            type=StreamEventType.TEXT_DELTA,
+                            text_delta=TextDelta(content=filtered),
+                        )
 
                 if delta.tool_calls:
                     for i, tool_call_delta in enumerate(delta.tool_calls):
@@ -181,6 +243,13 @@ class LLMClient:
                 if choice.finish_reason is not None:
                     break
 
+            flushed = tag_filter.flush()
+            if flushed:
+                yield StreamEvent(
+                    type=StreamEventType.TEXT_DELTA,
+                    text_delta=TextDelta(content=flushed),
+                )
+
             for idx, tc in tool_calls.items():
                 extra_content = tc.get('extra_content')
                 model_name = self.config.model_name.lower() if self.config.model_name else ""
@@ -227,7 +296,12 @@ class LLMClient:
         
         text_delta = None
         if message.content:
-            text_delta = TextDelta(content=message.content)
+            cleaned = message.content
+            for tag in ["<|channel|>thought", "<|channel|>final<|message|>", "<|channel|>call", "<|channel|>", "<|im_start|>", "<|im_end|>", "<|thought|>"]:
+                cleaned = cleaned.replace(tag, "")
+            import re
+            cleaned = re.sub(r'<\|.*?\|>', '', cleaned)
+            text_delta = TextDelta(content=cleaned)
 
         tool_calls: list[ToolCall] = []
         if message.tool_calls:
