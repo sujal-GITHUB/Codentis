@@ -230,6 +230,10 @@ class CLI:
                 mode[0] &= ~termios.ICRNL
                 termios.tcsetattr(fd, termios.TCSADRAIN, mode)
                 
+                # Enable progressive keyboard enhancement (Kitty keyboard protocol)
+                sys.stdout.write('\033[>1u')
+                sys.stdout.flush()
+                
                 while True:
                     # Check for interruption by signal handler
                     if self.interrupted:
@@ -309,6 +313,9 @@ class CLI:
                         await asyncio.sleep(0.01)
                         
             finally:
+                # Disable progressive keyboard enhancement
+                sys.stdout.write('\033[<u')
+                sys.stdout.flush()
                 termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
                 if was_running:
                     self.start_keyboard_listener()
