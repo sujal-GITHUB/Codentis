@@ -285,7 +285,9 @@ class TUI:
         tips_text.append("/list", style="cyan")
         tips_text.append(" - List all tool outputs with IDs\n", style="white")
         tips_text.append("/exit", style="cyan")
-        tips_text.append(" - Quit\n\n", style="white")
+        tips_text.append(" - Quit\n", style="white")
+        tips_text.append("Ctrl+J", style="cyan")
+        tips_text.append(" - New line (multiline input)\n\n", style="white")
 
         tips_text.append("No recent activity", style="dim")
 
