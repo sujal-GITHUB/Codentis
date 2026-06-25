@@ -681,7 +681,7 @@ Core dependencies (from `requirements.txt`):
 - `platformdirs` — Cross-platform paths
 - `tomli` — TOML parsing
 
-## Implemented Features (v1.5.2)
+## Implemented Features (v1.5.3)
 
 ✅ **Multi-turn agentic loop** - Fully implemented in `agentic_loop()`
 ✅ **Sub-agent orchestration** - Specialized agents for codebase analysis, code review, debugging, and modification
