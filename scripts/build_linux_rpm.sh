@@ -8,7 +8,7 @@ PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$PROJECT_ROOT"
 
 APP_NAME="codentis"
-VERSION="1.5.2"  # This version is updated by release_version.py script
+VERSION="1.5.3"  # This version is updated by release_version.py script
 ARCH=$(uname -m)
 # Normalize architecture for RPM (usually x86_64)
 if [ "$ARCH" == "x86_64" ]; then
