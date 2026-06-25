@@ -78,7 +78,234 @@ class CLI:
         finally:
             if was_running:
                 self.start_keyboard_listener()
-    
+
+    def _strip_ansi(self, text: str) -> str:
+        """Strip ANSI escape sequences from a string."""
+        import re
+        ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
+        return ansi_escape.sub('', text)
+
+    def _count_visual_lines(self, text: str, prompt: str) -> int:
+        """Count the number of visual lines occupied by text given prompt and terminal width."""
+        import shutil
+        try:
+            width = shutil.get_terminal_size().columns
+        except Exception:
+            width = 80
+            
+        prompt_len = len(self._strip_ansi(prompt))
+        lines = text.split('\n')
+        visual_lines = 0
+        for i, line in enumerate(lines):
+            line_len = len(line)
+            if i == 0:
+                line_len += prompt_len
+            visual_lines += max(1, (line_len + width - 1) // width)
+        return visual_lines
+
+    async def _get_multiline_input_async(self, prompt: str) -> str:
+        """Get multiline user input, supporting Shift+Enter to insert newlines on all OS platforms."""
+        if not sys.stdin.isatty():
+            return await self._safe_input_async(prompt)
+            
+        # Stop keyboard listener so it doesn't consume stdin bytes
+        was_running = self.keyboard_listener_running
+        self.stop_keyboard_listener()
+        
+        user_input = ""
+        lines_printed = 1
+        
+        # Print initial prompt
+        sys.stdout.write(prompt)
+        sys.stdout.flush()
+        
+        if WINDOWS:
+            import msvcrt
+            try:
+                while True:
+                    # Check for interruption by signal handler
+                    if self.interrupted:
+                        raise KeyboardInterrupt
+                        
+                    # Check if key is pressed
+                    if msvcrt.kbhit():
+                        char = msvcrt.getch()
+                        
+                        # Handle Ctrl+C (ASCII 3)
+                        if char == b'\x03':
+                            raise KeyboardInterrupt
+                            
+                        # Handle Ctrl+D (ASCII 4)
+                        elif char == b'\x04':
+                            if not user_input:
+                                raise EOFError
+                            continue
+                            
+                        # Handle Backspace (ASCII 8)
+                        elif char == b'\x08':
+                            if user_input:
+                                user_input = user_input[:-1]
+                                
+                        # Handle Ctrl+U (Clear line)
+                        elif char == b'\x15':
+                            user_input = ""
+                            
+                        # Handle Ctrl+W (Delete word)
+                        elif char == b'\x17':
+                            if user_input:
+                                stripped = user_input.rstrip()
+                                last_space = stripped.rfind(' ')
+                                if last_space == -1:
+                                    user_input = ""
+                                else:
+                                    user_input = stripped[:last_space + 1]
+                                    
+                        # Handle Shift+Enter (which sends b'\n' / ASCII 10 on Windows)
+                        elif char == b'\n':
+                            user_input += '\n'
+                            
+                        # Handle standard Enter (ASCII 13)
+                        elif char == b'\r':
+                            sys.stdout.write('\n')
+                            sys.stdout.flush()
+                            break
+                            
+                        # Discard function/arrow key prefixes on Windows (0xE0 or 0x00)
+                        elif char in (b'\xe0', b'\x00'):
+                            if msvcrt.kbhit():
+                                msvcrt.getch()
+                            continue
+                            
+                        # Handle printable/UTF-8 character
+                        elif char >= b' ':
+                            try:
+                                decoded_char = char.decode('utf-8')
+                                user_input += decoded_char
+                            except UnicodeDecodeError:
+                                pass
+                                
+                        # Redraw input prompt and text buffer
+                        if lines_printed > 1:
+                            sys.stdout.write(f"\r\033[{lines_printed - 1}A")
+                        else:
+                            sys.stdout.write("\r")
+                        sys.stdout.write("\033[J")
+                        sys.stdout.write(prompt + user_input)
+                        sys.stdout.flush()
+                        
+                        # Calculate new lines_printed
+                        lines_printed = self._count_visual_lines(user_input, prompt)
+                    else:
+                        await asyncio.sleep(0.01)
+                        
+            finally:
+                if was_running:
+                    self.start_keyboard_listener()
+                    
+            return user_input
+            
+        else:
+            # Unix/Linux implementation
+            import termios
+            import tty
+            import select
+            
+            fd = sys.stdin.fileno()
+            old_settings = termios.tcgetattr(fd)
+            
+            # Define escape sequences for Shift+Enter (and Alt/Ctrl+Enter variations)
+            shift_enter_sequences = (
+                '[13;2u',    # Kitty Shift+Enter
+                '[27;2;13~', # xterm Shift+Enter
+                'OM',        # Vt100 Shift+Enter
+                '[13;2~',    # Alternative Shift+Enter
+                '[13;5u',    # Ctrl+Enter
+                '[13;3u',    # Alt+Enter
+            )
+            
+            try:
+                tty.setcbreak(fd)
+                while True:
+                    # Check for interruption by signal handler
+                    if self.interrupted:
+                        raise KeyboardInterrupt
+                        
+                    # Check if stdin is ready for reading
+                    if sys.stdin in select.select([sys.stdin], [], [], 0.05)[0]:
+                        char = sys.stdin.read(1)
+                        
+                        # Handle Ctrl+C (ASCII 3)
+                        if char == '\x03':
+                            raise KeyboardInterrupt
+                            
+                        # Handle Ctrl+D (ASCII 4) - EOF
+                        elif char == '\x04':
+                            if not user_input:
+                                raise EOFError
+                            continue
+                            
+                        # Handle Backspace / Delete
+                        elif char in ('\x7f', '\x08'):
+                            if user_input:
+                                user_input = user_input[:-1]
+                                
+                        # Handle Ctrl+U (Clear line)
+                        elif char == '\x15':
+                            user_input = ""
+                            
+                        # Handle Ctrl+W (Delete word)
+                        elif char == '\x17':
+                            if user_input:
+                                stripped = user_input.rstrip()
+                                last_space = stripped.rfind(' ')
+                                if last_space == -1:
+                                    user_input = ""
+                                else:
+                                    user_input = stripped[:last_space + 1]
+                                    
+                        # Handle Escape Sequences
+                        elif char == '\x1b':
+                            seq = ""
+                            while sys.stdin in select.select([sys.stdin], [], [], 0.01)[0]:
+                                seq += sys.stdin.read(1)
+                                
+                            if seq in shift_enter_sequences or seq == '\r' or seq == '\n':
+                                user_input += '\n'
+                            elif seq in ('[A', '[B', '[C', '[D'):
+                                # Arrow keys - ignore to avoid garbage output
+                                pass
+                                
+                        # Handle standard Enter (ASCII 13 / 10)
+                        elif char in ('\r', '\n'):
+                            sys.stdout.write('\n')
+                            sys.stdout.flush()
+                            break
+                            
+                        # Regular character
+                        else:
+                            user_input += char
+                            
+                        # Redraw the input prompt and text buffer
+                        if lines_printed > 1:
+                            sys.stdout.write(f"\r\033[{lines_printed - 1}A")
+                        else:
+                            sys.stdout.write("\r")
+                        sys.stdout.write("\033[J")
+                        sys.stdout.write(prompt + user_input)
+                        sys.stdout.flush()
+                        
+                        # Calculate new lines_printed
+                        lines_printed = self._count_visual_lines(user_input, prompt)
+                    else:
+                        await asyncio.sleep(0.01)
+                        
+            finally:
+                termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+                if was_running:
+                    self.start_keyboard_listener()
+                    
+            return user_input
+
     def _setup_signal_handlers(self):
         """Set up signal handlers for interactive mode."""
         def sigint_handler(signum, frame):
@@ -406,74 +633,12 @@ class CLI:
                         # Get user input with prompt - handle KeyboardInterrupt properly
                         self.stop_keyboard_listener()
                         try:
-                            if WINDOWS:
-                                # Windows-specific input handling with Ctrl+C detection
-                                # We stop listener inside this block as needed
-                                self.stop_keyboard_listener()
-                                import msvcrt
-                                print(f"\n{self.tui.GRAY}{'─' * 80}{self.tui.RESET}")
-                                print(f"{self.tui.SKY}{self.tui.BOLD}❯{self.tui.RESET} {self.tui.SKY}", end="", flush=True)
-                                user_input = ""
-                                
-                                while True:
-                                    # Check if interrupted by signal handler
-                                    if self.interrupted:
-                                        print(f"{self.tui.RESET}\n{self.tui.YELLOW}Operation interrupted. Type /exit to quit interactive mode.{self.tui.RESET}")
-                                        self.interrupted = False
-                                        user_input = None
-                                        break
-                                    
-                                    # Check for keyboard input
-                                    if msvcrt.kbhit():
-                                        char = msvcrt.getch()
-                                        
-                                        # Handle Ctrl+C (ASCII 3)
-                                        if char == b'\x03':
-                                            print(f"{self.tui.RESET}\n{self.tui.YELLOW}Operation interrupted. Type /exit to quit interactive mode.{self.tui.RESET}")
-                                            user_input = None
-                                            break
-                                        
-                                        # Handle Enter (ASCII 13)
-                                        elif char == b'\r':
-                                            print(self.tui.RESET)  # New line and reset style
-                                            break
-                                        
-                                        # Handle Backspace (ASCII 8)
-                                        elif char == b'\x08':
-                                            if user_input:
-                                                user_input = user_input[:-1]
-                                                print('\b \b', end="", flush=True)
-                                        
-                                        # Handle regular characters
-                                        elif char >= b' ':
-                                            try:
-                                                decoded_char = char.decode('utf-8')
-                                                user_input += decoded_char
-                                                print(decoded_char, end="", flush=True)
-                                            except UnicodeDecodeError:
-                                                pass  # Ignore invalid characters
-                                    
-                                    # Small sleep to prevent high CPU usage
-                                    await asyncio.sleep(0.01)
-                                
-                                if user_input is not None:
-                                    user_input = user_input.strip()
-                                
-                                print(f"{self.tui.RESET}{self.tui.GRAY}{'─' * 80}{self.tui.RESET}")
-                                self.start_keyboard_listener()
-                            else:
-                                # Unix/Linux input handling
-                                # Print top boundary line
-                                print(f"\n{self.tui.GRAY}{'─' * 80}{self.tui.RESET}")
-                                # Prompt in SKY blue color
-                                user_input = await self._safe_input_async(f"{self.tui.SKY}{self.tui.BOLD}❯{self.tui.RESET} {self.tui.SKY}")
-                                # Print bottom boundary line (and reset style)
-                                print(f"{self.tui.RESET}{self.tui.GRAY}{'─' * 80}{self.tui.RESET}")
-                            
-                            if user_input is None:
-                                if not WINDOWS:
-                                    print(f"\n{self.tui.YELLOW}Operation interrupted. Type /exit to quit interactive mode.{self.tui.RESET}")
-                                continue
+                            # Print top boundary line
+                            print(f"\n{self.tui.GRAY}{'─' * 80}{self.tui.RESET}")
+                            # Prompt in SKY blue color
+                            user_input = await self._get_multiline_input_async(f"{self.tui.SKY}{self.tui.BOLD}❯{self.tui.RESET} {self.tui.SKY}")
+                            # Print bottom boundary line (and reset style)
+                            print(f"{self.tui.RESET}{self.tui.GRAY}{'─' * 80}{self.tui.RESET}")
                         except KeyboardInterrupt:
                             # Handle Ctrl+C during input
                             print(f"\n{self.tui.YELLOW}Operation interrupted. Type /exit to quit interactive mode.{self.tui.RESET}")
