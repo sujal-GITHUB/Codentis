@@ -103,224 +103,62 @@ class CLI:
             visual_lines += max(1, (line_len + width - 1) // width)
         return visual_lines
 
-    async def _get_multiline_input_async(self, prompt: str) -> str:
-        """Get multiline user input, supporting Shift+Enter to insert newlines on all OS platforms."""
+    async def _get_multiline_input_async(self, prompt_str: str) -> str:
+        """Get multiline user input using prompt_toolkit.
+        
+        - Enter submits the input
+        - Alt+Enter (Meta+Enter) / Ctrl+J inserts a new line
+        - Ctrl+C raises KeyboardInterrupt
+        - Ctrl+D on empty input raises EOFError
+        - Paste works correctly without auto-submitting
+        """
         if not sys.stdin.isatty():
-            return await self._safe_input_async(prompt)
-            
-        # Stop keyboard listener so it doesn't consume stdin bytes
+            return await self._safe_input_async(prompt_str)
+
         was_running = self.keyboard_listener_running
         self.stop_keyboard_listener()
-        
-        user_input = ""
-        lines_printed = 1
-        
-        # Print initial prompt
-        sys.stdout.write(prompt)
-        sys.stdout.flush()
-        
-        if WINDOWS:
-            import msvcrt
-            try:
-                while True:
-                    # Check for interruption by signal handler
-                    if self.interrupted:
-                        raise KeyboardInterrupt
-                        
-                    # Check if key is pressed
-                    if msvcrt.kbhit():
-                        char = msvcrt.getch()
-                        
-                        # Handle Ctrl+C (ASCII 3)
-                        if char == b'\x03':
-                            raise KeyboardInterrupt
-                            
-                        # Handle Ctrl+D (ASCII 4)
-                        elif char == b'\x04':
-                            if not user_input:
-                                raise EOFError
-                            continue
-                            
-                        # Handle Backspace (ASCII 8)
-                        elif char == b'\x08':
-                            if user_input:
-                                user_input = user_input[:-1]
-                                
-                        # Handle Ctrl+U (Clear line)
-                        elif char == b'\x15':
-                            user_input = ""
-                            
-                        # Handle Ctrl+W (Delete word)
-                        elif char == b'\x17':
-                            if user_input:
-                                stripped = user_input.rstrip()
-                                last_space = stripped.rfind(' ')
-                                if last_space == -1:
-                                    user_input = ""
-                                else:
-                                    user_input = stripped[:last_space + 1]
-                                    
-                        # Handle Shift+Enter (which sends b'\n' / ASCII 10 on Windows)
-                        elif char == b'\n':
-                            user_input += '\n'
-                            
-                        # Handle standard Enter (ASCII 13)
-                        elif char == b'\r':
-                            sys.stdout.write('\n')
-                            sys.stdout.flush()
-                            break
-                            
-                        # Discard function/arrow key prefixes on Windows (0xE0 or 0x00)
-                        elif char in (b'\xe0', b'\x00'):
-                            if msvcrt.kbhit():
-                                msvcrt.getch()
-                            continue
-                            
-                        # Handle printable/UTF-8 character
-                        elif char >= b' ':
-                            try:
-                                decoded_char = char.decode('utf-8')
-                                user_input += decoded_char
-                            except UnicodeDecodeError:
-                                pass
-                                
-                        # Redraw input prompt and text buffer
-                        if lines_printed > 1:
-                            sys.stdout.write(f"\r\033[{lines_printed - 1}A")
-                        else:
-                            sys.stdout.write("\r")
-                        sys.stdout.write("\033[J")
-                        sys.stdout.write(prompt + user_input)
-                        sys.stdout.flush()
-                        
-                        # Calculate new lines_printed
-                        lines_printed = self._count_visual_lines(user_input, prompt)
-                    else:
-                        await asyncio.sleep(0.01)
-                        
-            finally:
-                if was_running:
-                    self.start_keyboard_listener()
-                    
-            return user_input
-            
-        else:
-            # Unix/Linux implementation
-            import termios
-            import tty
-            import select
-            
-            fd = sys.stdin.fileno()
-            old_settings = termios.tcgetattr(fd)
-            
-            # Define escape sequences for Shift+Enter (and Alt/Ctrl+Enter variations)
-            shift_enter_sequences = (
-                '[13;2u',    # Kitty Shift+Enter
-                '[27;2;13~', # xterm Shift+Enter
-                'OM',        # Vt100 Shift+Enter
-                '[13;2~',    # Alternative Shift+Enter
-                '[13;5u',    # Ctrl+Enter
-                '[13;3u',    # Alt+Enter
+
+        try:
+            from prompt_toolkit import PromptSession
+            from prompt_toolkit.formatted_text import ANSI
+            from prompt_toolkit.key_binding import KeyBindings
+
+            kb = KeyBindings()
+
+            @kb.add('enter')
+            def _submit(event):
+                """Enter submits the input."""
+                event.current_buffer.validate_and_handle()
+
+            @kb.add('escape', 'enter')
+            @kb.add('c-j')
+            def _newline(event):
+                """Alt+Enter / Ctrl+J inserts a newline."""
+                event.current_buffer.insert_text('\n')
+
+            session = PromptSession(key_bindings=kb, multiline=False)
+
+            # Use prompt_toolkit's native async prompt to play well with asyncio
+            result = await session.prompt_async(
+                ANSI(prompt_str),
+                multiline=False,
             )
-            
-            try:
-                tty.setcbreak(fd)
-                # Disable ICRNL so we can distinguish carriage return (\r) and line feed (\n)
-                mode = termios.tcgetattr(fd)
-                mode[0] &= ~termios.ICRNL
-                termios.tcsetattr(fd, termios.TCSADRAIN, mode)
-                
-                # Enable progressive keyboard enhancement (Kitty keyboard protocol)
-                sys.stdout.write('\033[>1u')
-                sys.stdout.flush()
-                
-                while True:
-                    # Check for interruption by signal handler
-                    if self.interrupted:
-                        raise KeyboardInterrupt
-                        
-                    # Check if stdin is ready for reading
-                    if sys.stdin in select.select([sys.stdin], [], [], 0.05)[0]:
-                        char = sys.stdin.read(1)
-                        
-                        # Handle Ctrl+C (ASCII 3)
-                        if char == '\x03':
-                            raise KeyboardInterrupt
-                            
-                        # Handle Ctrl+D (ASCII 4) - EOF
-                        elif char == '\x04':
-                            if not user_input:
-                                raise EOFError
-                            continue
-                            
-                        # Handle Backspace / Delete
-                        elif char in ('\x7f', '\x08'):
-                            if user_input:
-                                user_input = user_input[:-1]
-                                
-                        # Handle Ctrl+U (Clear line)
-                        elif char == '\x15':
-                            user_input = ""
-                            
-                        # Handle Ctrl+W (Delete word)
-                        elif char == '\x17':
-                            if user_input:
-                                stripped = user_input.rstrip()
-                                last_space = stripped.rfind(' ')
-                                if last_space == -1:
-                                    user_input = ""
-                                else:
-                                    user_input = stripped[:last_space + 1]
-                                    
-                        # Handle Escape Sequences
-                        elif char == '\x1b':
-                            seq = ""
-                            while sys.stdin in select.select([sys.stdin], [], [], 0.01)[0]:
-                                seq += sys.stdin.read(1)
-                                
-                            if seq in shift_enter_sequences or seq == '\r' or seq == '\n':
-                                user_input += '\n'
-                            elif seq in ('[A', '[B', '[C', '[D'):
-                                # Arrow keys - ignore to avoid garbage output
-                                pass
-                                
-                        # Handle standard Enter (ASCII 13)
-                        elif char == '\r':
-                            sys.stdout.write('\n')
-                            sys.stdout.flush()
-                            break
-                            
-                        # Handle Shift+Enter or Line Feed (ASCII 10)
-                        elif char == '\n':
-                            user_input += '\n'
-                            
-                        # Regular character
-                        else:
-                            user_input += char
-                            
-                        # Redraw the input prompt and text buffer
-                        if lines_printed > 1:
-                            sys.stdout.write(f"\r\033[{lines_printed - 1}A")
-                        else:
-                            sys.stdout.write("\r")
-                        sys.stdout.write("\033[J")
-                        sys.stdout.write(prompt + user_input)
-                        sys.stdout.flush()
-                        
-                        # Calculate new lines_printed
-                        lines_printed = self._count_visual_lines(user_input, prompt)
-                    else:
-                        await asyncio.sleep(0.01)
-                        
-            finally:
-                # Disable progressive keyboard enhancement
-                sys.stdout.write('\033[<u')
-                sys.stdout.flush()
-                termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
-                if was_running:
-                    self.start_keyboard_listener()
-                    
-            return user_input
+            return result if result is not None else ""
+
+        except ImportError:
+            # Fallback to basic input if prompt_toolkit is not available
+            loop = asyncio.get_event_loop()
+            return await loop.run_in_executor(
+                None,
+                lambda: input(self._strip_ansi(prompt_str))
+            )
+        except KeyboardInterrupt:
+            raise
+        except EOFError:
+            raise
+        finally:
+            if was_running:
+                self.start_keyboard_listener()
 
     def _setup_signal_handlers(self):
         """Set up signal handlers for interactive mode."""

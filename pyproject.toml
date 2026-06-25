@@ -39,6 +39,7 @@ dependencies = [
     "beautifulsoup4",
     "textual",
     "typer",
+    "prompt-toolkit",
 ]
 
 [project.optional-dependencies]
